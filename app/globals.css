@@ -1,0 +1,435 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: oklch(0.98 0.005 240);
+  --foreground: oklch(0.2 0.02 240);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.02 240);
+  --card-title-color: #ffffff;
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.02 240);
+  --primary: oklch(0.42 0.15 250);
+  --primary-foreground: oklch(0.98 0.005 240);
+  --secondary: oklch(0.55 0.18 220);
+  --secondary-foreground: oklch(0.98 0.005 240);
+  --muted: oklch(0.95 0.01 240);
+  --muted-foreground: oklch(0.5 0.02 240);
+  --accent: oklch(0.65 0.2 200);
+  --accent-foreground: oklch(0.98 0.005 240);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0.005 240);
+  --border: oklch(0.88 0.01 240);
+  --input: oklch(0.88 0.01 240);
+  --ring: oklch(0.55 0.18 220);
+  --chart-1: oklch(0.55 0.18 220);
+  --chart-2: oklch(0.65 0.2 200);
+  --chart-3: oklch(0.42 0.15 250);
+  --chart-4: oklch(0.7 0.15 180);
+  --chart-5: oklch(0.6 0.12 260);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.15 0.02 240);
+  --foreground: oklch(0.95 0.005 240);
+  --card: oklch(0.18 0.02 240);
+  --card-foreground: oklch(0.95 0.005 240);
+  --card-title-color: #ffffff;
+  /* Override for CardTitle specifically */
+  --card-title-color: #ffffff;
+  --popover: oklch(0.18 0.02 240);
+  --popover-foreground: oklch(0.95 0.005 240);
+  --primary: oklch(0.55 0.18 220);
+  --primary-foreground: oklch(0.98 0.005 240);
+  --secondary: oklch(0.42 0.15 250);
+  --secondary-foreground: oklch(0.98 0.005 240);
+  --muted: oklch(0.25 0.02 240);
+  --muted-foreground: oklch(0.65 0.02 240);
+  --accent: oklch(0.65 0.2 200);
+  --accent-foreground: oklch(0.98 0.005 240);
+  --destructive: oklch(0.5 0.2 27);
+  --destructive-foreground: oklch(0.98 0.005 240);
+  --border: oklch(0.3 0.02 240);
+  --input: oklch(0.3 0.02 240);
+  --ring: oklch(0.55 0.18 220);
+  --chart-1: oklch(0.55 0.18 220);
+  --chart-2: oklch(0.65 0.2 200);
+  --chart-3: oklch(0.42 0.15 250);
+  --chart-4: oklch(0.7 0.15 180);
+  --chart-5: oklch(0.6 0.12 260);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Leaflet map styles */
+.leaflet-container {
+  background-color: hsl(var(--background));
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  background: white !important;
+  background-color: white !important;
+  color: #1f2937 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  padding: 0 !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background: #0f172a !important;
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.leaflet-popup-tip {
+  background: white !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .leaflet-popup-tip {
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: hsl(var(--muted));
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #6b7280 !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  width: 28px !important;
+  height: 28px !important;
+  line-height: 28px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  top: 8px !important;
+  right: 8px !important;
+  transition: all 0.2s !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #1f2937 !important;
+  background: rgba(255, 255, 255, 1) !important;
+  transform: scale(1.1) !important;
+}
+
+.dark .leaflet-container a.leaflet-popup-close-button {
+  color: #cbd5e1 !important;
+  background: rgba(15, 23, 42, 0.9) !important;
+}
+
+.dark .leaflet-container a.leaflet-popup-close-button:hover {
+  color: #f1f5f9 !important;
+  background: rgba(15, 23, 42, 1) !important;
+}
+
+/* Fix popup positioning to prevent being cut off by headers */
+.leaflet-popup {
+  z-index: 1000 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 1000 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  z-index: 1000 !important;
+  max-height: 400px !important;
+  overflow-y: auto !important;
+}
+
+/* Ensure popup is visible above everything */
+.leaflet-popup-custom {
+  z-index: 1000 !important;
+}
+
+.leaflet-container .leaflet-popup {
+  z-index: 1000 !important;
+}
+
+/* Ensure map container doesn't interfere with dialogs */
+.leaflet-container {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Ensure dialogs appear above map */
+[data-slot="dialog-overlay"],
+[data-slot="dialog-content"] {
+  z-index: 2000 !important;
+}
+
+/* Custom marker styles - ensure colors are visible */
+.leaflet-div-icon.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-div-icon.custom-marker .marker-dot {
+  opacity: 1 !important;
+  display: block !important;
+}
+
+/* Ensure Select dropdown appears above dialogs */
+[data-slot="select-content"] {
+  z-index: 3000 !important;
+}
+
+/* Radix Select Portal z-index */
+[data-radix-portal] [data-slot="select-content"] {
+  z-index: 3000 !important;
+}
+
+/* Global Black Theme Override - Convert all slate backgrounds to black */
+@layer utilities {
+  /* Override gradient backgrounds */
+  .bg-gradient-to-br.from-slate-900.to-slate-800,
+  .bg-gradient-to-br.from-slate-800.to-slate-900 {
+    background: #000000 !important;
+    background-color: #000000 !important;
+  }
+
+  /* Override solid slate backgrounds */
+  .bg-slate-900,
+  .bg-slate-800,
+  .bg-slate-950 {
+    background-color: #000000 !important;
+  }
+
+  /* Override slate backgrounds with opacity */
+  .bg-slate-900\/50,
+  .bg-slate-800\/50,
+  .bg-slate-800\/30,
+  .bg-slate-800\/70,
+  .bg-slate-700\/50 {
+    background-color: rgba(0, 0, 0, var(--tw-bg-opacity, 1)) !important;
+  }
+
+  /* Override slate borders to very dark gray for subtle borders */
+  .border-slate-700,
+  .border-slate-800 {
+    border-color: #1a1a1a !important;
+  }
+
+  /* Override slate borders with opacity */
+  .border-slate-700\/50,
+  .border-slate-800\/50,
+  .border-slate-700\/20 {
+    border-color: rgba(26, 26, 26, var(--tw-border-opacity, 1)) !important;
+  }
+
+  /* Override hover states */
+  .hover\:bg-slate-800:hover,
+  .hover\:bg-slate-700:hover,
+  .hover\:bg-slate-900:hover {
+    background-color: #0a0a0a !important;
+  }
+
+  .hover\:bg-slate-800\/70:hover,
+  .hover\:bg-slate-800\/50:hover {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+  }
+
+  /* Override text colors that might be too light on black */
+  .text-slate-400,
+  .text-slate-300 {
+    color: #a0a0a0 !important;
+  }
+
+  .text-slate-500 {
+    color: #808080 !important;
+  }
+
+  /* Enhanced card glow effects */
+  .card-glow {
+    box-shadow: 
+      0 1px 3px 0 rgba(0, 0, 0, 0.3),
+      0 4px 6px -1px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(59, 130, 246, 0.1);
+  }
+  
+  .card-glow-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .card-glow-hover:hover {
+    box-shadow: 
+      0 10px 15px -3px rgba(0, 0, 0, 0.4),
+      0 4px 6px -2px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(59, 130, 246, 0.2),
+      0 0 20px rgba(59, 130, 246, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a2a2a;
+}
+
+/* Focus visible improvements */
+*:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
+}
+
+/* Enhanced typography */
+@layer base {
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+    color: #ffffff !important;
+  }
+  
+  h2 {
+    @apply text-3xl font-semibold tracking-tight;
+    color: #ffffff !important;
+  }
+  
+  h3 {
+    @apply text-2xl font-semibold;
+    color: #ffffff !important;
+  }
+  
+  .metric-value {
+    @apply text-3xl font-bold tracking-tight;
+    letter-spacing: -0.02em;
+    color: #ffffff !important;
+  }
+  
+  .metric-label {
+    @apply text-xs font-medium uppercase tracking-wider;
+    color: #a0a0a0 !important;
+  }
+}
+
+/* Ensure CardTitle is always visible - Multiple layers of protection */
+/* Rule outside layer for maximum specificity - highest priority */
+/* This must come after Tailwind utilities to override them */
+h3[data-card-title="true"] {
+  color: rgb(255, 255, 255) !important;
+  color: #ffffff !important;
+}
+
+/* Override Tailwind's text-card-foreground utility for CardTitle - very specific */
+.text-card-foreground h3[data-card-title="true"],
+.card.text-card-foreground h3[data-card-title="true"],
+div.text-card-foreground h3[data-card-title="true"],
+[class*="card"] h3[data-card-title="true"],
+/* Target any h3 inside a card with bg-black */
+.bg-black h3[data-card-title="true"],
+.card.bg-black h3[data-card-title="true"] {
+  color: rgb(255, 255, 255) !important;
+  color: #ffffff !important;
+}
+
+@layer utilities {
+  /* Override Card's text-card-foreground for h3 elements specifically */
+  .card h3,
+  .card[class*="bg-black"] h3,
+  div[class*="CardHeader"] h3,
+  /* Override Tailwind utility classes */
+  .text-card-foreground h3 {
+    color: #ffffff !important;
+  }
+  
+  /* Target h3 inside CardHeader specifically - highest specificity */
+  .card h3[data-card-title="true"],
+  [class*="CardHeader"] h3[data-card-title="true"],
+  div[class*="CardHeader"] h3[data-card-title="true"],
+  /* Direct h3 with data attribute - highest priority */
+  h3[data-card-title="true"] {
+    color: #ffffff !important;
+  }
+  
+  /* Fallback: Target h3 inside Card with specific classes */
+  .bg-black h3,
+  .bg-black .border-slate-800 h3,
+  .card.bg-black h3,
+  /* Override all text color classes on h3 (CardTitle) */
+  h3.text-white,
+  h3.text-slate-400,
+  h3.text-slate-300,
+  h3.text-slate-500,
+  /* Override all font size classes to ensure color is white */
+  h3.text-xs,
+  h3.text-sm,
+  h3.text-base,
+  h3.text-lg,
+  h3.text-xl,
+  h3.text-2xl,
+  /* Target h3 with leading-none (CardTitle always has this) */
+  h3.leading-none {
+    color: #ffffff !important;
+  }
+}
