@@ -36,73 +36,79 @@ export function EfficiencyMetrics({ data, loading = false }: EfficiencyMetricsPr
     <div className="space-y-6">
       {/* Efficiency KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Cost per Transaction</CardTitle>
-            <CardDescription className="text-slate-400">Average cost per transaction</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Cost per Transaction</CardTitle>
+            <CardDescription className="relative z-10">Average cost per transaction</CardDescription>
+          </div>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {formatCurrency(data.costPerTransaction)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Cost per Service</CardTitle>
-            <CardDescription className="text-slate-400">Average cost per service</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Cost per Service</CardTitle>
+            <CardDescription className="relative z-10">Average cost per service</CardDescription>
+          </div>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {formatCurrency(data.costPerService)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Revenue per Customer</CardTitle>
-            <CardDescription className="text-slate-400">Average revenue per customer</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Revenue per Customer</CardTitle>
+            <CardDescription className="relative z-10">Average revenue per customer</CardDescription>
+          </div>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {formatCurrency(data.revenuePerCustomer)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Revenue per Employee</CardTitle>
-            <CardDescription className="text-slate-400">Average revenue per employee</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Revenue per Employee</CardTitle>
+            <CardDescription className="relative z-10">Average revenue per employee</CardDescription>
+          </div>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {formatCurrency(data.revenuePerEmployee)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Operating Cost Ratio</CardTitle>
-            <CardDescription className="text-slate-400">Operating costs as % of revenue</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Operating Cost Ratio</CardTitle>
+            <CardDescription className="relative z-10">Operating costs as % of revenue</CardDescription>
+          </div>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {data.operatingCostRatio.toFixed(1)}%
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Utilization Rate</CardTitle>
-            <CardDescription className="text-slate-400">Resource utilization percentage</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Utilization Rate</CardTitle>
+            <CardDescription className="relative z-10">Resource utilization percentage</CardDescription>
+          </div>
           <CardContent>
-            <div className="text-2xl font-bold text-white">
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">
               {data.utilizationRate.toFixed(1)}%
             </div>
           </CardContent>
@@ -111,11 +117,12 @@ export function EfficiencyMetrics({ data, loading = false }: EfficiencyMetricsPr
 
       {/* Efficiency Trends */}
       {data.trends && data.trends.length > 0 && (
-        <Card className="bg-black border-slate-800">
-          <CardHeader>
-            <CardTitle size="md" className="text-white">Efficiency Trends</CardTitle>
-            <CardDescription className="text-slate-400">Efficiency metrics over time</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="md" className="relative z-10">Efficiency Trends</CardTitle>
+            <CardDescription className="relative z-10">Efficiency metrics over time</CardDescription>
+          </div>
           <CardContent>
             <EnhancedLineChart
               data={data.trends}

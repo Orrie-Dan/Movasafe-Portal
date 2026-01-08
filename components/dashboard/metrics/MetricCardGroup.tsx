@@ -31,7 +31,7 @@ export function MetricCardGroup({
     return (
       <div className={cn('grid gap-4', gridCols, className)}>
         {[...Array(columns * 2)].map((_, i) => (
-          <Card key={i} className="bg-black border-slate-800">
+          <Card key={i} className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
             <div className="p-6">
               <Skeleton className="h-4 w-24 mb-4" />
               <Skeleton className="h-8 w-32 mb-2" />

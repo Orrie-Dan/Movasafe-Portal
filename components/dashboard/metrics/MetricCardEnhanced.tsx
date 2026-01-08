@@ -61,15 +61,16 @@ export function MetricCardEnhanced({
   const cardContent = (
     <Card
       className={cn(
-        'group bg-black border-slate-800 transition-all duration-300',
+        'group bg-white dark:bg-black border-slate-200 dark:border-slate-800 transition-all duration-300',
+        'text-slate-900 dark:text-white',
         onClick && 'cursor-pointer hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98]',
         className
       )}
       onClick={onClick}
     >
-      <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-900/50 bg-black relative">
+      <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-        <CardTitle size="xs" className="metric-label text-white z-10 relative">{title}</CardTitle>
+        <CardTitle size="xs" className="metric-label z-10 relative text-slate-900 dark:text-white">{title}</CardTitle>
         <div className="relative z-10">
           <div className={cn('absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300', {
             'bg-blue-500/20': variant === 'default',
@@ -88,14 +89,14 @@ export function MetricCardEnhanced({
         </div>
       </div>
       <CardContent>
-        <div className="metric-value text-2xl font-bold mb-1 text-white">
+        <div className="metric-value text-2xl font-bold mb-1 text-slate-900 dark:text-white">
           {formatValue(value)}
         </div>
         {change !== undefined && (
           <p
             className={cn(
               'text-xs flex items-center gap-1 transition-colors',
-              change >= 0 ? 'text-green-400' : 'text-red-400'
+              change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             )}
           >
             {change >= 0 ? (
@@ -107,7 +108,7 @@ export function MetricCardEnhanced({
           </p>
         )}
         {!change && unit && format === 'number' && (
-          <p className="text-xs text-slate-400">{unit}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{unit}</p>
         )}
       </CardContent>
     </Card>

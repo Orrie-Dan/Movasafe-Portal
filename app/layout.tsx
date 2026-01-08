@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { ThemeProvider } from "@/lib/contexts/theme-context"
 import "leaflet/dist/leaflet.css"
 import "./globals.css"
 
@@ -20,8 +21,8 @@ const playfair = Playfair_Display({
 })
 
 export const metadata: Metadata = {
-  title: "Waste Management System",
-  description: "Admin and Officers Dashboard for Waste Management System",
+  title: "Movasafe Digital Wallet",
+  description: "Admin Dashboard for Movasafe Digital Wallet Management",
   icons: [
     {
       url: "/favicon.ico",
@@ -35,9 +36,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${playfair.variable} ${inter.className} font-sans antialiased`}>
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

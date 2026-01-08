@@ -68,15 +68,15 @@ export function Forecasting({ data, loading = false }: ForecastingProps) {
       </div>
 
       {/* Forecast Chart */}
-      <Card className="bg-black border-slate-800">
-        <div className="flex flex-row items-center justify-between p-4 sm:p-6 pb-3 border-b border-slate-900/50 bg-black relative">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+        <div className="flex flex-row items-center justify-between p-4 sm:p-6 pb-3 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
           <div className="flex items-center justify-between relative z-10 flex-1">
             <div>
-              <CardTitle size="md" className="text-white text-sm sm:text-base">
+              <CardTitle size="md" className="relative z-10 text-sm sm:text-base">
                 {scenario.charAt(0).toUpperCase() + scenario.slice(1)} Case Forecast
               </CardTitle>
-              <CardDescription className="text-slate-400 text-xs sm:text-sm">
+              <CardDescription className="relative z-10 text-xs sm:text-sm">
                 Revenue, expenses, and cash flow projections ({data.periods.length} months)
               </CardDescription>
             </div>
@@ -101,29 +101,29 @@ export function Forecasting({ data, loading = false }: ForecastingProps) {
 
       {/* Forecast Metrics */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="bg-black border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-green-400">
               {formatCurrency(selectedScenario.revenue[selectedScenario.revenue.length - 1])}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Projected Revenue (Final Month)</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Projected Revenue (Final Month)</p>
           </CardContent>
         </Card>
         
-        <Card className="bg-black border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-red-400">
               {formatCurrency(selectedScenario.expenses[selectedScenario.expenses.length - 1])}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Projected Expenses (Final Month)</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Projected Expenses (Final Month)</p>
           </CardContent>
         </Card>
         
-        <Card className="bg-black border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-blue-400">{data.cashRunway} days</div>
-            <p className="text-xs text-slate-400 mt-1">Cash Runway</p>
-            <p className="text-xs text-slate-500 mt-1">Confidence: {data.confidence}%</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Cash Runway</p>
+            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Confidence: {data.confidence}%</p>
           </CardContent>
         </Card>
       </div>

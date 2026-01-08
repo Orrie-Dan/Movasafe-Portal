@@ -21,44 +21,41 @@ function getToken(): string | null {
   return localStorage.getItem('auth_token')
 }
 
-export async function apiLogin(email: string, password: string) {
-  // TODO: Replace with actual API call
-  // Example: const response = await fetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
-  
-  // Placeholder: Simulate API call
-  if (typeof window !== 'undefined') {
-    // Store token in localStorage (replace with actual token from API)
-    localStorage.setItem('auth_token', 'placeholder_token')
-  }
-  
-  return { 
-    success: true, 
-    token: 'placeholder_token',
-    user: { id: '1', email, fullName: 'User', role: email.includes('admin') ? 'admin' : 'officer' }
-  }
-}
+// Re-export auth functions
+export { apiMe, apiLogin, apiLogout, apiRefreshToken, apiRegister, apiResendOtp, apiGetAccountStatus } from './api/auth'
+export type { User as AuthUser, LoginResponse, LoginCredentials, RegisterUserDTO, ResendOtpDTO } from './types/auth'
 
-export async function apiMe() {
-  // TODO: Replace with actual API call
-  // Example: const response = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-  
-  // Placeholder: Return user data
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token')
-    if (!token) {
-      throw new Error('Not authenticated')
-    }
-  }
-  
-  return { 
-    user: { 
-      id: '1', 
-      email: 'admin@example.com', 
-      fullName: 'Admin User', 
-      role: 'admin' 
-    } 
-  }
-}
+// Re-export transaction functions
+export { 
+  apiGetAllTransactions, 
+  apiGetUserTransactions, 
+  apiGetTransactionById,
+  apiCreateTransfer,
+  apiCreateEscrowPayment
+} from './api/transactions'
+export type { Transaction, TransactionFilters, CreateTransferDTO, CreateEscrowPaymentDTO } from './types/transactions'
+export { TransactionType, TransactionStatus } from './types/transactions'
+
+// Re-export wallet functions
+export {
+  apiGetWallet,
+  apiGetUserWallet,
+  apiGetAllWallets,
+  apiCreateWalletAccount
+} from './api/wallets'
+export type { Wallet, CreateWalletAccountDTO, WalletFilters } from './types/wallets'
+
+// Re-export escrow functions
+export {
+  apiCreateEscrow,
+  apiGetEscrows,
+  apiGetEscrowById,
+  apiApproveEscrow,
+  apiReleaseEscrow,
+  apiRefundEscrow
+} from './api/escrows'
+export type { EscrowTransaction, CreateEscrowDTO, EscrowFilters } from './types/escrows'
+export { EscrowStatus } from './types/escrows'
 
 export async function apiGetAdminReports(params?: any) {
   return { data: [] }
@@ -72,9 +69,9 @@ export async function apiAssignReport(reportId: string, officerId: string) {
   return { success: true }
 }
 
-export async function apiGetUsers() {
-  return { data: [] }
-}
+// Re-export user management functions
+export { apiGetUsers, apiGetUser, apiCreateUser, apiUpdateUser, apiDeleteUser, apiSuspendUser, apiActivateUser, apiResetUserPassword } from './api/users'
+export type { User, CreateUserRequest, UpdateUserRequest, UserListParams, UserListResponse } from './types/user'
 
 export async function apiGetOrganizations() {
   return { data: [] }
@@ -153,61 +150,6 @@ export async function apiGetFacilityOperations(params?: {
   return { data: [] as FacilityOperation[] }
 }
 
-export async function apiGetRecyclingRecords(params?: {
-  materialType?: string
-  facilityId?: string
-  startDate?: string
-  endDate?: string
-}) {
-  // TODO: Replace with actual API call
-  return { data: [] as RecyclingRecord[] }
-}
-
-export async function apiGetRecyclingMetrics(params?: {
-  period?: 'daily' | 'weekly' | 'monthly' | 'yearly'
-  startDate?: string
-  endDate?: string
-}) {
-  // TODO: Replace with actual API call
-  return {
-    period: {
-      start: new Date().toISOString(),
-      end: new Date().toISOString(),
-      type: 'monthly' as const,
-    },
-    totalRecycled: 0,
-    totalDiverted: 0,
-    recyclingRate: 0,
-    compostingRate: 0,
-    byMaterial: [],
-    environmentalImpact: {
-      totalCo2Saved: 0,
-      totalWaterSaved: 0,
-      totalEnergySaved: 0,
-      totalTreesSaved: 0,
-    },
-  } as RecyclingMetrics
-}
-
-export async function apiGetWasteTypeStats(params?: {
-  startDate?: string
-  endDate?: string
-}) {
-  // TODO: Replace with actual API call
-  return {
-    period: {
-      start: new Date().toISOString(),
-      end: new Date().toISOString(),
-    },
-    types: [],
-    totals: {
-      totalTypes: 0,
-      totalCollections: 0,
-      totalWeight: 0,
-      averageCollections: 0,
-    },
-  } as WasteTypeStats
-}
 
 export async function apiGetComplianceData(params?: {
   providerId?: string
@@ -537,9 +479,9 @@ export async function apiUpdateUserPassword(userId: string, newPassword: string)
   return { success: true }
 }
 
-// Type definitions for Waste Management System
+// Type definitions for Movasafe Digital Wallet System
 
-// Collection type matching Rwanda waste management system
+// Collection type (legacy - may be removed if not used)
 export type Collection = {
   id: string
   collectionNumber: string
@@ -675,76 +617,6 @@ export type FacilityOperation = {
   createdAt: string
 }
 
-// Recycling Record
-export type RecyclingRecord = {
-  id: string
-  collectionId: string
-  materialType: string
-  weight: number
-  unit: 'kg' | 'tons'
-  facility: {
-    id: string
-    name: string
-    type: 'recycling' | 'composting'
-  }
-  environmentalImpact: {
-    co2Saved: number // kg CO2
-    waterSaved: number // liters
-    energySaved: number // kWh
-    treesSaved: number
-  }
-  processedAt: string
-  qualityGrade?: 'A' | 'B' | 'C'
-  createdAt: string
-}
-
-// Recycling Metrics
-export type RecyclingMetrics = {
-  period: {
-    start: string
-    end: string
-    type: 'daily' | 'weekly' | 'monthly' | 'yearly'
-  }
-  totalRecycled: number // tons
-  totalDiverted: number // tons
-  recyclingRate: number // percentage
-  compostingRate: number // percentage
-  byMaterial: Array<{
-    type: string
-    recycled: number
-    total: number
-    rate: number
-  }>
-  environmentalImpact: {
-    totalCo2Saved: number
-    totalWaterSaved: number
-    totalEnergySaved: number
-    totalTreesSaved: number
-  }
-}
-
-// Waste Type Statistics
-export type WasteTypeStats = {
-  period: {
-    start: string
-    end: string
-  }
-  types: Array<{
-    type: string
-    displayName: string
-    totalCollections: number
-    totalWeight: number
-    averageWeight: number
-    trend: 'up' | 'down' | 'stable'
-    trendPercent: number
-  }>
-  totals: {
-    totalTypes: number
-    totalCollections: number
-    totalWeight: number
-    averageCollections: number
-  }
-}
 
 // Compliance Data (RURA)
 export type ComplianceData = {
@@ -832,83 +704,6 @@ export type Organization = {
   [key: string]: any
 }
 
-export async function apiGetWasteTrends(params?: {
-  period?: 'daily' | 'weekly' | 'monthly' | 'seasonal'
-  startDate?: string
-  endDate?: string
-}) {
-  try {
-    const queryParams = new URLSearchParams()
-    if (params?.period) queryParams.append('period', params.period)
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    
-    const response = await fetch(`/api/waste/trends?${queryParams.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-      },
-    })
-    if (!response.ok) throw new Error('Failed to fetch waste trends')
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching waste trends:', error)
-    return { data: [], byType: {} }
-  }
-}
-
-export async function apiGetWasteByArea(params?: {
-  province?: string
-  district?: string
-  sector?: string
-  startDate?: string
-  endDate?: string
-}) {
-  try {
-    const queryParams = new URLSearchParams()
-    if (params?.province) queryParams.append('province', params.province)
-    if (params?.district) queryParams.append('district', params.district)
-    if (params?.sector) queryParams.append('sector', params.sector)
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    
-    const response = await fetch(`/api/waste/by-area?${queryParams.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-      },
-    })
-    if (!response.ok) throw new Error('Failed to fetch waste by area')
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching waste by area:', error)
-    return { data: [] }
-  }
-}
-
-export async function apiGetRecyclingRevenue(params?: {
-  startDate?: string
-  endDate?: string
-}) {
-  try {
-    const queryParams = new URLSearchParams()
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    
-    const response = await fetch(`/api/recycling/revenue?${queryParams.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-      },
-    })
-    if (!response.ok) throw new Error('Failed to fetch recycling revenue')
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching recycling revenue:', error)
-    return {
-      totalRevenue: 0,
-      byMaterial: [],
-      byFacility: [],
-    }
-  }
-}
 
 export async function apiGetClientMetrics(params?: {
   startDate?: string
@@ -1101,27 +896,6 @@ export async function apiGetEmissionsBreakdown(params?: {
   }
 }
 
-export async function apiGetWasteHeatmap(params?: {
-  startDate?: string
-  endDate?: string
-}) {
-  try {
-    const queryParams = new URLSearchParams()
-    if (params?.startDate) queryParams.append('startDate', params.startDate)
-    if (params?.endDate) queryParams.append('endDate', params.endDate)
-    
-    const response = await fetch(`/api/geographic/waste-heatmap?${queryParams.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-      },
-    })
-    if (!response.ok) throw new Error('Failed to fetch waste heatmap')
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching waste heatmap:', error)
-    return { data: [] }
-  }
-}
 
 // Comprehensive Financial Analytics API Functions
 
@@ -1212,8 +986,8 @@ export async function apiGetRevenueAnalytics(filters?: FinancialFilters): Promis
         revenue: 2000000 + (i * 100000) + Math.random() * 200000,
       })),
       revenueByCategory: [
-        { category: 'Waste Collection', revenue: 1200000, percentage: 48, change: 12.5 },
-        { category: 'Recycling', revenue: 800000, percentage: 32, change: 8.3 },
+        { category: 'Transaction Fees', revenue: 1200000, percentage: 48, change: 12.5 },
+        { category: 'Escrow Services', revenue: 800000, percentage: 32, change: 8.3 },
         { category: 'Consulting', revenue: 300000, percentage: 12, change: -2.1 },
         { category: 'Other Services', revenue: 200000, percentage: 8, change: 5.4 },
       ],
@@ -1321,8 +1095,8 @@ export async function apiGetProfitabilityAnalysis(filters?: FinancialFilters): P
       grossProfitMargin: (grossProfit / revenue) * 100,
       netProfitMargin: (netProfit / revenue) * 100,
       profitMarginByService: [
-        { service: 'Waste Collection', margin: 25.5, revenue: 1200000, cost: 900000 },
-        { service: 'Recycling', margin: 35.2, revenue: 800000, cost: 520000 },
+        { service: 'Transaction Processing', margin: 25.5, revenue: 1200000, cost: 900000 },
+        { service: 'Escrow Services', margin: 35.2, revenue: 800000, cost: 520000 },
         { service: 'Consulting', margin: 40.0, revenue: 300000, cost: 180000 },
         { service: 'Other Services', margin: 20.0, revenue: 200000, cost: 160000 },
       ],
@@ -1333,8 +1107,8 @@ export async function apiGetProfitabilityAnalysis(filters?: FinancialFilters): P
       },
       costPerTransaction: 750,
       costPerService: [
-        { service: 'Waste Collection', cost: 180 },
-        { service: 'Recycling', cost: 130 },
+        { service: 'Transaction Processing', cost: 180 },
+        { service: 'Escrow Services', cost: 130 },
         { service: 'Consulting', cost: 600 },
         { service: 'Other Services', cost: 200 },
       ],
@@ -1541,7 +1315,7 @@ export async function apiGetRiskIndicators(): Promise<RiskIndicators> {
           type: 'revenue_dependency',
           severity: 'high',
           title: 'High Dependency on Single Revenue Source',
-          description: '48% of revenue comes from Waste Collection service',
+          description: '48% of revenue comes from Transaction Processing services',
           detectedAt: new Date().toISOString(),
           value: 48,
           threshold: 40,
@@ -1650,26 +1424,6 @@ export async function apiGetIllegalDumpingZones(params?: {
     return await response.json()
   } catch (error) {
     console.error('Error fetching illegal dumping zones:', error)
-    return { data: [] }
-  }
-}
-
-export async function apiGetWasteForecast(params?: {
-  period?: 'week' | 'month' | 'quarter'
-}) {
-  try {
-    const queryParams = new URLSearchParams()
-    if (params?.period) queryParams.append('period', params.period)
-    
-    const response = await fetch(`/api/analytics/waste-forecast?${queryParams.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${getToken()}`,
-      },
-    })
-    if (!response.ok) throw new Error('Failed to fetch waste forecast')
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching waste forecast:', error)
     return { data: [] }
   }
 }
@@ -1917,7 +1671,7 @@ export async function apiGetContributionAnalysis(period?: string) {
     topRevenueSources: [
       { source: 'Household Collections', amount: 4500000, percentage: 35.2, trend: 'up' as const },
       { source: 'Commercial Services', amount: 3200000, percentage: 25.0, trend: 'up' as const },
-      { source: 'Recycling Revenue', amount: 2800000, percentage: 21.9, trend: 'stable' as const },
+      { source: 'Escrow Revenue', amount: 2800000, percentage: 21.9, trend: 'stable' as const },
       { source: 'Special Collections', amount: 2300000, percentage: 18.0, trend: 'down' as const },
     ],
     topCostDrivers: [
@@ -1934,7 +1688,7 @@ export async function apiGetContributionAnalysis(period?: string) {
     productProfitability: [
       { product: 'Household Collections', revenue: 4500000, cost: 2800000, profit: 1700000, margin: 37.8 },
       { product: 'Commercial Services', revenue: 3200000, cost: 2100000, profit: 1100000, margin: 34.4 },
-      { product: 'Recycling Revenue', revenue: 2800000, cost: 1500000, profit: 1300000, margin: 46.4 },
+      { product: 'Escrow Revenue', revenue: 2800000, cost: 1500000, profit: 1300000, margin: 46.4 },
     ],
     customerSegmentProfitability: [
       { segment: 'Residential', revenue: 4500000, cost: 2800000, profit: 1700000, margin: 37.8 },

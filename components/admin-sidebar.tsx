@@ -12,22 +12,30 @@ import {
   Settings,
   LogOut,
   HelpCircle,
-  Trash2,
-  Truck,
-  MapPin,
-  Recycle,
   ChevronRight,
   ChevronLeft,
   X,
   Menu,
-  DollarSign
+  DollarSign,
+  Shield,
+  Bell,
+  FileSearch,
+  Key,
+  Database,
+  Wallet,
+  Store,
+  Activity,
+  MessageSquare,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 interface AdminSidebarProps {
-  variant?: 'admin' | 'officer'
+  variant?: 'admin'
   userName?: string
   userRole?: string
   collapsed?: boolean
@@ -65,29 +73,34 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
   }, [internalCollapsed, externalCollapsed])
 
   const overviewSection = [
-    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, badge: null },
+    { href: '/admin', label: 'Overview', icon: LayoutDashboard, badge: null },
     { href: '/admin/analytics', label: 'Analytics', icon: BarChart3, badge: null },
-    { href: '/admin/financial', label: 'Financial', icon: DollarSign, badge: null },
-    { href: '/admin/clients', label: 'Clients', icon: Users, badge: null },
-    { href: '/admin/reports', label: 'Collections', icon: FileText, badge: null },
   ]
 
   const operationsSection = [
-    { href: '/admin/waste-collections', label: 'Waste Collections', icon: Trash2, badge: null },
-    { href: '/admin/officers', label: 'Fleet Management', icon: Truck, badge: null },
-    { href: '/admin/zones-routes', label: 'Zones & Routes', icon: MapPin, badge: null },
+    { href: '/admin/transactions', label: 'Transactions', icon: FileText, badge: null },
+    { href: '/admin/users', label: 'Users & Wallets', icon: Users, badge: null },
+    { href: '/admin/wallets', label: 'Wallets', icon: Wallet, badge: null },
   ]
 
-  const sustainabilitySection = [
-    { href: '/admin/recycling', label: 'Recycling', icon: Recycle, badge: null },
-    { href: '/admin/waste-types', label: 'Waste Types', icon: FileText, badge: null },
+  const riskComplianceSection = [
+    { href: '/admin/risk-fraud', label: 'Risk & Fraud', icon: AlertTriangle, badge: null },
+    { href: '/admin/compliance-kyc', label: 'Compliance & KYC', icon: CheckCircle2, badge: null },
   ]
 
-  const officerItems = [
-    { href: '/officer', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/officer/reports', label: 'My Collections', icon: FileText },
-    { href: '/officer/settings', label: 'Settings', icon: Settings },
+  const systemSection = [
+    { href: '/admin/system-health', label: 'System Health', icon: Activity, badge: null },
+    { href: '/admin/support', label: 'Support', icon: MessageSquare, badge: null },
+    { href: '/admin/revenue', label: 'Revenue', icon: DollarSign, badge: null },
   ]
+
+  const adminPortalSection = [
+    { href: '/admin/audit', label: 'Audit Logs', icon: FileSearch, badge: null },
+    { href: '/admin/roles', label: 'Roles & Permissions', icon: Shield, badge: null },
+    { href: '/admin/settings', label: 'System Settings', icon: Settings, badge: null },
+    { href: '/admin/api-keys', label: 'API Keys', icon: Key, badge: null },
+  ]
+
 
   const renderNavItem = (item: { href: string; label: string; icon: any; badge?: number | null }) => {
     const Icon = item.icon
@@ -125,29 +138,29 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
 
   return (
     <div className={cn(
-      "bg-black border-r border-slate-900 flex flex-col h-screen transition-all duration-300",
+      "bg-white dark:bg-black border-r border-slate-200 dark:border-slate-900 flex flex-col h-screen transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Logo Section */}
-      <div className={cn("border-b border-slate-900 flex items-center justify-between", collapsed ? "p-4" : "p-6")}>
+      <div className={cn("border-b border-slate-200 dark:border-slate-900 flex items-center justify-between", collapsed ? "p-4" : "p-6")}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded bg-white flex items-center justify-center">
-              <Trash2 className="h-5 w-5 text-slate-900" />
+            <div className="h-8 w-8 rounded bg-slate-900 dark:bg-white flex items-center justify-center">
+              <Wallet className="h-5 w-5 text-white dark:text-slate-900" />
             </div>
-            <h2 className="text-lg font-bold text-white">WMS</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Movasafe</h2>
           </div>
         )}
         {collapsed && (
-          <div className="h-8 w-8 rounded bg-white flex items-center justify-center mx-auto">
-            <Trash2 className="h-5 w-5 text-slate-900" />
+          <div className="h-8 w-8 rounded bg-slate-900 dark:bg-white flex items-center justify-center mx-auto">
+            <Wallet className="h-5 w-5 text-white dark:text-slate-900" />
           </div>
         )}
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleCollapse}
-          className="text-slate-400 hover:text-white hover:bg-slate-800 h-8 w-8"
+          className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 h-8 w-8"
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -179,21 +192,69 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
           </div>
         </div>
 
-        {/* SUSTAINABILITY Section */}
+        {/* RISK & COMPLIANCE Section */}
         <div>
           {!collapsed && (
             <div className="px-4 mb-3">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">SUSTAINABILITY</h3>
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">RISK & COMPLIANCE</h3>
             </div>
           )}
           <div className="space-y-1">
-            {sustainabilitySection.map(renderNavItem)}
+            {riskComplianceSection.map(renderNavItem)}
           </div>
         </div>
+
+        {/* SYSTEM Section */}
+        <div>
+          {!collapsed && (
+            <div className="px-4 mb-3">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">SYSTEM</h3>
+            </div>
+          )}
+          <div className="space-y-1">
+            {systemSection.map(renderNavItem)}
+          </div>
+        </div>
+
+        {/* ADMIN PORTAL Section */}
+        <div>
+          {!collapsed && (
+            <div className="px-4 mb-3">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">ADMIN & SECURITY</h3>
+            </div>
+          )}
+          <div className="space-y-1">
+            {adminPortalSection.map(renderNavItem)}
+          </div>
+        </div>
+
       </nav>
 
       {/* Bottom Section */}
-      <div className={cn("border-t border-slate-900 space-y-1", collapsed ? "p-2" : "p-4")}>
+      <div className={cn("border-t border-slate-900 dark:border-slate-700 space-y-1", collapsed ? "p-2" : "p-4")}>
+        {/* Theme Toggle */}
+        <div className={cn(
+          "flex items-center rounded-lg transition-colors",
+          collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5"
+        )}>
+          {collapsed ? (
+            <ThemeToggle 
+              variant="ghost" 
+              size="icon"
+              className="text-slate-400 hover:bg-slate-800/50 hover:text-white dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white"
+            />
+          ) : (
+            <div className="flex items-center gap-3 w-full">
+              <ThemeToggle 
+                variant="ghost" 
+                size="default"
+                className="flex-1 justify-start text-slate-400 hover:bg-slate-800/50 hover:text-white dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white"
+              />
+              <span className="text-sm text-slate-400 dark:text-slate-400">Theme</span>
+            </div>
+          )}
+        </div>
+        
         <Link
           href="/admin/settings"
           title={collapsed ? "Settings" : undefined}
@@ -201,8 +262,8 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
             "flex items-center rounded-lg transition-colors",
             collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5 gap-3",
             pathname === '/admin/settings'
-              ? "bg-slate-800 text-white"
-              : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
+              ? "bg-slate-800 text-white dark:bg-slate-800 dark:text-white"
+              : "text-slate-400 hover:bg-slate-800/50 hover:text-white dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white"
           )}
         >
           <Settings className="h-4 w-4 flex-shrink-0" />

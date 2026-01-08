@@ -1,10 +1,9 @@
 'use client'
 
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
-import { Clock, TrendingUp, AlertCircle } from 'lucide-react'
+import { TrendingUp, AlertCircle } from 'lucide-react'
 
 export interface PerformanceMetricsCardsProps {
-  avgResolutionTime: number
   slaComplianceRate: number | null
   overdueCount: number
   overduePercentage?: number
@@ -13,7 +12,6 @@ export interface PerformanceMetricsCardsProps {
 }
 
 export function PerformanceMetricsCards({
-  avgResolutionTime,
   slaComplianceRate,
   overdueCount,
   overduePercentage,
@@ -25,25 +23,7 @@ export function PerformanceMetricsCards({
   }
 
   return (
-    <div className={`grid gap-4 sm:grid-cols-1 md:grid-cols-3 ${className}`}>
-      <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700 hover:border-blue-500/50 transition-all">
-        <div className="flex flex-row items-center justify-between p-6 pb-3 border-b border-slate-900/50 bg-black relative">
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-          <CardTitle size="sm" className="text-white z-10 relative">Avg Resolution Time</CardTitle>
-          <div className="p-2 rounded-lg bg-blue-500/10 relative z-10">
-            <Clock className="h-5 w-5 text-blue-400" />
-          </div>
-        </div>
-        <CardContent>
-          <div className="text-2xl font-bold text-white mb-1">
-            {avgResolutionTime > 0
-              ? `${Math.round(avgResolutionTime / 24 * 10) / 10} days`
-              : 'N/A'}
-          </div>
-          <p className="text-xs text-slate-400">Average time to resolve</p>
-        </CardContent>
-      </Card>
-
+    <div className={`grid gap-4 sm:grid-cols-1 md:grid-cols-2 ${className}`}>
       <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700 hover:border-green-500/50 transition-all">
         <div className="flex flex-row items-center justify-between p-6 pb-3 border-b border-slate-900/50 bg-black relative">
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />

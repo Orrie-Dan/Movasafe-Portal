@@ -1,14 +1,16 @@
-# Waste Management System
+# Movasafe Portal
 
-A Next.js web application for managing waste management operations with dedicated dashboards for administrators and officers.
+A Next.js web application for managing Movasafe digital wallet and payment platform operations with dedicated admin portal for transaction, wallet, and escrow management.
 
 ## Features
 
-- **Admin Dashboard**: Complete administrative interface for managing the waste management system
-- **Officer Dashboard**: Dedicated interface for field officers to manage assigned tasks
-- **Reports Management**: Track and manage waste collection reports
-- **Analytics**: View system analytics and insights
-- **Organizations Management**: Manage organizations and their waste management operations
+- **Admin Dashboard**: Complete administrative interface for managing transactions, wallets, and escrow payments
+- **Transaction Management**: Track and manage all wallet transactions, transfers, and escrow payments
+- **Wallet Management**: Monitor wallet balances, reserved balances, and savings
+- **Escrow Management**: Manage escrow payments, approvals, releases, and refunds
+- **Analytics**: View transaction analytics, commission trends, and wallet distribution
+- **Merchant Management**: Manage merchants/vendors and their escrow operations
+- **User Management**: Manage users (clients, vendors, admins) with KYC verification
 
 ## Tech Stack
 

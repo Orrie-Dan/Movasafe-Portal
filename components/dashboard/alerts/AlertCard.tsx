@@ -74,8 +74,8 @@ export function AlertCard({
       <div className="flex items-center gap-3">
         <Icon className={cn('h-5 w-5', config.textColor)} />
         <div>
-          <div className="text-sm font-medium text-white">{title}</div>
-          <div className="text-xs text-slate-400">
+          <div className="text-sm font-medium text-slate-900 dark:text-white">{title}</div>
+          <div className="text-xs text-slate-600 dark:text-slate-400">
             {count !== undefined ? `${count} ${description}` : description}
           </div>
         </div>

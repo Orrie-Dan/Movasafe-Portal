@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { apiGetAdminReports, type AdminReport } from '@/lib/api'
-import { AdminSidebar } from '@/components/admin-sidebar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -186,11 +185,8 @@ export default function AdminReportsPage() {
   }, [filterStatus, filterType, filterSeverity, searchQuery])
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white">
-      <AdminSidebar variant="admin" userName="Admin User" userRole="admin" />
-      
-      <div className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-10 border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-900/95 backdrop-blur-sm px-6 py-5 shadow-lg">
+    <div className="bg-slate-950 text-white">
+      <div className="sticky top-0 z-10 border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-900/95 backdrop-blur-sm px-6 py-5 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-400" />
@@ -220,30 +216,30 @@ export default function AdminReportsPage() {
             </div>
           )}
 
-          <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700">
-            <div className="flex flex-row items-center justify-between p-6 pb-3 border-b border-slate-900/50 bg-black relative">
+          <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+            <div className="flex flex-row items-center justify-between p-6 pb-3 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
               <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
               <div className="flex items-center justify-between relative z-10 flex-1">
                 <div>
-                  <CardTitle size="md" className="text-white">Reports ({filteredReports.length})</CardTitle>
-                  <CardDescription className="text-slate-400">Review and manage infrastructure reports</CardDescription>
+                  <CardTitle size="md" className="relative z-10">Reports ({filteredReports.length})</CardTitle>
+                  <CardDescription className="relative z-10">Review and manage infrastructure reports</CardDescription>
                 </div>
               </div>
             </div>
             <CardContent className="space-y-4">
               {/* Filters */}
-              <div className="flex items-center gap-4 flex-wrap p-4 rounded-lg bg-slate-800/30 border border-slate-700">
+              <div className="flex items-center gap-4 flex-wrap p-4 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-2 flex-1 min-w-[200px]">
                   <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
                   <Input
                     placeholder="Search reports..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-slate-600"
+                    className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500 focus:border-slate-300 dark:focus:border-slate-600"
                   />
                 </div>
                 <Select value={filterStatus || undefined} onValueChange={(value) => setFilterStatus(value === 'all' ? '' : value)}>
-                  <SelectTrigger className="w-[180px] bg-slate-800/50 border-slate-700 text-white hover:border-slate-600">
+                  <SelectTrigger className="w-[180px] bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:border-slate-300 dark:hover:border-slate-600">
                     <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
@@ -281,12 +277,12 @@ export default function AdminReportsPage() {
               </div>
 
               {/* Table */}
-              <div className="rounded-md border border-slate-800">
+              <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-black">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-slate-800 hover:bg-slate-800/50">
-                      <TableHead className="text-slate-300">
-                        <button onClick={() => handleSort('title')} className="flex items-center gap-1 hover:text-white">
+                    <TableRow className="border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <TableHead className="text-slate-600 dark:text-slate-300">
+                        <button onClick={() => handleSort('title')} className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white">
                           Title
                           {sortColumn === 'title' ? (
                             sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
@@ -295,8 +291,8 @@ export default function AdminReportsPage() {
                           )}
                         </button>
                       </TableHead>
-                      <TableHead className="text-slate-300">
-                        <button onClick={() => handleSort('type')} className="flex items-center gap-1 hover:text-white">
+                      <TableHead className="text-slate-600 dark:text-slate-300">
+                        <button onClick={() => handleSort('type')} className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white">
                           Type
                           {sortColumn === 'type' ? (
                             sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
@@ -305,8 +301,8 @@ export default function AdminReportsPage() {
                           )}
                         </button>
                       </TableHead>
-                      <TableHead className="text-slate-300">
-                        <button onClick={() => handleSort('severity')} className="flex items-center gap-1 hover:text-white">
+                      <TableHead className="text-slate-600 dark:text-slate-300">
+                        <button onClick={() => handleSort('severity')} className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white">
                           Severity
                           {sortColumn === 'severity' ? (
                             sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
@@ -315,8 +311,8 @@ export default function AdminReportsPage() {
                           )}
                         </button>
                       </TableHead>
-                      <TableHead className="text-slate-300">
-                        <button onClick={() => handleSort('status')} className="flex items-center gap-1 hover:text-white">
+                      <TableHead className="text-slate-600 dark:text-slate-300">
+                        <button onClick={() => handleSort('status')} className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white">
                           Status
                           {sortColumn === 'status' ? (
                             sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
@@ -325,9 +321,9 @@ export default function AdminReportsPage() {
                           )}
                         </button>
                       </TableHead>
-                      <TableHead className="text-slate-300">Assigned To</TableHead>
-                      <TableHead className="text-slate-300">
-                        <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1 hover:text-white">
+                      <TableHead className="text-slate-600 dark:text-slate-300">Assigned To</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-300">
+                        <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white">
                           Created
                           {sortColumn === 'createdAt' ? (
                             sortDirection === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
@@ -336,28 +332,28 @@ export default function AdminReportsPage() {
                           )}
                         </button>
                       </TableHead>
-                      <TableHead className="text-slate-300">Actions</TableHead>
+                      <TableHead className="text-slate-600 dark:text-slate-300">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow className="border-slate-800">
-                        <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                      <TableRow className="border-slate-200 dark:border-slate-800">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           Loading...
                         </TableCell>
                       </TableRow>
                     ) : paginatedReports.length === 0 ? (
-                      <TableRow className="border-slate-800">
-                        <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                      <TableRow className="border-slate-200 dark:border-slate-800">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           No reports found
                         </TableCell>
                       </TableRow>
                     ) : (
                       paginatedReports.map((report) => (
-                        <TableRow key={report.id} className="border-slate-800 hover:bg-slate-800/50">
-                          <TableCell className="font-medium text-white max-w-xs truncate">{report.title}</TableCell>
+                        <TableRow key={report.id} className="border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <TableCell className="font-medium text-slate-900 dark:text-white max-w-xs truncate">{report.title}</TableCell>
                           <TableCell className="whitespace-nowrap">
-                            <Badge variant="outline" className="border-slate-700 text-slate-300 whitespace-nowrap px-2 py-1 min-w-[80px] text-center inline-block">
+                            <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 whitespace-nowrap px-2 py-1 min-w-[80px] text-center inline-block">
                               {getTypeDisplayName(report.type)}
                             </Badge>
                           </TableCell>
@@ -371,16 +367,16 @@ export default function AdminReportsPage() {
                               {report.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-slate-300 text-sm">
+                          <TableCell className="text-slate-600 dark:text-slate-300 text-sm">
                             {report.currentAssignment?.assignee ? (
                               <span>{report.currentAssignment.assignee.fullName || report.currentAssignment.assignee.email}</span>
                             ) : report.currentAssignment?.organization ? (
                               <span>{report.currentAssignment.organization.name}</span>
                             ) : (
-                              <span className="text-slate-500">Unassigned</span>
+                              <span className="text-slate-500 dark:text-slate-500">Unassigned</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-slate-400 text-sm">
+                          <TableCell className="text-muted-foreground text-sm">
                             {format(new Date(report.createdAt), 'MMM d, yyyy')}
                           </TableCell>
                           <TableCell>
@@ -388,7 +384,7 @@ export default function AdminReportsPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleViewReport(report)}
-                              className="text-blue-400 hover:text-blue-300 hover:bg-slate-800"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                               title="View Details"
                             >
                               <Eye className="h-4 w-4" />

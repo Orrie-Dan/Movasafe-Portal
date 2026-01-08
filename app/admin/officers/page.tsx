@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { apiGetUsers, apiCreateUser, apiUpdateUserPassword, type User, type CreateUserPayload } from '@/lib/api'
-import { AdminSidebar } from '@/components/admin-sidebar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -144,19 +143,16 @@ export default function AdminOfficersPage() {
   })
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white">
-      <AdminSidebar variant="admin" userName="Admin User" userRole="admin" />
-      
-      <div className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-10 border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-900/95 backdrop-blur-sm px-6 py-5 shadow-lg">
+    <div className="bg-background">
+      <div className="sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/95 backdrop-blur-sm px-6 py-5 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="h-6 w-6 text-blue-400" />
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold text-foreground">
                   Officers Management
                 </h1>
-                <p className="text-sm text-slate-400">Manage officers and their assignments</p>
+                <p className="text-sm text-muted-foreground">Manage officers and their assignments</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -172,7 +168,7 @@ export default function AdminOfficersPage() {
                 onClick={fetchOfficers} 
                 variant="outline" 
                 size="sm" 
-                className="bg-slate-800/50 border-slate-700 text-white hover:bg-slate-700 hover:border-slate-600 transition-all"
+                className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
@@ -188,71 +184,81 @@ export default function AdminOfficersPage() {
             </div>
           )}
 
-          <Card className="bg-black border-slate-800">
-            <CardHeader>
-              <div className="flex items-center justify-between">
+          <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+            <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+              <div className="flex items-center justify-between relative z-10">
                 <div>
-                  <CardTitle size="md">Officers ({filteredOfficers.length})</CardTitle>
-                  <CardDescription className="text-slate-400">View and manage all officers</CardDescription>
+                  <CardTitle size="md" className="relative z-10">Officers ({filteredOfficers.length})</CardTitle>
+                  <CardDescription className="relative z-10">View and manage all officers</CardDescription>
                 </div>
               </div>
-            </CardHeader>
+            </div>
             <CardContent className="space-y-4">
               {/* Search */}
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-slate-800/30 border border-slate-700">
+              <div className="flex items-center gap-2 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700">
                 <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
                 <Input
                   placeholder="Search by name, email, or phone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-slate-600"
+                  className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500 focus:border-slate-300 dark:focus:border-slate-600"
                 />
               </div>
 
               {/* Stats */}
               <div className="grid gap-4 md:grid-cols-3">
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold text-white">{officers.length}</div>
-                    <p className="text-xs text-slate-400 mt-1">Total Officers</p>
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">Total Officers</CardTitle>
+                  </div>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{officers.length}</div>
                   </CardContent>
                 </Card>
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold text-white">
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">With Profile</CardTitle>
+                  </div>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">
                       {officers.filter(o => o.fullName).length}
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">With Profile</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold text-white">
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">With Phone</CardTitle>
+                  </div>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">
                       {officers.filter(o => o.phone).length}
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">With Phone</p>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Table */}
-              <div className="rounded-lg border border-slate-800 overflow-hidden bg-black">
+              <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-black">
                 <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                      <TableRow className="border-slate-800 bg-slate-900 hover:bg-slate-900">
-                        <TableHead className="text-slate-300 font-semibold">Officer</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Email</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Phone</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Role</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Actions</TableHead>
+                      <TableRow className="border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900">
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Officer</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Email</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Phone</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Role</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
                         <>
                           {[...Array(5)].map((_, i) => (
-                            <TableRow key={i} className="border-slate-800">
+                            <TableRow key={i} className="border-slate-200 dark:border-slate-800">
                               <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                               <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                               <TableCell><Skeleton className="h-4 w-24" /></TableCell>
@@ -262,7 +268,7 @@ export default function AdminOfficersPage() {
                           ))}
                         </>
                     ) : filteredOfficers.length === 0 ? (
-                        <TableRow className="border-slate-800 hover:bg-transparent">
+                        <TableRow className="border-slate-200 dark:border-slate-800 hover:bg-transparent">
                           <TableCell colSpan={5} className="p-0">
                             <EmptyState
                               title="No officers found"
@@ -273,37 +279,37 @@ export default function AdminOfficersPage() {
                       </TableRow>
                     ) : (
                       filteredOfficers.map((officer) => (
-                          <TableRow key={officer.id} className="border-slate-800 hover:bg-slate-800/60 transition-colors duration-150">
+                          <TableRow key={officer.id} className="border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-150">
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-white">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-sm font-medium text-slate-900 dark:text-white">
                                 {officer.fullName ? officer.fullName[0].toUpperCase() : officer.email[0].toUpperCase()}
                               </div>
                               <div>
-                                <div className="font-medium text-white">
+                                <div className="font-medium text-slate-900 dark:text-white">
                                   {officer.fullName || 'No name'}
                                 </div>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2 text-slate-300">
+                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                               <Mail className="h-4 w-4 text-slate-400" />
                               {officer.email}
                             </div>
                           </TableCell>
                           <TableCell>
                             {officer.phone ? (
-                              <div className="flex items-center gap-2 text-slate-300">
+                              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                 <Phone className="h-4 w-4 text-slate-400" />
                                 {officer.phone}
                               </div>
                             ) : (
-                              <span className="text-slate-500">No phone</span>
+                              <span className="text-slate-500 dark:text-slate-500">No phone</span>
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="border-slate-700 text-slate-300">
+                            <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                               {officer.role}
                             </Badge>
                           </TableCell>
@@ -316,7 +322,7 @@ export default function AdminOfficersPage() {
                                 setPasswordUpdateUserId(officer.id)
                                 setNewPassword('')
                               }}
-                              className="text-blue-400 hover:text-blue-300 hover:bg-slate-800"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                             >
                               <Key className="h-4 w-4 mr-2" />
                               Set Password

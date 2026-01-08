@@ -36,23 +36,23 @@ export function MetricsSection({
 
   return (
     <div className={cn('space-y-4', className)}>
-      <Card className="bg-black border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <div
-          className="flex flex-row items-center justify-between p-6 pb-3 border-b border-slate-900/50 bg-black relative cursor-pointer hover:bg-slate-800/50 transition-colors"
+          className="flex flex-row items-center justify-between p-6 pb-3 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
           onClick={() => setExpanded(!expanded)}
         >
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
           <div className="flex items-center gap-2 relative z-10">
             {expanded ? (
-              <ChevronUp className="h-4 w-4 text-slate-400" />
+              <ChevronUp className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             ) : (
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-400" />
             )}
-            {Icon && <Icon className="h-5 w-5 text-blue-400" />}
-            <CardTitle size="md" className="text-white">{title}</CardTitle>
+            {Icon && <Icon className="h-5 w-5 text-blue-500 dark:text-blue-400" />}
+            <CardTitle size="md">{title}</CardTitle>
           </div>
           {badge && (
-            <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/30 relative z-10">
+            <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 relative z-10">
               {badge}
             </Badge>
           )}

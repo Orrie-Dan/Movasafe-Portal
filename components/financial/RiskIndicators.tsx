@@ -37,30 +37,30 @@ export function RiskIndicators({ data, loading = false }: RiskIndicatorsProps) {
     <div className="space-y-4 sm:space-y-6">
       {/* Risk Summary */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-black border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-white">{data.totalRisks}</div>
-            <p className="text-xs text-slate-400 mt-1">Total Risks</p>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white">{data.totalRisks}</div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Total Risks</p>
           </CardContent>
         </Card>
         
-        <Card className="bg-black border-red-600/50">
+        <Card className="bg-white dark:bg-black border-red-600/50 dark:border-red-600/50">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-red-500">{data.criticalRisks}</div>
-            <p className="text-xs text-slate-400 mt-1">Critical Risks</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Critical Risks</p>
           </CardContent>
         </Card>
         
-        <Card className="bg-black border-red-500/50">
+        <Card className="bg-white dark:bg-black border-red-500/50 dark:border-red-500/50">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-red-400">{data.highRisks}</div>
-            <p className="text-xs text-slate-400 mt-1">High Risks</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">High Risks</p>
           </CardContent>
         </Card>
         
-        <Card className="bg-black border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="pt-6">
-            <div className="text-xs text-slate-400">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               Last scan: {new Date(data.lastScan).toLocaleString()}
             </div>
           </CardContent>
@@ -76,13 +76,13 @@ export function RiskIndicators({ data, loading = false }: RiskIndicatorsProps) {
             title={indicator.title}
             description={
               <div>
-                <p className="mb-2">{indicator.description}</p>
+                <p className="mb-2 text-slate-700 dark:text-slate-300">{indicator.description}</p>
                 {indicator.recommendation && (
-                  <p className="text-sm text-slate-300 mt-2">
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
                     <strong>Recommendation:</strong> {indicator.recommendation}
                   </p>
                 )}
-                <div className="flex items-center gap-4 mt-2 text-xs text-slate-400">
+                <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
                   <span>Value: {indicator.value.toLocaleString()}</span>
                   <span>Threshold: {indicator.threshold.toLocaleString()}</span>
                   <span>Detected: {new Date(indicator.detectedAt).toLocaleDateString()}</span>

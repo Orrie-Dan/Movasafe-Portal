@@ -113,26 +113,23 @@ export default function AdminOrganizationsPage() {
   })
 
   return (
-    <div className="flex h-screen bg-slate-950 text-white">
-      <AdminSidebar variant="admin" userName="Admin User" userRole="admin" />
-      
-      <div className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-10 border-b border-slate-800 bg-gradient-to-r from-slate-900 to-slate-900/95 backdrop-blur-sm px-6 py-5 shadow-lg">
+    <div className="bg-background">
+      <div className="sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/95 backdrop-blur-sm px-6 py-5 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Building2 className="h-6 w-6 text-blue-400" />
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold text-foreground">
                   Organizations Management
                 </h1>
-                <p className="text-sm text-slate-400">Manage organizations and their assignments</p>
+                <p className="text-sm text-muted-foreground">Manage organizations and their assignments</p>
               </div>
             </div>
             <Button 
               onClick={fetchOrganizations} 
               variant="outline" 
               size="sm" 
-              className="bg-slate-800/50 border-slate-700 text-white hover:bg-slate-700 hover:border-slate-600 transition-all"
+              className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
@@ -147,87 +144,106 @@ export default function AdminOrganizationsPage() {
             </div>
           )}
 
-          <Card className="bg-black border-slate-800">
-            <CardHeader>
-              <div className="flex items-center justify-between">
+          <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+            <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+              <div className="flex items-center justify-between relative z-10">
                 <div>
-                  <CardTitle size="md">Organizations ({filteredOrganizations.length})</CardTitle>
-                  <CardDescription className="text-slate-400">View and manage all organizations</CardDescription>
+                  <CardTitle size="md" className="relative z-10">Organizations ({filteredOrganizations.length})</CardTitle>
+                  <CardDescription className="relative z-10">View and manage all organizations</CardDescription>
                 </div>
               </div>
-            </CardHeader>
+            </div>
             <CardContent className="space-y-4">
               {/* Search */}
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-slate-800/30 border border-slate-700">
+              <div className="flex items-center gap-2 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-700">
                 <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
                 <Input
                   placeholder="Search by name, email, or phone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 focus:border-slate-600"
+                  className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500 focus:border-slate-300 dark:focus:border-slate-600"
                 />
               </div>
 
               {/* Organization Overview Metrics */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold text-white">{orgStats.total}</div>
-                    <p className="text-xs text-slate-400 mt-1">Total Organizations</p>
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">Total Organizations</CardTitle>
+                  </div>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{orgStats.total}</div>
                   </CardContent>
                 </Card>
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">Active</CardTitle>
+                  </div>
+                  <CardContent>
                     <div className="text-2xl font-bold text-green-400">{orgStats.active}</div>
-                    <p className="text-xs text-slate-400 mt-1">Active</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold text-slate-400">{orgStats.inactive}</div>
-                    <p className="text-xs text-slate-400 mt-1">Inactive</p>
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">Inactive</CardTitle>
+                  </div>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-slate-500 dark:text-slate-400">{orgStats.inactive}</div>
                   </CardContent>
                 </Card>
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">RURA Licensed</CardTitle>
+                  </div>
+                  <CardContent>
                     <div className="text-2xl font-bold text-blue-400">{orgStats.licensed}</div>
-                    <p className="text-xs text-slate-400 mt-1">RURA Licensed</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">CBOs</CardTitle>
+                  </div>
+                  <CardContent>
                     <div className="text-2xl font-bold text-purple-400">{orgStats.cbo}</div>
-                    <p className="text-xs text-slate-400 mt-1">CBOs</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-slate-800/50 border-slate-700">
-                  <CardContent className="pt-6">
+                <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                  <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                    <CardTitle size="xs" className="z-10 relative">Cooperatives</CardTitle>
+                  </div>
+                  <CardContent>
                     <div className="text-2xl font-bold text-orange-400">{orgStats.cooperative}</div>
-                    <p className="text-xs text-slate-400 mt-1">Cooperatives</p>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Table */}
-              <div className="rounded-lg border border-slate-800 overflow-hidden bg-black">
+              <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-black">
                 <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                      <TableRow className="border-slate-800 bg-slate-900 hover:bg-slate-900">
-                        <TableHead className="text-slate-300 font-semibold">Organization</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Contact Email</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Contact Phone</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Collections</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Subscriptions</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Compliance</TableHead>
-                        <TableHead className="text-slate-300 font-semibold">Actions</TableHead>
+                      <TableRow className="border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-900">
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Organization</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Contact Email</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Contact Phone</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Collections</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Subscriptions</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Compliance</TableHead>
+                        <TableHead className="text-slate-600 dark:text-slate-300 font-semibold">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
                         <>
                           {[...Array(5)].map((_, i) => (
-                            <TableRow key={i} className="border-slate-800">
+                            <TableRow key={i} className="border-slate-200 dark:border-slate-800">
                               <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                               <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                               <TableCell><Skeleton className="h-4 w-24" /></TableCell>
@@ -239,7 +255,7 @@ export default function AdminOrganizationsPage() {
                           ))}
                         </>
                     ) : filteredOrganizations.length === 0 ? (
-                        <TableRow className="border-slate-800 hover:bg-transparent">
+                        <TableRow className="border-slate-200 dark:border-slate-800 hover:bg-transparent">
                           <TableCell colSpan={7} className="p-0">
                             <EmptyState
                               title="No organizations found"
@@ -252,50 +268,50 @@ export default function AdminOrganizationsPage() {
                       filteredOrganizations.map((org) => {
                         const metrics = orgMetrics[org.id] || {}
                         return (
-                          <TableRow key={org.id} className="border-slate-800 hover:bg-slate-800/60 transition-colors duration-150">
+                          <TableRow key={org.id} className="border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors duration-150">
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-white">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-sm font-medium text-slate-900 dark:text-white">
                                 {org.name[0].toUpperCase()}
                               </div>
                                 <div>
-                              <div className="font-medium text-white">{org.name}</div>
+                              <div className="font-medium text-slate-900 dark:text-white">{org.name}</div>
                                   {(org as any).type && (
-                                    <div className="text-xs text-slate-400 capitalize">{(org as any).type}</div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">{(org as any).type}</div>
                                   )}
                                 </div>
                             </div>
                           </TableCell>
                           <TableCell>
                             {org.contactEmail ? (
-                              <div className="flex items-center gap-2 text-slate-300">
+                              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                 <Mail className="h-4 w-4 text-slate-400" />
                                 {org.contactEmail}
                               </div>
                             ) : (
-                              <span className="text-slate-500">No email</span>
+                              <span className="text-slate-500 dark:text-slate-500">No email</span>
                             )}
                           </TableCell>
                           <TableCell>
                             {org.contactPhone ? (
-                              <div className="flex items-center gap-2 text-slate-300">
+                              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                 <Phone className="h-4 w-4 text-slate-400" />
                                 {org.contactPhone}
                               </div>
                             ) : (
-                              <span className="text-slate-500">No phone</span>
+                              <span className="text-slate-500 dark:text-slate-500">No phone</span>
                             )}
                           </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <Truck className="h-4 w-4 text-slate-400" />
-                                <span className="text-white">{metrics.collections || 0}</span>
+                                <span className="text-slate-900 dark:text-white">{metrics.collections || 0}</span>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <Users className="h-4 w-4 text-slate-400" />
-                                <span className="text-white">{metrics.subscriptions || 0}</span>
+                                <span className="text-slate-900 dark:text-white">{metrics.subscriptions || 0}</span>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -317,7 +333,7 @@ export default function AdminOrganizationsPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleViewOrg(org)}
-                                className="text-slate-400 hover:text-white"
+                                className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -338,34 +354,34 @@ export default function AdminOrganizationsPage() {
 
       {/* Organization Details Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700 text-white">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
           <DialogHeader>
-            <DialogTitle className="text-white text-xl">{selectedOrg?.name}</DialogTitle>
-            <DialogDescription className="text-slate-400">Organization details and performance metrics</DialogDescription>
+            <DialogTitle className="text-xl">{selectedOrg?.name}</DialogTitle>
+            <DialogDescription>Organization details and performance metrics</DialogDescription>
           </DialogHeader>
           {selectedOrg && (
             <div className="space-y-6 mt-4">
               {/* Basic Information */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Basic Information</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Basic Information</h3>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <div className="text-sm text-slate-400 mb-1">Contact Email</div>
-                    <div className="text-white">{selectedOrg.contactEmail || 'N/A'}</div>
+                    <div className="text-sm text-muted-foreground mb-1">Contact Email</div>
+                    <div className="text-foreground">{selectedOrg.contactEmail || 'N/A'}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-slate-400 mb-1">Contact Phone</div>
-                    <div className="text-white">{selectedOrg.contactPhone || 'N/A'}</div>
+                    <div className="text-sm text-muted-foreground mb-1">Contact Phone</div>
+                    <div className="text-foreground">{selectedOrg.contactPhone || 'N/A'}</div>
                   </div>
                   {(selectedOrg as any).ruraLicense && (
                     <div>
-                      <div className="text-sm text-slate-400 mb-1">RURA License</div>
-                      <div className="text-white">{(selectedOrg as any).ruraLicense}</div>
+                      <div className="text-sm text-muted-foreground mb-1">RURA License</div>
+                      <div className="text-foreground">{(selectedOrg as any).ruraLicense}</div>
                     </div>
                   )}
                   {(selectedOrg as any).type && (
                     <div>
-                      <div className="text-sm text-slate-400 mb-1">Type</div>
+                      <div className="text-sm text-muted-foreground mb-1">Type</div>
                       <div className="text-white capitalize">{(selectedOrg as any).type}</div>
                     </div>
                   )}

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { apiLogin, apiMe } from '@/lib/api'
+import { apiLogin } from '@/lib/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Mail, Lock, Twitter, Instagram, Facebook } from 'lucide-react'
@@ -26,19 +26,61 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     try {
-      await apiLogin(email, password)
-      const { user } = await apiMe()
-      if (user.role === 'admin') {
+      // Login response already contains user data, no need to call apiMe()
+      const loginResponse = await apiLogin({ email, password })
+      
+      // Store user data in localStorage for use by AuthProvider
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user_data', JSON.stringify(loginResponse.user))
+      }
+      
+      // Use the user data from login response
+      const user = loginResponse.user
+      const userRole = user.role?.toLowerCase() || 'user'
+      const roles = user.roles || []
+      const permissions = user.permissions || []
+      const roleName = roles[0]?.name?.toLowerCase() || userRole
+      
+      // Debug logging
+      console.log('Login successful - User data:', {
+        role: userRole,
+        roleName,
+        roles: roles.map((r: any) => r.name),
+        permissions,
+      })
+      
+      // Route based on role/permissions - default to admin portal for authenticated users
+      const hasAdminRole = roleName === 'admin' || 
+                           roleName === 'super_admin' || 
+                           roleName.includes('admin')
+      
+      const hasAdminPermissions = permissions.some((p: string) => 
+        ['VIEW_USERS', 'VIEW_ROLES', 'MANAGE_SYSTEM_SETTINGS', 'VIEW_LOGS'].includes(p)
+      )
+      
+      const hasOfficerRole = roleName === 'officer' || roleName.includes('officer')
+      
+      // Route to admin portal if user has admin role/permissions, or if they have any permissions
+      // (assuming authenticated users with permissions should access admin portal)
+      if (hasAdminRole || hasAdminPermissions || permissions.length > 0) {
+        console.log('Redirecting to admin portal')
         router.replace('/admin')
-      } else if (user.role === 'officer') {
+      } else if (hasOfficerRole) {
+        console.log('Redirecting to officer portal')
         router.replace('/officer')
       } else {
-        router.replace('/')
+        // Default to admin portal for authenticated users (they can be redirected if needed)
+        console.log('Redirecting to admin portal (default for authenticated users)')
+        router.replace('/admin')
       }
     } catch (err: any) {
       let errorMessage = err.message || 'Login failed'
       if (errorMessage.includes('Invalid email or password')) {
         errorMessage = 'Invalid email or password. Please check your credentials and try again.'
+      }
+      // Handle timeout errors gracefully
+      if (errorMessage.includes('timeout') || errorMessage.includes('504') || errorMessage.includes('Gateway')) {
+        errorMessage = 'The server is taking too long to respond. Please try again.'
       }
       setError(errorMessage)
     } finally {
@@ -59,8 +101,8 @@ export default function LoginPage() {
           <div className="relative hidden lg:block">
             <div className="absolute inset-0">
               <Image
-                src="/images/Recycle.png"
-                alt="Waste Management"
+                src="/images/Wallet.jpg"
+                alt="Movasafe Digital Wallet"
                 fill
                 className="object-cover"
                 priority
@@ -71,17 +113,17 @@ export default function LoginPage() {
             {/* Template label - Top Left */}
             <div className="absolute top-6 left-6 z-10">
               <div className="flex items-center gap-2 text-white text-sm">
-                <span className="border border-dashed border-white/50 px-2 py-1 rounded">WMS</span>
+                <span className="border border-dashed border-white/50 px-2 py-1 rounded">Movasafe</span>
               </div>
             </div>
 
             {/* Marketing Content - Bottom Left */}
             <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
               <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                 Waste Management System
+                 Movasafe Portal
               </h2>
               <p className="text-base md:text-lg text-white/90 font-light drop-shadow-md mb-8">
-                Efficient, sustainable, and intelligent waste collection operations for a cleaner future.
+                Secure digital wallet and payment platform for seamless transactions and escrow services.
               </p>
               
               
@@ -93,7 +135,7 @@ export default function LoginPage() {
             {/* Template label - Top Right */}
             <div className="absolute top-6 right-6">
               <div className="flex items-center gap-2 text-white text-sm">
-                <span className="border border-dashed border-white/50 px-2 py-1 rounded">WMS</span>
+                <span className="border border-dashed border-white/50 px-2 py-1 rounded">Movasafe</span>
               </div>
             </div>
 
@@ -180,7 +222,7 @@ export default function LoginPage() {
 
       {/* Bottom Bar - Presented by */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-        <p className="text-white/60 text-xs">presented by <span className="font-bold">WMS</span></p>
+        <p className="text-white/60 text-xs">presented by <span className="font-bold">Movasafe</span></p>
       </div>
     </div>
   )

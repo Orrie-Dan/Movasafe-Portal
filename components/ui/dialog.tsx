@@ -70,11 +70,17 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm text-slate-400", className)}
+    style={{ color: 'rgb(148, 163, 184)' }}
     {...props}
   />
 ))
 DialogDescription.displayName = "DialogDescription"
 
-export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription }
+const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)} {...props} />
+)
+DialogFooter.displayName = "DialogFooter"
+
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter }
 

@@ -25,11 +25,11 @@ export function QuickActionsPanel({
   className,
 }: QuickActionsPanelProps) {
   return (
-    <Card className={`bg-black border-slate-800 ${className}`}>
-      <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-900/50 bg-black">
+    <Card className={`bg-white dark:bg-black border-slate-200 dark:border-slate-800 ${className}`}>
+      <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-        <CardTitle size="md" className="text-white relative z-10">{title}</CardTitle>
-        <CardDescription className="text-slate-400 relative z-10">{description}</CardDescription>
+        <CardTitle size="md" className="relative z-10">{title}</CardTitle>
+        <CardDescription className="relative z-10">{description}</CardDescription>
       </div>
       <CardContent className="space-y-2">
         {actions.map((action, index) => {
@@ -38,7 +38,7 @@ export function QuickActionsPanel({
             <Button
               key={index}
               variant={action.variant || 'outline'}
-              className="w-full justify-start bg-slate-900 border-slate-700 text-white hover:bg-slate-800 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10 active:scale-95"
+              className="w-full justify-start bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/10 active:scale-95"
               onClick={action.onClick}
               style={{ animationDelay: `${index * 50}ms` }}
             >

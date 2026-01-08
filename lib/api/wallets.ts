@@ -1,0 +1,119 @@
+// Wallet API functions
+
+import { API_CONFIG } from '@/lib/config/api'
+import type { Wallet, CreateWalletAccountDTO, WalletResponse, WalletFilters } from '@/lib/types/wallets'
+
+const TRANSACTION_BASE = API_CONFIG.TRANSACTION.baseUrl
+
+// Helper function to get auth token
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('auth_token')
+}
+
+// API request helper with error handling
+async function apiRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = getToken()
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    ...options.headers,
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${TRANSACTION_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  })
+
+  if (!response.ok) {
+    const responseText = await response.text()
+    let errorMessage = `Request failed with status ${response.status}`
+    
+    try {
+      const errorData = JSON.parse(responseText)
+      if (errorData.data && typeof errorData.data === 'object') {
+        const errorFields = Object.keys(errorData.data)
+        if (errorFields.length > 0) {
+          errorMessage = errorFields.map(field => 
+            `${field}: ${errorData.data[field]}`
+          ).join(', ')
+        } else {
+          errorMessage = errorData.message || errorData.data?.message || errorMessage
+        }
+      } else {
+        errorMessage = errorData.message || errorData.error || errorMessage
+      }
+    } catch {
+      errorMessage = responseText || errorMessage
+    }
+    
+    throw new Error(errorMessage)
+  }
+
+  const data = await response.json()
+  if (data.data !== undefined) {
+    return data.data as T
+  }
+  return data as T
+}
+
+/**
+ * Get wallet by ID
+ */
+export async function apiGetWallet(walletId: string): Promise<Wallet> {
+  return apiRequest<Wallet>(`${API_CONFIG.TRANSACTION.endpoints.walletById}/${walletId}`, {
+    method: 'GET',
+  })
+}
+
+/**
+ * Get wallet by user ID
+ */
+export async function apiGetUserWallet(userId: string): Promise<Wallet> {
+  return apiRequest<Wallet>(`${API_CONFIG.TRANSACTION.endpoints.walletByUser}/${userId}`, {
+    method: 'GET',
+  })
+}
+
+/**
+ * Get all wallets (admin only)
+ */
+export async function apiGetAllWallets(filters?: WalletFilters): Promise<Wallet[]> {
+  const queryParams = new URLSearchParams()
+  
+  if (filters?.userId) queryParams.append('userId', filters.userId)
+  if (filters?.minBalance) queryParams.append('minBalance', filters.minBalance.toString())
+  if (filters?.maxBalance) queryParams.append('maxBalance', filters.maxBalance.toString())
+  if (filters?.limit) queryParams.append('limit', filters.limit.toString())
+  if (filters?.offset) queryParams.append('offset', filters.offset.toString())
+
+  const queryString = queryParams.toString()
+  const endpoint = `${API_CONFIG.TRANSACTION.endpoints.allWallets}${queryString ? `?${queryString}` : ''}`
+  
+  return apiRequest<Wallet[]>(endpoint, {
+    method: 'GET',
+  })
+}
+
+/**
+ * Create wallet account
+ */
+export async function apiCreateWalletAccount(data: CreateWalletAccountDTO): Promise<WalletResponse> {
+  return apiRequest<WalletResponse>(API_CONFIG.TRANSACTION.endpoints.createWalletAccount, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+
+
+
+
+

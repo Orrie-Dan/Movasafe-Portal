@@ -225,63 +225,63 @@
   z-index: 3000 !important;
 }
 
-/* Global Black Theme Override - Convert all slate backgrounds to black */
+/* Global Black Theme Override - Convert all slate backgrounds to black (Dark Mode Only) */
 @layer utilities {
-  /* Override gradient backgrounds */
-  .bg-gradient-to-br.from-slate-900.to-slate-800,
-  .bg-gradient-to-br.from-slate-800.to-slate-900 {
+  /* Override gradient backgrounds - Dark Mode Only */
+  .dark .bg-gradient-to-br.from-slate-900.to-slate-800,
+  .dark .bg-gradient-to-br.from-slate-800.to-slate-900 {
     background: #000000 !important;
     background-color: #000000 !important;
   }
 
-  /* Override solid slate backgrounds */
-  .bg-slate-900,
-  .bg-slate-800,
-  .bg-slate-950 {
+  /* Override solid slate backgrounds - Dark Mode Only */
+  .dark .bg-slate-900,
+  .dark .bg-slate-800,
+  .dark .bg-slate-950 {
     background-color: #000000 !important;
   }
 
-  /* Override slate backgrounds with opacity */
-  .bg-slate-900\/50,
-  .bg-slate-800\/50,
-  .bg-slate-800\/30,
-  .bg-slate-800\/70,
-  .bg-slate-700\/50 {
+  /* Override slate backgrounds with opacity - Dark Mode Only */
+  .dark .bg-slate-900\/50,
+  .dark .bg-slate-800\/50,
+  .dark .bg-slate-800\/30,
+  .dark .bg-slate-800\/70,
+  .dark .bg-slate-700\/50 {
     background-color: rgba(0, 0, 0, var(--tw-bg-opacity, 1)) !important;
   }
 
-  /* Override slate borders to very dark gray for subtle borders */
-  .border-slate-700,
-  .border-slate-800 {
+  /* Override slate borders to very dark gray for subtle borders - Dark Mode Only */
+  .dark .border-slate-700,
+  .dark .border-slate-800 {
     border-color: #1a1a1a !important;
   }
 
-  /* Override slate borders with opacity */
-  .border-slate-700\/50,
-  .border-slate-800\/50,
-  .border-slate-700\/20 {
+  /* Override slate borders with opacity - Dark Mode Only */
+  .dark .border-slate-700\/50,
+  .dark .border-slate-800\/50,
+  .dark .border-slate-700\/20 {
     border-color: rgba(26, 26, 26, var(--tw-border-opacity, 1)) !important;
   }
 
-  /* Override hover states */
-  .hover\:bg-slate-800:hover,
-  .hover\:bg-slate-700:hover,
-  .hover\:bg-slate-900:hover {
+  /* Override hover states - Dark Mode Only */
+  .dark .hover\:bg-slate-800:hover,
+  .dark .hover\:bg-slate-700:hover,
+  .dark .hover\:bg-slate-900:hover {
     background-color: #0a0a0a !important;
   }
 
-  .hover\:bg-slate-800\/70:hover,
-  .hover\:bg-slate-800\/50:hover {
+  .dark .hover\:bg-slate-800\/70:hover,
+  .dark .hover\:bg-slate-800\/50:hover {
     background-color: rgba(0, 0, 0, 0.7) !important;
   }
 
-  /* Override text colors that might be too light on black */
-  .text-slate-400,
-  .text-slate-300 {
+  /* Override text colors that might be too light on black - Dark Mode Only */
+  .dark .text-slate-400,
+  .dark .text-slate-300 {
     color: #a0a0a0 !important;
   }
 
-  .text-slate-500 {
+  .dark .text-slate-500 {
     color: #808080 !important;
   }
 
@@ -312,22 +312,34 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Theme Aware */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.dark ::-webkit-scrollbar-track {
   background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+}
+
 ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #2a2a2a;
 }
 
@@ -338,98 +350,298 @@ html {
   border-radius: 4px;
 }
 
-/* Selection color */
+/* Selection color - Theme Aware */
 ::selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: inherit;
+}
+
+.dark ::selection {
   background: rgba(59, 130, 246, 0.3);
   color: #ffffff;
 }
 
-/* Enhanced typography */
+/* Enhanced typography - Theme Aware */
 @layer base {
   h1 {
     @apply text-4xl font-bold tracking-tight;
+  }
+  
+  .dark h1 {
     color: #ffffff !important;
   }
   
   h2 {
     @apply text-3xl font-semibold tracking-tight;
+  }
+  
+  .dark h2 {
     color: #ffffff !important;
   }
   
   h3 {
     @apply text-2xl font-semibold;
+  }
+  
+  .dark h3 {
     color: #ffffff !important;
   }
   
   .metric-value {
     @apply text-3xl font-bold tracking-tight;
     letter-spacing: -0.02em;
+    color: rgb(15, 23, 42) !important;
+  }
+  
+  .dark .metric-value {
+    color: #ffffff !important;
+  }
+  
+  /* Ensure metric-value works in both themes with explicit classes */
+  .metric-value.text-slate-900 {
+    color: rgb(15, 23, 42) !important;
+  }
+  
+  .dark .metric-value.text-white,
+  .dark .metric-value.dark\:text-white {
     color: #ffffff !important;
   }
   
   .metric-label {
     @apply text-xs font-medium uppercase tracking-wider;
+    color: rgb(100, 116, 139) !important;
+  }
+  
+  .dark .metric-label {
     color: #a0a0a0 !important;
+  }
+  
+  /* Ensure metric-label works in both themes */
+  .metric-label.text-slate-900 {
+    color: rgb(15, 23, 42) !important;
+  }
+  
+  .dark .metric-label.text-white,
+  .dark .metric-label.dark\:text-white {
+    color: #ffffff !important;
   }
 }
 
-/* Ensure CardTitle is always visible - Multiple layers of protection */
+/* Ensure CardTitle is always visible - Theme Aware */
 /* Rule outside layer for maximum specificity - highest priority */
 /* This must come after Tailwind utilities to override them */
-h3[data-card-title="true"] {
+.dark h3[data-card-title="true"] {
   color: rgb(255, 255, 255) !important;
   color: #ffffff !important;
 }
 
-/* Override Tailwind's text-card-foreground utility for CardTitle - very specific */
-.text-card-foreground h3[data-card-title="true"],
-.card.text-card-foreground h3[data-card-title="true"],
-div.text-card-foreground h3[data-card-title="true"],
-[class*="card"] h3[data-card-title="true"],
-/* Target any h3 inside a card with bg-black */
-.bg-black h3[data-card-title="true"],
-.card.bg-black h3[data-card-title="true"] {
+/* Override Tailwind's text-card-foreground utility for CardTitle - very specific - Dark Mode */
+.dark .text-card-foreground h3[data-card-title="true"] {
   color: rgb(255, 255, 255) !important;
-  color: #ffffff !important;
+}
+
+.dark .card.text-card-foreground h3[data-card-title="true"] {
+  color: rgb(255, 255, 255) !important;
+}
+
+.dark div.text-card-foreground h3[data-card-title="true"] {
+  color: rgb(255, 255, 255) !important;
+}
+
+/* Target any h3 inside a card with bg-black - Dark Mode */
+.dark .bg-black h3[data-card-title="true"] {
+  color: rgb(255, 255, 255) !important;
+}
+
+.dark .card.bg-black h3[data-card-title="true"] {
+  color: rgb(255, 255, 255) !important;
 }
 
 @layer utilities {
-  /* Override Card's text-card-foreground for h3 elements specifically */
-  .card h3,
-  .card[class*="bg-black"] h3,
-  div[class*="CardHeader"] h3,
-  /* Override Tailwind utility classes */
-  .text-card-foreground h3 {
+  /* Override Card's text-card-foreground for h3 elements specifically - Dark Mode */
+  .dark .card h3 {
     color: #ffffff !important;
   }
   
-  /* Target h3 inside CardHeader specifically - highest specificity */
-  .card h3[data-card-title="true"],
-  [class*="CardHeader"] h3[data-card-title="true"],
-  div[class*="CardHeader"] h3[data-card-title="true"],
-  /* Direct h3 with data attribute - highest priority */
-  h3[data-card-title="true"] {
+  /* Target h3 inside CardHeader specifically - highest specificity - Dark Mode */
+  .dark .card h3[data-card-title="true"] {
     color: #ffffff !important;
   }
   
-  /* Fallback: Target h3 inside Card with specific classes */
-  .bg-black h3,
-  .bg-black .border-slate-800 h3,
-  .card.bg-black h3,
-  /* Override all text color classes on h3 (CardTitle) */
-  h3.text-white,
-  h3.text-slate-400,
-  h3.text-slate-300,
-  h3.text-slate-500,
-  /* Override all font size classes to ensure color is white */
-  h3.text-xs,
-  h3.text-sm,
-  h3.text-base,
-  h3.text-lg,
-  h3.text-xl,
-  h3.text-2xl,
-  /* Target h3 with leading-none (CardTitle always has this) */
-  h3.leading-none {
+  /* Direct h3 with data attribute - highest priority - Dark Mode */
+  .dark h3[data-card-title="true"] {
     color: #ffffff !important;
   }
+  
+  /* Fallback: Target h3 inside Card with specific classes - Dark Mode */
+  .dark .bg-black h3,
+  .dark .card.bg-black h3 {
+    color: #ffffff !important;
+  }
+
+  /* Ensure CardDescription is visible - Theme Aware */
+  .dark .text-muted-foreground {
+    color: rgb(148, 163, 184) !important;
+  }
+
+  /* Override text-card-foreground CSS variable for cards with explicit backgrounds */
+  .card.bg-white {
+    --card-foreground: rgb(15, 23, 42) !important;
+  }
+  
+  .dark .card.bg-black {
+    --card-foreground: rgb(255, 255, 255) !important;
+  }
+  
+  /* Force metric-value to be readable - highest specificity */
+  .card.bg-white .metric-value.text-slate-900,
+  .card.bg-white .metric-value.dark\:text-white,
+  .card.bg-white .metric-value {
+    color: rgb(15, 23, 42) !important;
+  }
+  
+  .dark .card.bg-black .metric-value.text-slate-900,
+  .dark .card.bg-black .metric-value.dark\:text-white,
+  .dark .card.bg-black .metric-value {
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* Force metric-label to be readable - highest specificity */
+  .card.bg-white .metric-label.text-slate-900,
+  .card.bg-white .metric-label.dark\:text-white,
+  .card.bg-white .metric-label {
+    color: rgb(15, 23, 42) !important;
+  }
+  
+  .dark .card.bg-black .metric-label.text-slate-900,
+  .dark .card.bg-black .metric-label.dark\:text-white,
+  .dark .card.bg-black .metric-label {
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* Override text-card-foreground utility class directly */
+  .card.bg-white.text-card-foreground,
+  .card.bg-white [class*="text-card-foreground"] {
+    color: rgb(15, 23, 42) !important;
+  }
+  
+  .dark .card.bg-black.text-card-foreground,
+  .dark .card.bg-black [class*="text-card-foreground"] {
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* Ensure CardContent children inherit correct color */
+  .card.bg-white [class*="CardContent"] {
+    color: rgb(15, 23, 42) !important;
+  }
+  
+  .dark .card.bg-black [class*="CardContent"] {
+    color: rgb(255, 255, 255) !important;
+  }
+  
+  /* But preserve explicit color classes on children */
+  .card.bg-white [class*="CardContent"] [class*="text-green"],
+  .card.bg-white [class*="CardContent"] [class*="text-red"],
+  .card.bg-white [class*="CardContent"] [class*="text-yellow"],
+  .card.bg-white [class*="CardContent"] [class*="text-blue"],
+  .card.bg-white [class*="CardContent"] [class*="text-slate-4"],
+  .card.bg-white [class*="CardContent"] [class*="text-slate-5"],
+  .card.bg-white [class*="CardContent"] [class*="text-slate-6"] {
+    color: inherit !important;
+  }
+  
+  .dark .card.bg-black [class*="CardContent"] [class*="text-green"],
+  .dark .card.bg-black [class*="CardContent"] [class*="text-red"],
+  .dark .card.bg-black [class*="CardContent"] [class*="text-yellow"],
+  .dark .card.bg-black [class*="CardContent"] [class*="text-blue"],
+  .dark .card.bg-black [class*="CardContent"] [class*="text-slate-4"],
+  .dark .card.bg-black [class*="CardContent"] [class*="text-slate-5"],
+  .dark .card.bg-black [class*="CardContent"] [class*="text-slate-6"] {
+    color: inherit !important;
+  }
+
+  /* Ensure Table cells are visible - Dark Mode */
+  .dark table td {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark table th {
+    color: rgb(148, 163, 184) !important;
+  }
+
+  /* Ensure all text in black cards is visible - Dark Mode */
+  .dark .bg-black {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .card.bg-black {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Override for specific text elements that should be muted - Dark Mode */
+  /* Removed specific .text-slate-400 overrides to avoid Tailwind compilation issues */
+
+  /* Ensure Input text is visible in dark cards - Dark Mode */
+  .dark .bg-black input {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .card.bg-black input {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Ensure Label text is visible in dark cards - Dark Mode */
+  .dark .bg-black label {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .card.bg-black label {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Ensure placeholder text is visible but muted - Dark Mode */
+  .dark .bg-black input::placeholder {
+    color: rgb(100, 116, 139) !important;
+  }
+
+  .dark .card.bg-black input::placeholder {
+    color: rgb(100, 116, 139) !important;
+  }
+
+  /* Ensure Select text is visible in dark cards - Dark Mode */
+  .dark .bg-black select {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .card.bg-black select {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Override for specific elements that should inherit parent color - Dark Mode */
+  .dark .bg-black p {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .card.bg-black p {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .bg-black span {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .card.bg-black span {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .bg-black div {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  .dark .card.bg-black div {
+    color: rgb(255, 255, 255) !important;
+  }
+
+  /* Exception: muted text should be slate-400 - Dark Mode */
+  /* Removed specific p.text-slate-400 overrides to avoid Tailwind compilation issues */
 }

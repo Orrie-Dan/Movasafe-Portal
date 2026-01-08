@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AdminSidebar } from '@/components/admin-sidebar'
-import { DashboardHeader } from '@/components/dashboard-header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TimePeriodFilter } from '@/components/dashboard/filters/TimePeriodFilter'
 import { ClientLifecycleMetrics } from '@/components/dashboard/clients/ClientLifecycleMetrics'
@@ -67,37 +65,28 @@ export default function ClientsPage() {
 
   if (authError) {
     return (
-      <div className="flex h-screen bg-slate-800">
-        <AdminSidebar variant="admin" />
-        <div className="flex-1 flex items-center justify-center">
-          <Card className="bg-slate-700 border-slate-600">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <h2 className="text-2xl font-bold text-white mb-2">Authentication Required</h2>
-              <p className="text-slate-400 mb-6">Please log in to view client data</p>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Authentication Required</h2>
+            <p className="text-muted-foreground mb-6">Please log in to view client data</p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-black text-white">
-      <AdminSidebar variant="admin" />
-      
-      <div className="flex-1 overflow-y-auto">
-        <DashboardHeader userName="Admin User" userRole="Administrator" />
-        
-        <div className="p-6 lg:p-8 space-y-8 bg-black">
+    <div className="p-6 lg:p-8 space-y-8 bg-background">
           {/* Page Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="h-6 w-6 text-blue-400" />
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-                  Clients Management
+                <h1 className="text-3xl font-bold text-foreground">
+                  Merchants & Vendors
                 </h1>
-                <p className="text-sm text-slate-400">Client lifecycle, compliance, and subscription analytics</p>
+                <p className="text-sm text-muted-foreground">Manage vendors and their escrow operations</p>
               </div>
             </div>
           </div>
@@ -140,8 +129,6 @@ export default function ClientsPage() {
             startDate={dateRange.startDate}
             endDate={dateRange.endDate}
           />
-        </div>
-      </div>
     </div>
   )
 }

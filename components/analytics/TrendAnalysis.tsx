@@ -37,11 +37,12 @@ export function TrendAnalysis({ data, loading = false }: TrendAnalysisProps) {
     <div className="space-y-6">
       {/* Seasonal Patterns */}
       {data.seasonalPatterns && data.seasonalPatterns.length > 0 && (
-        <Card className="bg-black border-slate-800">
-          <CardHeader>
-            <CardTitle size="md" className="text-white">Seasonal Revenue Patterns</CardTitle>
-            <CardDescription className="text-slate-400">Revenue trends by month</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="md" className="relative z-10">Seasonal Revenue Patterns</CardTitle>
+            <CardDescription className="relative z-10">Revenue trends by month</CardDescription>
+          </div>
           <CardContent>
             <EnhancedLineChart
               data={data.seasonalPatterns}
@@ -59,20 +60,21 @@ export function TrendAnalysis({ data, loading = false }: TrendAnalysisProps) {
 
       {/* Expense Spikes */}
       {data.expenseSpikes && data.expenseSpikes.length > 0 && (
-        <Card className="bg-black border-slate-800">
-          <CardHeader>
-            <CardTitle size="md" className="text-white">Expense Spikes</CardTitle>
-            <CardDescription className="text-slate-400">Unusual expense increases</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="md" className="relative z-10">Expense Spikes</CardTitle>
+            <CardDescription className="relative z-10">Unusual expense increases</CardDescription>
+          </div>
           <CardContent>
             <div className="space-y-3">
               {data.expenseSpikes.map((spike, index) => (
                 <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
                   <div>
-                    <div className="text-sm font-medium text-white">{spike.category}</div>
-                    <div className="text-xs text-slate-400">{spike.date}</div>
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">{spike.category}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{spike.date}</div>
                     {spike.reason && (
-                      <div className="text-xs text-slate-500 mt-1">{spike.reason}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-500 mt-1">{spike.reason}</div>
                     )}
                   </div>
                   <div className="text-right">
@@ -88,62 +90,63 @@ export function TrendAnalysis({ data, loading = false }: TrendAnalysisProps) {
 
       {/* Peak vs Low Period */}
       {data.peakVsLow && (
-        <Card className="bg-black border-slate-800">
-          <CardHeader>
-            <CardTitle size="md" className="text-white">Peak vs Low Period Performance</CardTitle>
-            <CardDescription className="text-slate-400">Comparison of best and worst periods</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="md" className="relative z-10">Peak vs Low Period Performance</CardTitle>
+            <CardDescription className="relative z-10">Comparison of best and worst periods</CardDescription>
+          </div>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                <div className="text-sm text-slate-400 mb-2">Peak Period</div>
-                <div className="text-xl font-semibold text-white mb-3">{data.peakVsLow.peakPeriod.period}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">Peak Period</div>
+                <div className="text-xl font-semibold text-slate-900 dark:text-white mb-3">{data.peakVsLow.peakPeriod.period}</div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-slate-300">Revenue</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">Revenue</span>
                     <span className="text-sm font-semibold text-green-400">
                       {formatCurrency(data.peakVsLow.peakPeriod.revenue)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-slate-300">Expenses</span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-sm text-slate-600 dark:text-slate-300">Expenses</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
                       {formatCurrency(data.peakVsLow.peakPeriod.expenses)}
                     </span>
                   </div>
                 </div>
               </div>
               <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                <div className="text-sm text-slate-400 mb-2">Low Period</div>
-                <div className="text-xl font-semibold text-white mb-3">{data.peakVsLow.lowPeriod.period}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">Low Period</div>
+                <div className="text-xl font-semibold text-slate-900 dark:text-white mb-3">{data.peakVsLow.lowPeriod.period}</div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm text-slate-300">Revenue</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">Revenue</span>
                     <span className="text-sm font-semibold text-red-400">
                       {formatCurrency(data.peakVsLow.lowPeriod.revenue)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-slate-300">Expenses</span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-sm text-slate-600 dark:text-slate-300">Expenses</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">
                       {formatCurrency(data.peakVsLow.lowPeriod.expenses)}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-4 p-4 rounded-lg bg-slate-900/50 border border-slate-700">
-              <div className="text-sm text-slate-400 mb-2">Difference</div>
+            <div className="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700">
+              <div className="text-sm text-slate-600 dark:text-slate-400 mb-2">Difference</div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-xs text-slate-400">Revenue Gap</div>
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Revenue Gap</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">
                     {formatCurrency(data.peakVsLow.difference.revenue)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400">Expense Gap</div>
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Expense Gap</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">
                     {formatCurrency(data.peakVsLow.difference.expenses)}
                   </div>
                 </div>

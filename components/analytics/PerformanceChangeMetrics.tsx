@@ -46,11 +46,12 @@ export function PerformanceChangeMetrics({ data, loading = false }: PerformanceC
     <div className="space-y-6">
       {/* Growth Rates */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Revenue Growth</CardTitle>
-            <CardDescription className="text-slate-400">Period-over-period change</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Revenue Growth</CardTitle>
+            <CardDescription className="relative z-10">Period-over-period change</CardDescription>
+          </div>
           <CardContent>
             <div className="flex items-center gap-2">
               {getTrendIcon(data.revenueGrowthRate)}
@@ -61,11 +62,12 @@ export function PerformanceChangeMetrics({ data, loading = false }: PerformanceC
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Expense Growth</CardTitle>
-            <CardDescription className="text-slate-400">Period-over-period change</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Expense Growth</CardTitle>
+            <CardDescription className="relative z-10">Period-over-period change</CardDescription>
+          </div>
           <CardContent>
             <div className="flex items-center gap-2">
               {getTrendIcon(data.expenseGrowthRate)}
@@ -76,11 +78,12 @@ export function PerformanceChangeMetrics({ data, loading = false }: PerformanceC
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Profit Growth</CardTitle>
-            <CardDescription className="text-slate-400">Period-over-period change</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Profit Growth</CardTitle>
+            <CardDescription className="relative z-10">Period-over-period change</CardDescription>
+          </div>
           <CardContent>
             <div className="flex items-center gap-2">
               {getTrendIcon(data.profitGrowth)}
@@ -91,11 +94,12 @@ export function PerformanceChangeMetrics({ data, loading = false }: PerformanceC
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-800">
-          <CardHeader className="pb-3">
-            <CardTitle size="sm" className="text-white">Margin Change</CardTitle>
-            <CardDescription className="text-slate-400">Profit margin change</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 pb-3 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="sm" className="relative z-10">Margin Change</CardTitle>
+            <CardDescription className="relative z-10">Profit margin change</CardDescription>
+          </div>
           <CardContent>
             <div className="flex items-center gap-2">
               {getTrendIcon(data.marginChange)}
@@ -110,27 +114,28 @@ export function PerformanceChangeMetrics({ data, loading = false }: PerformanceC
       {/* Period Comparisons */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Month-over-Month */}
-        <Card className="bg-black border-slate-800">
-          <CardHeader>
-            <CardTitle size="md" className="text-white">Month-over-Month Comparison</CardTitle>
-            <CardDescription className="text-slate-400">Current vs previous month</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="md" className="relative z-10">Month-over-Month Comparison</CardTitle>
+            <CardDescription className="relative z-10">Current vs previous month</CardDescription>
+          </div>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <span className="text-sm text-slate-300">Revenue</span>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-300">Revenue</span>
                 <span className={`text-2xl font-bold ${getTrendColor(data.momComparison.revenue)}`}>
                   {data.momComparison.revenue > 0 ? '+' : ''}{data.momComparison.revenue.toFixed(1)}%
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <span className="text-sm text-slate-300">Expenses</span>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-300">Expenses</span>
                 <span className={`text-2xl font-bold ${getTrendColor(data.momComparison.expenses)}`}>
                   {data.momComparison.expenses > 0 ? '+' : ''}{data.momComparison.expenses.toFixed(1)}%
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <span className="text-sm text-slate-300">Profit</span>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-300">Profit</span>
                 <span className={`text-2xl font-bold ${getTrendColor(data.momComparison.profit)}`}>
                   {data.momComparison.profit > 0 ? '+' : ''}{data.momComparison.profit.toFixed(1)}%
                 </span>
@@ -140,27 +145,28 @@ export function PerformanceChangeMetrics({ data, loading = false }: PerformanceC
         </Card>
 
         {/* Year-over-Year */}
-        <Card className="bg-black border-slate-800">
-          <CardHeader>
-            <CardTitle size="md" className="text-white">Year-over-Year Comparison</CardTitle>
-            <CardDescription className="text-slate-400">Current vs same period last year</CardDescription>
-          </CardHeader>
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+            <CardTitle size="md" className="relative z-10">Year-over-Year Comparison</CardTitle>
+            <CardDescription className="relative z-10">Current vs same period last year</CardDescription>
+          </div>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <span className="text-sm text-slate-300">Revenue</span>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-300">Revenue</span>
                 <span className={`text-2xl font-bold ${getTrendColor(data.yoyComparison.revenue)}`}>
                   {data.yoyComparison.revenue > 0 ? '+' : ''}{data.yoyComparison.revenue.toFixed(1)}%
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <span className="text-sm text-slate-300">Expenses</span>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-300">Expenses</span>
                 <span className={`text-2xl font-bold ${getTrendColor(data.yoyComparison.expenses)}`}>
                   {data.yoyComparison.expenses > 0 ? '+' : ''}{data.yoyComparison.expenses.toFixed(1)}%
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-slate-700">
-                <span className="text-sm text-slate-300">Profit</span>
+              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700">
+                <span className="text-sm text-slate-600 dark:text-slate-300">Profit</span>
                 <span className={`text-2xl font-bold ${getTrendColor(data.yoyComparison.profit)}`}>
                   {data.yoyComparison.profit > 0 ? '+' : ''}{data.yoyComparison.profit.toFixed(1)}%
                 </span>

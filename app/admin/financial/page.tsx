@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { apiMe, apiGetExecutiveSnapshot, apiGetRevenueAnalytics, apiGetExpenseAnalytics, apiGetProfitabilityAnalysis, apiGetCashFlow } from '@/lib/api'
-import { AdminSidebar } from '@/components/admin-sidebar'
-import { DashboardHeader } from '@/components/dashboard-header'
 import { ExecutiveSnapshot } from '@/components/financial/ExecutiveSnapshot'
 import { RevenueAnalytics } from '@/components/financial/RevenueAnalytics'
 import { ExpenseAnalytics } from '@/components/financial/ExpenseAnalytics'
@@ -94,34 +92,25 @@ export default function FinancialPage() {
 
   if (authError) {
     return (
-      <div className="flex h-screen bg-black">
-        <AdminSidebar variant="admin" />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="bg-slate-900 border border-slate-800 rounded-lg p-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Authentication Required</h2>
-            <p className="text-slate-400">Please log in to view financial data</p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen bg-black">
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Authentication Required</h2>
+          <p className="text-slate-400">Please log in to view financial data</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-black text-white">
-      <AdminSidebar variant="admin" />
-      
-      <div className="flex-1 overflow-y-auto">
-        <DashboardHeader userName="Admin User" userRole="Administrator" />
-        
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-black">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-black">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-2 sm:gap-3">
                 <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-green-400" />
-                Financial Records & Accounting
+                Commissions & Revenue
               </h1>
-              <p className="text-sm sm:text-base text-slate-400 mt-1">What are the numbers? - Records, transactions, and accounting views</p>
+              <p className="text-sm sm:text-base text-slate-400 mt-1">Commission analytics, revenue tracking, and financial insights</p>
             </div>
             <div className="w-full sm:w-auto">
               <ExportControls filters={filters} onRefresh={fetchAllData} />
@@ -150,8 +139,8 @@ export default function FinancialPage() {
 
           {/* Revenue Records */}
           <CollapsibleSection
-            title="Revenue Records"
-            description="Full revenue totals, invoices, and transactions"
+            title="Commission & Revenue"
+            description="Commission earnings, revenue totals, and transaction analytics"
             defaultExpanded={true}
             icon={TrendingUp}
           >
@@ -203,8 +192,6 @@ export default function FinancialPage() {
               <CashFlowAnalytics data={cashFlow} />
             )}
           </CollapsibleSection>
-        </div>
-      </div>
     </div>
   )
 }
