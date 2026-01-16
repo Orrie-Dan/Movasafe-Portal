@@ -66,14 +66,14 @@ export const API_CONFIG = {
   TRANSACTION: {
     baseUrl: process.env.NEXT_PUBLIC_TRANSACTION_API_URL || 
       process.env.NEXT_PUBLIC_TRANSACTION_API_BASE ||
-      'http://transactionservice-env.eba-x2faumyp.eu-north-1.elasticbeanstalk.com',
+      'http://movasafe-transaction-env-2.eba-ydyugcws.eu-north-1.elasticbeanstalk.com',
     endpoints: {
       // Wallet Accounts
       createWalletAccount: '/api/transactions/accounts',
       // Transactions
       transfer: '/api/transactions/transfer',
       escrowPayVendor: '/api/transactions/escrow/pay-vendor',
-      allTransactions: '/api/transactions/wallets/all',
+      allTransactions: '/api/admin/transactions/all',
       transactionByUser: '/api/transactions/by-user',
       transactionById: '/api/transactions',
       // Wallets
@@ -86,7 +86,7 @@ export const API_CONFIG = {
     baseUrl: process.env.NEXT_PUBLIC_ESCROW_API_URL || 
       process.env.NEXT_PUBLIC_TRANSACTION_API_URL || 
       process.env.NEXT_PUBLIC_TRANSACTION_API_BASE ||
-      'http://transactionservice-env.eba-x2faumyp.eu-north-1.elasticbeanstalk.com',
+      'http://movasafe-transaction-env-2.eba-ydyugcws.eu-north-1.elasticbeanstalk.com',
     endpoints: {
       create: '/api/escrows/create',
       list: '/api/escrows/my-escrows/list',

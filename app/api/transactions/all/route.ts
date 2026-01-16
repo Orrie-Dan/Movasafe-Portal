@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 
+// Use environment variable or fallback to correct backend URL
 const BACKEND_BASE =
+  process.env.NEXT_PUBLIC_TRANSACTION_API_URL ||
+  process.env.NEXT_PUBLIC_TRANSACTION_API_BASE ||
   "http://movasafe-transaction-env-2.eba-ydyugcws.eu-north-1.elasticbeanstalk.com";
 
 export async function GET(req: NextRequest) {
@@ -29,22 +32,20 @@ export async function GET(req: NextRequest) {
     // Get response body
     const body = await res.text();
 
-    // Forward response headers (excluding those that shouldn't be forwarded)
+    // Build response headers with CORS support
+    const origin = req.headers.get("origin");
     const responseHeaders = new Headers();
     responseHeaders.set("Content-Type", res.headers.get("Content-Type") || "application/json");
     
-    // Forward CORS headers if present
-    const corsHeaders = [
-      "Access-Control-Allow-Origin",
-      "Access-Control-Allow-Methods",
-      "Access-Control-Allow-Headers",
-    ];
-    corsHeaders.forEach((header) => {
-      const value = res.headers.get(header);
-      if (value) {
-        responseHeaders.set(header, value);
-      }
-    });
+    // Add CORS headers to allow frontend access
+    if (origin) {
+      responseHeaders.set("Access-Control-Allow-Origin", origin);
+      responseHeaders.set("Access-Control-Allow-Credentials", "true");
+    } else {
+      responseHeaders.set("Access-Control-Allow-Origin", "*");
+    }
+    responseHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+    responseHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
 
     return new Response(body, {
       status: res.status,
@@ -53,6 +54,19 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("[Transactions Proxy] Error:", error);
+    
+    // Build error response with CORS headers
+    const origin = req.headers.get("origin");
+    const errorHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": origin || "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+    };
+    if (origin) {
+      errorHeaders["Access-Control-Allow-Credentials"] = "true";
+    }
+    
     return new Response(
       JSON.stringify({
         success: false,
@@ -60,8 +74,23 @@ export async function GET(req: NextRequest) {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: errorHeaders,
       }
     );
   }
+}
+
+// Handle CORS preflight requests
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get("origin");
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": origin || "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, Accept",
+      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Max-Age": "3600",
+    },
+  });
 }

@@ -1,8 +1,9 @@
 // Wallet API functions
 
-import { TRANSACTION_BASE } from '@/lib/api/config'
 import { API_CONFIG } from '@/lib/config/api'
 import type { Wallet, CreateWalletAccountDTO, WalletResponse, WalletFilters } from '@/lib/types/wallets'
+
+const BASE_URL = API_CONFIG.TRANSACTION.baseUrl
 
 // Helper function to get auth token
 function getToken(): string | null {
@@ -10,7 +11,7 @@ function getToken(): string | null {
   return localStorage.getItem('auth_token')
 }
 
-// API request helper with error handling
+// API request helper with error handling - direct calls to backend
 async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -26,18 +27,14 @@ async function apiRequest<T>(
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  // Use Next.js API proxy route to avoid mixed-content issues (HTTPS frontend -> HTTP backend)
-  // Convert backend endpoint to proxy route: /api/transactions/wallets/... -> /api/transactions/wallets/...
-  let proxyUrl = endpoint
-  if (!endpoint.startsWith('/api/transactions/')) {
-    // Ensure it starts with /api/transactions/
-    proxyUrl = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
-    if (!proxyUrl.startsWith('/api/transactions/')) {
-      proxyUrl = `/api/transactions${proxyUrl.startsWith('/') ? proxyUrl : `/${proxyUrl}`}`
-    }
+  // Make direct call to backend
+  const url = `${BASE_URL}${endpoint}`
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Wallets API] Request:', { url, method: options.method || 'GET' })
   }
 
-  const response = await fetch(proxyUrl, {
+  const response = await fetch(url, {
     ...options,
     headers,
   })
@@ -94,6 +91,7 @@ export async function apiGetUserWallet(userId: string): Promise<Wallet> {
 
 /**
  * Get all wallets (admin only)
+ * Uses /api/transactions/wallets/all endpoint
  */
 export async function apiGetAllWallets(filters?: WalletFilters): Promise<Wallet[]> {
   const queryParams = new URLSearchParams()
@@ -137,9 +135,3 @@ export async function apiCreateWalletAccount(data: CreateWalletAccountDTO): Prom
     body: JSON.stringify(data),
   })
 }
-
-
-
-
-
-
