@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { apiMe, apiGetAllTransactions, apiGetAllWallets, TransactionType, TransactionStatus, type Transaction, type Wallet } from '@/lib/api'
-import { format, parseISO, startOfDay, endOfDay, subDays } from 'date-fns'
+import { apiGetAllTransactions, TransactionType, TransactionStatus, type Transaction } from '@/lib/api'
+import { apiGetAllWallets } from '@/lib/api/wallets'
+import type { Wallet } from '@/lib/types/wallets'
+import type { TransactionFilters } from '@/lib/types/transactions'
+import { parseISO, startOfDay, endOfDay, subDays } from 'date-fns'
 
 export interface AnalyticsFilters {
   dateRange: '7d' | '30d' | 'custom'
@@ -9,14 +12,12 @@ export interface AnalyticsFilters {
   customEndDate?: string
   transactionType: 'all' | TransactionType
   status: 'all' | TransactionStatus
-  userSegment: 'all' | 'verified' | 'unverified'
 }
 
 const DEFAULT_FILTERS: AnalyticsFilters = {
   dateRange: '30d',
   transactionType: 'all',
   status: 'all',
-  userSegment: 'all',
 }
 
 export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
@@ -54,10 +55,14 @@ export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
     try {
       const { startDate, endDate } = getDateRange()
 
-      const transactionFilters: any = {
+      // Build filters using the same shape as the Transactions page (pagination + ISO dates)
+      const transactionFilters: TransactionFilters = {
+        page: 0,
         limit: 10000,
-        startDate: format(startDate, 'yyyy-MM-dd'),
-        endDate: format(endDate, 'yyyy-MM-dd'),
+        sortBy: 'createdAt',
+        order: 'DESC',
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
       }
 
       if (filters.transactionType !== 'all') {
@@ -73,7 +78,12 @@ export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
         apiGetAllWallets({ limit: 10000 }),
       ])
 
-      setTransactions(transactionsData)
+      // apiGetAllTransactions returns a paginated response wrapper
+      if (transactionsData.success && transactionsData.data?.content) {
+        setTransactions(transactionsData.data.content)
+      } else {
+        setTransactions([])
+      }
       setWallets(walletsData)
     } catch (error) {
       console.error('Failed to fetch analytics data:', error)
@@ -82,39 +92,18 @@ export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
     }
   }
 
+  // Authentication check removed - allow access without login
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await apiMe()
-        setAuthError(false)
-        fetchAnalyticsData()
-      } catch (error: any) {
-        setAuthError(true)
-        setTimeout(() => router.replace('/login'), 2000)
-      }
-    }
-    checkAuth()
-  }, [router])
+    setAuthError(false)
+    fetchAnalyticsData()
+  }, [])
 
   useEffect(() => {
-    if (!authError) {
-      fetchAnalyticsData()
-    }
+    fetchAnalyticsData()
   }, [filters])
 
-  // Filter transactions based on user segment (verified/unverified)
-  const filteredTransactions = useMemo(() => {
-    let filtered = transactions
-
-    if (filters.userSegment !== 'all') {
-      // Note: This is a simplified check. In a real app, you'd need to join with user data
-      // For now, we'll filter based on available data
-      // You may need to fetch user data separately to check kycVerified status
-      filtered = filtered // Placeholder - would filter by user verification status
-    }
-
-    return filtered
-  }, [transactions, filters.userSegment])
+  // Currently, all analytics are computed from the full transactions set
+  const filteredTransactions = useMemo(() => transactions, [transactions])
 
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS)

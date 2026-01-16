@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { apiMe, apiGetExecutiveSnapshot, apiGetRevenueAnalytics, apiGetExpenseAnalytics, apiGetProfitabilityAnalysis, apiGetCashFlow } from '@/lib/api'
+import { apiGetExecutiveSnapshot, apiGetRevenueAnalytics, apiGetExpenseAnalytics, apiGetProfitabilityAnalysis, apiGetCashFlow } from '@/lib/api'
 import { ExecutiveSnapshot } from '@/components/financial/ExecutiveSnapshot'
 import { RevenueAnalytics } from '@/components/financial/RevenueAnalytics'
 import { ExpenseAnalytics } from '@/components/financial/ExpenseAnalytics'
@@ -43,7 +43,7 @@ export default function FinancialPage() {
 
   const fetchAllData = async () => {
     try {
-      await apiMe()
+      // Authentication check removed - allow access without login
       setAuthError(false)
       setLoading(true)
       
@@ -69,7 +69,7 @@ export default function FinancialPage() {
       setCashFlow(cash)
     } catch (error) {
       console.error('Failed to fetch financial data:', error)
-      setAuthError(true)
+      // Don't set auth error - just log it
     } finally {
       setLoading(false)
     }
@@ -90,16 +90,7 @@ export default function FinancialPage() {
     })
   }
 
-  if (authError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8">
-          <h2 className="text-2xl font-bold text-white mb-2">Authentication Required</h2>
-          <p className="text-slate-400">Please log in to view financial data</p>
-        </div>
-      </div>
-    )
-  }
+  // Authentication check removed - allow access without login
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 bg-black">

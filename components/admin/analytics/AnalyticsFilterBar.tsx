@@ -106,23 +106,6 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
               </SelectContent>
             </Select>
           </div>
-
-          {/* User Segment */}
-          <div>
-            <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">User Segment</label>
-            <Select
-              value={filters.userSegment}
-              onValueChange={(value) => updateFilter('userSegment', value as AnalyticsFilters['userSegment'])}
-              className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
-            >
-              <SelectValue placeholder="All Users" />
-              <SelectContent>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="verified">Verified</SelectItem>
-                <SelectItem value="unverified">Unverified</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
       </CardContent>
     </Card>

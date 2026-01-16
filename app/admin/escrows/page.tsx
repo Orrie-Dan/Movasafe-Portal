@@ -216,7 +216,7 @@ export default function EscrowsPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </CardHeader>
+            </div>
           </Card>
 
           {loading ? (

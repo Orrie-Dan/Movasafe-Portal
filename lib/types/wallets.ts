@@ -28,6 +28,7 @@ export interface WalletFilters {
   userType?: 'CLIENT' | 'VENDOR'
   minBalance?: number
   maxBalance?: number
+  page?: number
   limit?: number
   offset?: number
 }

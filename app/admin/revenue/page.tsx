@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Forecasting } from '@/components/financial/Forecasting'
 import { ContributionAnalysis } from '@/components/analytics/ContributionAnalysis'
@@ -9,7 +9,7 @@ import { EnhancedLineChart } from '@/components/dashboard/charts/enhanced-line-c
 import { CollapsibleSection } from '@/components/ui/collapsible-section'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { DollarSign, TrendingUp, Calendar, Store, Users, ArrowUpRight } from 'lucide-react'
+import { DollarSign, TrendingUp, Calendar, Store, Users, ArrowUpRight, Activity, Percent, CreditCard } from 'lucide-react'
 import type { RevenueMetrics } from '@/lib/types/fintech'
 import { DataTable, type Column } from '@/components/admin/DataTable'
 import { useMemo } from 'react'
@@ -73,83 +73,129 @@ export default function RevenuePage() {
   }, [])
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-black">
+    <div className="p-6 lg:p-8 space-y-6 bg-black min-h-screen">
       {/* Page Header */}
-      <div>
+      <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
           <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
           Revenue Dashboard
         </h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-1">
-          Revenue analytics, forecasting, and commission tracking
+        <p className="text-sm sm:text-base text-muted-foreground">
+          Comprehensive revenue analytics, forecasting, and commission tracking for financial performance monitoring
         </p>
       </div>
 
       {/* Revenue KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-          <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-            <CardTitle size="xs" className="z-10 relative">Total Revenue</CardTitle>
-          </div>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-              {revenueMetrics ? `${(revenueMetrics.totalRevenue / 1000000).toFixed(2)}M` : 'N/A'}
+        <Card className="bg-black border-slate-200 dark:border-slate-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <div className="text-2xl font-bold text-foreground mt-1">
+                  {loading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : revenueMetrics ? (
+                    `${(revenueMetrics.totalRevenue / 1000000).toFixed(2)}M`
+                  ) : (
+                    'N/A'
+                  )}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-green-400 mt-1">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>
+                    {revenueMetrics ? `+${revenueMetrics.trend}%` : 'N/A'} from last period
+                  </span>
+                </div>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-blue-400" />
+              </div>
             </div>
-            <p className="text-xs text-green-400 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              {revenueMetrics ? `+${revenueMetrics.trend}%` : 'N/A'}
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-          <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-            <CardTitle size="xs" className="z-10 relative">Transaction Volume</CardTitle>
-          </div>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-              {revenueMetrics ? revenueMetrics.transactionVolume.toLocaleString() : 'N/A'}
+        <Card className="bg-black border-slate-200 dark:border-slate-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Transaction Volume</p>
+                <div className="text-2xl font-bold text-foreground mt-1">
+                  {loading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : revenueMetrics ? (
+                    revenueMetrics.transactionVolume.toLocaleString()
+                  ) : (
+                    'N/A'
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Total transactions this period</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                <Activity className="h-6 w-6 text-green-400" />
+              </div>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Transactions this period</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-          <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-            <CardTitle size="xs" className="z-10 relative">Commission Earned</CardTitle>
-          </div>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-400 mb-1">
-              {revenueMetrics ? `${(revenueMetrics.commissionEarned / 1000).toFixed(1)}K` : 'N/A'}
+        <Card className="bg-black border-slate-200 dark:border-slate-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Commission Earned</p>
+                <div className="text-2xl font-bold text-blue-400 mt-1">
+                  {loading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : revenueMetrics ? (
+                    `${(revenueMetrics.commissionEarned / 1000).toFixed(1)}K`
+                  ) : (
+                    'N/A'
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Total commissions generated</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                <CreditCard className="h-6 w-6 text-purple-400" />
+              </div>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Total commissions</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-          <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-            <CardTitle size="xs" className="z-10 relative">Growth Rate</CardTitle>
-          </div>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-400 mb-1">
-              {revenueMetrics ? `+${revenueMetrics.trend}%` : 'N/A'}
+        <Card className="bg-black border-slate-200 dark:border-slate-800">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Growth Rate</p>
+                <div className="text-2xl font-bold text-green-400 mt-1">
+                  {loading ? (
+                    <Skeleton className="h-8 w-20" />
+                  ) : revenueMetrics ? (
+                    `+${revenueMetrics.trend}%`
+                  ) : (
+                    'N/A'
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Period-over-period growth</p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-orange-500/20 flex items-center justify-center">
+                <Percent className="h-6 w-6 text-orange-400" />
+              </div>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Period-over-period</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Revenue Trends Chart */}
-      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-        <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-          <CardTitle className="z-10 relative text-slate-900 dark:text-white">Revenue Trends</CardTitle>
-          <CardDescription className="z-10 relative">Revenue and transaction volume over time</CardDescription>
-        </div>
+      <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-400" />
+            Revenue Trends Analysis
+          </CardTitle>
+          <CardDescription>
+            Historical revenue and transaction volume trends over the last 6 months
+          </CardDescription>
+        </CardHeader>
         <CardContent>
           {loading ? (
             <Skeleton className="h-[300px] w-full" />
@@ -196,83 +242,112 @@ export default function RevenuePage() {
       </CollapsibleSection>
 
       {/* Top Merchants & Users */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-            <CardTitle className="z-10 relative text-slate-900 dark:text-white flex items-center gap-2">
+      <div className="space-y-4">
+        <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Users className="h-5 w-5 text-blue-400" />
+            Top Performers Analysis
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Analysis of top-performing merchants and users contributing to revenue growth
+          </p>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="bg-black border-slate-200 dark:border-slate-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <Store className="h-5 w-5 text-blue-400" />
-              Top Merchants
+              Top Performing Merchants
             </CardTitle>
-            <CardDescription className="z-10 relative">Highest revenue generating merchants</CardDescription>
-          </div>
+            <CardDescription>
+              Leading merchants ranked by revenue generation and transaction volume
+            </CardDescription>
+          </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-slate-200 dark:border-slate-700">
-                  <TableHead className="text-slate-600 dark:text-slate-400">Merchant</TableHead>
-                  <TableHead className="text-slate-600 dark:text-slate-400">Revenue</TableHead>
-                  <TableHead className="text-slate-600 dark:text-slate-400">Transactions</TableHead>
-                  <TableHead className="text-slate-600 dark:text-slate-400">FX Margin</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {topMerchants.map((merchant) => (
-                  <TableRow key={merchant.id} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <TableCell className="font-medium text-slate-900 dark:text-white">{merchant.name}</TableCell>
-                    <TableCell className="text-green-400">
-                      {(merchant.revenue / 1000).toFixed(1)}K RWF
-                    </TableCell>
-                    <TableCell className="text-slate-600 dark:text-slate-300">{merchant.transactions}</TableCell>
-                    <TableCell className="text-blue-400">{merchant.margin}%</TableCell>
+            {loading ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-slate-200 dark:border-slate-700">
+                    <TableHead className="text-muted-foreground font-semibold">Merchant</TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">Revenue</TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">Transactions</TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">FX Margin</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {topMerchants.map((merchant) => (
+                    <TableRow key={merchant.id} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                      <TableCell className="font-medium text-foreground">{merchant.name}</TableCell>
+                      <TableCell className="text-green-400 font-semibold">
+                        {(merchant.revenue / 1000).toFixed(1)}K RWF
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{merchant.transactions.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-blue-400 border-blue-500/30">
+                          {merchant.margin}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-            <CardTitle className="z-10 relative text-slate-900 dark:text-white flex items-center gap-2">
+        <Card className="bg-black border-slate-200 dark:border-slate-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-400" />
-              Top Users
+              Top Revenue Users
             </CardTitle>
-            <CardDescription className="z-10 relative">Highest revenue generating users</CardDescription>
-          </div>
+            <CardDescription>
+              Users with the highest transaction volume and revenue contribution
+            </CardDescription>
+          </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="border-slate-200 dark:border-slate-700">
-                  <TableHead className="text-slate-600 dark:text-slate-400">User</TableHead>
-                  <TableHead className="text-slate-600 dark:text-slate-400">Revenue</TableHead>
-                  <TableHead className="text-slate-600 dark:text-slate-400">Transactions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {topUsers.map((user) => (
-                  <TableRow key={user.id} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <TableCell className="font-medium text-slate-900 dark:text-white">{user.name}</TableCell>
-                    <TableCell className="text-green-400">
-                      {(user.revenue / 1000).toFixed(1)}K RWF
-                    </TableCell>
-                    <TableCell className="text-slate-600 dark:text-slate-300">{user.transactions}</TableCell>
+            {loading ? (
+              <Skeleton className="h-[200px] w-full" />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-slate-200 dark:border-slate-700">
+                    <TableHead className="text-muted-foreground font-semibold">User</TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">Revenue</TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">Transactions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {topUsers.map((user) => (
+                    <TableRow key={user.id} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                      <TableCell className="font-medium text-foreground">{user.name}</TableCell>
+                      <TableCell className="text-green-400 font-semibold">
+                        {(user.revenue / 1000).toFixed(1)}K RWF
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.transactions.toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
+        </div>
       </div>
 
       {/* Cohort Analysis */}
-      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-        <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-          <CardTitle className="z-10 relative text-slate-900 dark:text-white">Cohort Analysis</CardTitle>
-          <CardDescription className="z-10 relative">User retention and revenue by cohort</CardDescription>
-        </div>
+      <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-400" />
+            Cohort Performance Analysis
+          </CardTitle>
+          <CardDescription>
+            User retention rates and revenue performance segmented by acquisition cohort
+          </CardDescription>
+        </CardHeader>
         <CardContent>
           {loading ? (
             <Skeleton className="h-[300px] w-full" />
@@ -280,18 +355,18 @@ export default function RevenuePage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-slate-200 dark:border-slate-700">
-                  <TableHead className="text-slate-600 dark:text-slate-400">Cohort</TableHead>
-                  <TableHead className="text-slate-600 dark:text-slate-400">Users</TableHead>
-                  <TableHead className="text-slate-600 dark:text-slate-400">Revenue</TableHead>
-                  <TableHead className="text-slate-600 dark:text-slate-400">Retention %</TableHead>
+                  <TableHead className="text-muted-foreground font-semibold">Cohort Period</TableHead>
+                  <TableHead className="text-muted-foreground font-semibold">Active Users</TableHead>
+                  <TableHead className="text-muted-foreground font-semibold">Total Revenue</TableHead>
+                  <TableHead className="text-muted-foreground font-semibold">Retention Rate</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {cohortData.map((cohort) => (
-                  <TableRow key={cohort.cohort} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                    <TableCell className="font-medium text-slate-900 dark:text-white">{cohort.cohort}</TableCell>
-                    <TableCell className="text-slate-600 dark:text-slate-300">{cohort.users.toLocaleString()}</TableCell>
-                    <TableCell className="text-green-400">
+                  <TableRow key={cohort.cohort} className="border-slate-200 dark:border-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <TableCell className="font-medium text-foreground">{cohort.cohort}</TableCell>
+                    <TableCell className="text-muted-foreground">{cohort.users.toLocaleString()}</TableCell>
+                    <TableCell className="text-green-400 font-semibold">
                       {(cohort.revenue / 1000000).toFixed(2)}M RWF
                     </TableCell>
                     <TableCell>
@@ -315,5 +390,3 @@ export default function RevenuePage() {
     </div>
   )
 }
-
-r

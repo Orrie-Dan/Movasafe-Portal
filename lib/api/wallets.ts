@@ -1,9 +1,8 @@
 // Wallet API functions
 
+import { TRANSACTION_BASE } from '@/lib/api/config'
 import { API_CONFIG } from '@/lib/config/api'
 import type { Wallet, CreateWalletAccountDTO, WalletResponse, WalletFilters } from '@/lib/types/wallets'
-
-const TRANSACTION_BASE = API_CONFIG.TRANSACTION.baseUrl
 
 // Helper function to get auth token
 function getToken(): string | null {
@@ -27,7 +26,18 @@ async function apiRequest<T>(
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const response = await fetch(`${TRANSACTION_BASE}${endpoint}`, {
+  // Use Next.js API proxy route to avoid mixed-content issues (HTTPS frontend -> HTTP backend)
+  // Convert backend endpoint to proxy route: /api/transactions/wallets/... -> /api/transactions/wallets/...
+  let proxyUrl = endpoint
+  if (!endpoint.startsWith('/api/transactions/')) {
+    // Ensure it starts with /api/transactions/
+    proxyUrl = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+    if (!proxyUrl.startsWith('/api/transactions/')) {
+      proxyUrl = `/api/transactions${proxyUrl.startsWith('/') ? proxyUrl : `/${proxyUrl}`}`
+    }
+  }
+
+  const response = await fetch(proxyUrl, {
     ...options,
     headers,
   })
@@ -91,15 +101,31 @@ export async function apiGetAllWallets(filters?: WalletFilters): Promise<Wallet[
   if (filters?.userId) queryParams.append('userId', filters.userId)
   if (filters?.minBalance) queryParams.append('minBalance', filters.minBalance.toString())
   if (filters?.maxBalance) queryParams.append('maxBalance', filters.maxBalance.toString())
+  if (filters?.page !== undefined) queryParams.append('page', filters.page.toString())
   if (filters?.limit) queryParams.append('limit', filters.limit.toString())
   if (filters?.offset) queryParams.append('offset', filters.offset.toString())
 
   const queryString = queryParams.toString()
   const endpoint = `${API_CONFIG.TRANSACTION.endpoints.allWallets}${queryString ? `?${queryString}` : ''}`
   
-  return apiRequest<Wallet[]>(endpoint, {
+  const raw = await apiRequest<any>(endpoint, {
     method: 'GET',
   })
+
+  // Normalize different response shapes to always return Wallet[]
+  if (raw?.data?.content && Array.isArray(raw.data.content)) {
+    return raw.data.content as Wallet[]
+  }
+
+  if (Array.isArray(raw)) {
+    return raw as Wallet[]
+  }
+
+  if (Array.isArray(raw?.data)) {
+    return raw.data as Wallet[]
+  }
+
+  return []
 }
 
 /**

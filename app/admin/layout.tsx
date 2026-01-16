@@ -4,11 +4,11 @@ import { AuthProvider } from '@/lib/auth/hooks'
 import { AdminSidebar } from '@/components/admin-sidebar'
 import { DashboardHeader } from '@/components/dashboard-header'
 import { useAuth } from '@/lib/auth/hooks'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
-  const { user, loading, isAuthenticated } = useAuth()
+  const { user, loading, isAuthenticated, isAdminUser } = useAuth()
   const router = useRouter()
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -18,34 +18,26 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return false
   })
 
+  // Route protection: Redirect to login if not authenticated or not admin
   useEffect(() => {
-    // Check for token directly if AuthProvider hasn't loaded user yet
     if (!loading) {
-      if (!isAuthenticated) {
-        // Double-check if token exists (AuthProvider might not have loaded yet)
-        if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('auth_token')
-          if (!token) {
-            router.push('/login')
-          }
-          // If token exists but user is null, wait a bit for AuthProvider to load
-          // This handles the case where apiMe() is still loading
-        } else {
-          router.push('/login')
-        }
+      if (!isAuthenticated || !isAdminUser) {
+        router.push('/login')
       }
     }
-  }, [loading, isAuthenticated, router])
+  }, [loading, isAuthenticated, isAdminUser, router])
 
+  // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-slate-900 dark:text-white">Loading...</div>
+      <div className="flex h-screen bg-black items-center justify-center">
+        <div className="text-white">Loading...</div>
       </div>
     )
   }
 
-  if (!isAuthenticated) {
+  // Don't render admin content if not authenticated or not admin
+  if (!isAuthenticated || !isAdminUser) {
     return null
   }
 
@@ -81,4 +73,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </AuthProvider>
   )
 }
-

@@ -47,13 +47,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     handleSetTheme(newTheme)
   }
 
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return <>{children}</>
+  // Always provide context, even before mounting
+  // This ensures useTheme works during SSR and initial render
+  const contextValue: ThemeContextType = {
+    theme,
+    setTheme: handleSetTheme,
+    toggleTheme,
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme, toggleTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   )
@@ -66,7 +69,3 @@ export function useTheme() {
   }
   return context
 }
-
-
-
-

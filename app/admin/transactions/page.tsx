@@ -139,7 +139,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-slate-50 dark:bg-slate-900/50">
+    <div className="p-6 lg:p-8 space-y-6 bg-black">
       <PageHeader
         title="Transactions"
         description="Investigate and manage individual transactions"
@@ -160,7 +160,7 @@ export default function TransactionsPage() {
         onSort={handleSort}
         pagination={pagination}
         totalPages={totalPages}
-        totalCount={sortedTransactions.length}
+        totalCount={transactions.length}
         onPageChange={handlePageChange}
         onRowClick={handleViewTransaction}
       />
@@ -191,7 +191,7 @@ export default function TransactionsPage() {
             actionModal.type === 'retry'
               ? `Are you sure you want to retry transaction ${actionModal.transaction.id}?`
               : actionModal.type === 'refund'
-              ? `Refund amount: ${formatCurrency(actionModal.transaction.amount, actionModal.transaction.currency)}. This action cannot be undone.`
+              ? `Refund amount: ${formatCurrency(actionModal.transaction.amount, actionModal.transaction.currency || actionModal.transaction.toDetails?.currency || actionModal.transaction.fromDetails?.currency || 'RWF')}. This action cannot be undone.`
               : actionModal.type === 'reverse'
               ? `Reverse transaction ${actionModal.transaction.id}. This will undo the transaction and cannot be undone.`
               : `Flag transaction ${actionModal.transaction.id} for manual review.`

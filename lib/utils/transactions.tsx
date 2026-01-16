@@ -1,7 +1,13 @@
+import React from 'react'
 import { Transaction, TransactionType, TransactionStatus } from '@/lib/api'
 import { ArrowDownRight, ArrowUpRight, FileText } from 'lucide-react'
 
-export function getTransactionStatusBadge(status: TransactionStatus | string): string {
+/* =========================
+   STATUS BADGE
+========================= */
+export function getTransactionStatusBadge(
+  status: TransactionStatus | string
+): string {
   switch (status) {
     case TransactionStatus.SUCCESSFUL:
       return 'bg-green-500/10 text-green-400 border-green-500/20'
@@ -18,7 +24,12 @@ export function getTransactionStatusBadge(status: TransactionStatus | string): s
   }
 }
 
-export function getTransactionTypeIcon(type: TransactionType | string): JSX.Element {
+/* =========================
+   TYPE ICON
+========================= */
+export function getTransactionTypeIcon(
+  type: TransactionType | string
+): React.ReactNode {
   switch (type) {
     case TransactionType.CASH_IN:
       return <ArrowDownRight className="h-4 w-4 text-green-400" />
@@ -29,12 +40,32 @@ export function getTransactionTypeIcon(type: TransactionType | string): JSX.Elem
   }
 }
 
-export function formatCurrency(amount: number, currency: string = 'RWF'): string {
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(2)}M ${currency}`
-  if (amount >= 1000) return `${(amount / 1000).toFixed(2)}K ${currency}`
+/* =========================
+   SAFE CURRENCY FORMATTER
+========================= */
+export function formatCurrency(
+  amount?: number | null,
+  currency: string = 'RWF'
+): string {
+  // 🚨 Guard against undefined / null / NaN
+  if (typeof amount !== 'number' || isNaN(amount)) {
+    return `0.00 ${currency}`
+  }
+
+  if (amount >= 1_000_000) {
+    return `${(amount / 1_000_000).toFixed(2)}M ${currency}`
+  }
+
+  if (amount >= 1_000) {
+    return `${(amount / 1_000).toFixed(2)}K ${currency}`
+  }
+
   return `${amount.toFixed(2)} ${currency}`
 }
 
+/* =========================
+   FAILURE CATEGORY
+========================= */
 export interface FailureInfo {
   category: string
   retryEligible: boolean
@@ -49,15 +80,19 @@ export function getFailureCategory(
   }
 
   const desc = (description || '').toLowerCase()
+
   if (desc.includes('insufficient') || desc.includes('balance')) {
     return { category: 'Insufficient Funds', retryEligible: false }
   }
+
   if (desc.includes('timeout') || desc.includes('network')) {
     return { category: 'Network Error', retryEligible: true }
   }
+
   if (desc.includes('invalid') || desc.includes('validation')) {
     return { category: 'Validation Error', retryEligible: false }
   }
+
   if (desc.includes('provider') || desc.includes('gateway')) {
     return { category: 'Provider Error', retryEligible: true }
   }
@@ -65,6 +100,9 @@ export function getFailureCategory(
   return { category: 'Unknown Error', retryEligible: true }
 }
 
+/* =========================
+   RELATED FAILURES
+========================= */
 export function getRelatedFailures(
   transaction: Transaction,
   allTransactions: Transaction[]
@@ -72,26 +110,33 @@ export function getRelatedFailures(
   if (transaction.status !== TransactionStatus.FAILED) return []
 
   return allTransactions
-    .filter(
-      (t) =>
-        t.id !== transaction.id &&
-        t.status === TransactionStatus.FAILED &&
-        (t.userId === transaction.userId ||
-          (t.description &&
-            transaction.description &&
-            t.description
-              .toLowerCase()
-              .includes(transaction.description.toLowerCase().split(' ')[0])))
-    )
+    .filter((t) => {
+      if (t.id === transaction.id) return false
+      if (t.status !== TransactionStatus.FAILED) return false
+
+      if (t.userId === transaction.userId) return true
+
+      if (t.description && transaction.description) {
+        const keyword = transaction.description.toLowerCase().split(' ')[0]
+        return t.description.toLowerCase().includes(keyword)
+      }
+
+      return false
+    })
     .slice(0, 5)
 }
 
+/* =========================
+   CHANNEL NAME
+========================= */
 export function getChannelName(description?: string): string {
   if (!description) return 'Wallet'
-  if (description.includes('ESCROW')) return 'Escrow'
-  if (description.includes('MOBILE')) return 'Mobile Money'
-  if (description.includes('BANK')) return 'Bank Transfer'
+
+  const desc = description.toUpperCase()
+
+  if (desc.includes('ESCROW')) return 'Escrow'
+  if (desc.includes('MOBILE')) return 'Mobile Money'
+  if (desc.includes('BANK')) return 'Bank Transfer'
+
   return 'Wallet'
 }
-
-

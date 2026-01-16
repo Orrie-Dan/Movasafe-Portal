@@ -33,8 +33,9 @@ export {
   apiCreateTransfer,
   apiCreateEscrowPayment
 } from './api/transactions'
-export type { Transaction, TransactionFilters, CreateTransferDTO, CreateEscrowPaymentDTO } from './types/transactions'
-export { TransactionType, TransactionStatus } from './types/transactions'
+export type { Transaction, PaginatedTransactionResponse } from './api/transactions'
+export type { TransactionFilters, CreateTransferDTO, CreateEscrowPaymentDTO } from './types/transactions'
+export { TransactionType, TransactionStatus, TransactionDescription } from './types/transactions'
 
 // Re-export wallet functions
 export {

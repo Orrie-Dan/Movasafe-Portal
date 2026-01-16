@@ -12,7 +12,13 @@ import type {
   BulkUserOperation,
   UserImportResult,
 } from '@/lib/types/user'
-import type { UpdateUserRoleDTO, ChangeCurrentPasswordDTO, ResetPasswordDTO, ForgotPasswordDTO } from '@/lib/types/auth'
+import type {
+  UpdateUserRoleDTO,
+  ChangeCurrentPasswordDTO,
+  ResetPasswordDTO,
+  ForgotPasswordDTO,
+  Role as AuthRole,
+} from '@/lib/types/auth'
 
 const AUTH_BASE = API_CONFIG.AUTH.baseUrl
 const endpoints = API_CONFIG.AUTH.endpoints.users
@@ -71,16 +77,101 @@ export async function apiGetUsers(params?: UserListParams): Promise<UserListResp
     })
   }
   const queryString = queryParams.toString()
-  const response = await apiRequest<any>(`${endpoints.all}${queryString ? `?${queryString}` : ''}`)
-  
-  // Adjust based on your ApiResponse structure
+  const raw = await apiRequest<any>(`${endpoints.all}${queryString ? `?${queryString}` : ''}`)
+
+  // Handle ApiResponse<{ content: User[] }> shape from /api/auth/users/all
+  const dataContainer = raw?.data ?? raw
+  const content = Array.isArray(dataContainer?.content)
+    ? dataContainer.content
+    : Array.isArray(dataContainer)
+    ? dataContainer
+    : []
+
+  const mapApiUserToUser = (u: any): User => {
+    const fullName =
+      u.name ||
+      [u.firstname, u.lastname].filter(Boolean).join(' ').trim() ||
+      u.username ||
+      ''
+
+    const statusRaw = (u.status || 'ACTIVE').toString().toUpperCase()
+    let status: User['status']
+    switch (statusRaw) {
+      case 'ACTIVE':
+        status = 'active'
+        break
+      case 'SUSPENDED':
+        status = 'suspended'
+        break
+      case 'LOCKED':
+        status = 'locked'
+        break
+      case 'INACTIVE':
+      case 'NOT_READY':
+        status = 'inactive'
+        break
+      default:
+        status = 'inactive'
+    }
+
+    const roles: AuthRole[] =
+      (u.roles || []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        displayName: r.name,
+        description: '',
+        permissions: (r.permissions || []).map((p: any) => p.name),
+        isSystem: false,
+        createdAt: '',
+        updatedAt: '',
+      })) ?? []
+
+    const primaryRole = roles[0]?.name || 'USER'
+
+    return {
+      id: u.id,
+      email: u.email || '',
+      fullName,
+      username: u.username,
+      phoneNumber: u.phoneNumber,
+      nationalId: u.nationalId,
+      userType: u.userType,
+      role: primaryRole,
+      roles,
+      permissions: undefined,
+      status,
+      emailVerified: !!u.emailVerified,
+      kycVerified: u.kyc_verified ?? u.kycVerified ?? undefined,
+      mfaEnabled: false,
+      lastLogin: u.lastLogin || undefined,
+      createdAt: u.registrationDate || u.createdAt || new Date().toISOString(),
+      updatedAt: u.updatedAt || u.registrationDate || new Date().toISOString(),
+      profile: {
+        firstName: u.firstname,
+        lastName: u.lastname,
+        phone: u.phoneNumber,
+      },
+      // Preserve raw API name fields for UI convenience (used in columns)
+      // These extra properties are accessed via (user as any).firstname / lastname
+      firstname: u.firstname,
+      lastname: u.lastname,
+    }
+  }
+
+  const users: User[] = content.map(mapApiUserToUser)
+
+  const total =
+    dataContainer?.totalElements ?? dataContainer?.total ?? users.length
+  const page = params?.page || (dataContainer?.pageable?.pageNumber ?? 0) + 1
+  const limit = params?.limit || dataContainer?.pageable?.pageSize || users.length || 25
+
   return {
-    data: response.data || response || [],
+    data: users,
     pagination: {
-      page: params?.page || 1,
-      limit: params?.limit || 25,
-      total: response.total || response.data?.length || 0,
-      totalPages: Math.ceil((response.total || response.data?.length || 0) / (params?.limit || 25)),
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / (limit || 1)),
     }
   }
 }
@@ -272,7 +363,7 @@ export async function apiImportUsers(file: File): Promise<UserImportResult> {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const response = await fetch(`${API_BASE_URL}/admin/users/import`, {
+  const response = await fetch(`${API_CONFIG.AUTH.baseUrl}/admin/users/import`, {
     method: 'POST',
     headers,
     body: formData,
@@ -303,7 +394,7 @@ export async function apiExportUsers(params?: UserListParams): Promise<Blob> {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const response = await fetch(`${API_BASE_URL}/admin/users/export${queryString ? `?${queryString}` : ''}`, {
+  const response = await fetch(`${API_CONFIG.AUTH.baseUrl}/admin/users/export${queryString ? `?${queryString}` : ''}`, {
     headers,
   })
 

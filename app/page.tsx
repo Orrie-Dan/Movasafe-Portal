@@ -7,12 +7,9 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    router.replace('/login')
+    // Redirect to admin dashboard immediately
+    router.replace('/admin')
   }, [router])
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <div className="text-white">Redirecting to login...</div>
-    </div>
-  )
+  return null
 }

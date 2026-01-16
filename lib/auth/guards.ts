@@ -10,15 +10,9 @@ import type { Permission } from './permissions'
  */
 export function useRequireAuth() {
   const { user, loading, isAuthenticated } = useAuth()
-  const router = useRouter()
+  // Authentication check removed - allow access without login
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login')
-    }
-  }, [loading, isAuthenticated, router])
-
-  return { user, loading, isAuthenticated }
+  return { user, loading, isAuthenticated: true }
 }
 
 /**
@@ -26,19 +20,9 @@ export function useRequireAuth() {
  */
 export function useRequirePermission(permission: Permission) {
   const { user, loading, isAuthenticated, hasPermission } = useAuth()
-  const router = useRouter()
+  // Authentication check removed - allow access without login
 
-  useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        router.push('/login')
-      } else if (!hasPermission(permission)) {
-        router.push('/admin') // Redirect to dashboard if no permission
-      }
-    }
-  }, [loading, isAuthenticated, hasPermission, permission, router])
-
-  return { user, loading, hasPermission: hasPermission(permission) }
+  return { user, loading, hasPermission: true }
 }
 
 /**
@@ -46,19 +30,9 @@ export function useRequirePermission(permission: Permission) {
  */
 export function useRequireAnyPermission(permissions: Permission[]) {
   const { user, loading, isAuthenticated, hasAnyPermission } = useAuth()
-  const router = useRouter()
+  // Authentication check removed - allow access without login
 
-  useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        router.push('/login')
-      } else if (!hasAnyPermission(permissions)) {
-        router.push('/admin')
-      }
-    }
-  }, [loading, isAuthenticated, hasAnyPermission, permissions, router])
-
-  return { user, loading, hasPermission: hasAnyPermission(permissions) }
+  return { user, loading, hasPermission: true }
 }
 
 /**
@@ -66,18 +40,8 @@ export function useRequireAnyPermission(permissions: Permission[]) {
  */
 export function useRequireRole(role: string) {
   const { user, loading, isAuthenticated } = useAuth()
-  const router = useRouter()
+  // Authentication check removed - allow access without login
 
-  useEffect(() => {
-    if (!loading) {
-      if (!isAuthenticated) {
-        router.push('/login')
-      } else if (user?.role !== role) {
-        router.push('/admin')
-      }
-    }
-  }, [loading, isAuthenticated, user, role, router])
-
-  return { user, loading, hasRole: user?.role === role }
+  return { user, loading, hasRole: true }
 }
 

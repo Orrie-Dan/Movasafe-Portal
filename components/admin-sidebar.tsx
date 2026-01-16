@@ -79,7 +79,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
 
   const operationsSection = [
     { href: '/admin/transactions', label: 'Transactions', icon: FileText, badge: null },
-    { href: '/admin/users', label: 'Users & Wallets', icon: Users, badge: null },
+    { href: '/admin/users', label: 'Users', icon: Users, badge: null },
     { href: '/admin/wallets', label: 'Wallets', icon: Wallet, badge: null },
   ]
 
@@ -104,7 +104,13 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
 
   const renderNavItem = (item: { href: string; label: string; icon: any; badge?: number | null }) => {
     const Icon = item.icon
-    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+    // Special handling for /admin to only match exactly, not sub-routes
+    let isActive: boolean
+    if (item.href === '/admin') {
+      isActive = pathname === '/admin' || pathname === '/admin/'
+    } else {
+      isActive = pathname === item.href || pathname?.startsWith(item.href + '/')
+    }
     
     return (
       <Link
@@ -116,7 +122,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
           collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5",
           isActive
             ? "bg-blue-600 text-white"
-            : "text-slate-400 hover:bg-slate-800/50 hover:text-white"
+            : "text-black dark:text-white hover:bg-slate-800/50 hover:text-white"
         )}
       >
         <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
@@ -172,7 +178,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
         <div>
           {!collapsed && (
             <div className="px-4 mb-3">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">OVERVIEW</h3>
+              <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">OVERVIEW</h3>
             </div>
           )}
           <div className="space-y-1">
@@ -184,7 +190,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
         <div>
           {!collapsed && (
             <div className="px-4 mb-3">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">OPERATIONS</h3>
+              <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">OPERATIONS</h3>
             </div>
           )}
           <div className="space-y-1">
@@ -196,7 +202,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
         <div>
           {!collapsed && (
             <div className="px-4 mb-3">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">RISK & COMPLIANCE</h3>
+              <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">RISK & COMPLIANCE</h3>
             </div>
           )}
           <div className="space-y-1">
@@ -208,7 +214,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
         <div>
           {!collapsed && (
             <div className="px-4 mb-3">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">SYSTEM</h3>
+              <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">SYSTEM</h3>
             </div>
           )}
           <div className="space-y-1">
@@ -220,7 +226,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
         <div>
           {!collapsed && (
             <div className="px-4 mb-3">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">ADMIN & SECURITY</h3>
+              <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">ADMIN & SECURITY</h3>
             </div>
           )}
           <div className="space-y-1">
@@ -238,19 +244,19 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
           collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5"
         )}>
           {collapsed ? (
-            <ThemeToggle 
-              variant="ghost" 
-              size="icon"
-              className="text-slate-400 hover:bg-slate-800/50 hover:text-white dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white"
-            />
+              <ThemeToggle 
+                variant="ghost" 
+                size="icon"
+                className="text-black dark:text-white hover:bg-slate-800/50 hover:text-white dark:hover:bg-slate-800/50"
+              />
           ) : (
             <div className="flex items-center gap-3 w-full">
               <ThemeToggle 
                 variant="ghost" 
                 size="default"
-                className="flex-1 justify-start text-slate-400 hover:bg-slate-800/50 hover:text-white dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white"
+                className="flex-1 justify-start text-black dark:text-white hover:bg-slate-800/50 hover:text-white dark:hover:bg-slate-800/50"
               />
-              <span className="text-sm text-slate-400 dark:text-slate-400">Theme</span>
+              <span className="text-sm text-black dark:text-white">Theme</span>
             </div>
           )}
         </div>
@@ -263,7 +269,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
             collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5 gap-3",
             pathname === '/admin/settings'
               ? "bg-slate-800 text-white dark:bg-slate-800 dark:text-white"
-              : "text-slate-400 hover:bg-slate-800/50 hover:text-white dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white"
+              : "text-black dark:text-white hover:bg-slate-800/50 hover:text-white dark:hover:bg-slate-800/50"
           )}
         >
           <Settings className="h-4 w-4 flex-shrink-0" />
@@ -278,7 +284,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
           href="#"
           title={collapsed ? "Help" : undefined}
           className={cn(
-            "flex items-center rounded-lg text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors relative",
+            "flex items-center rounded-lg text-black dark:text-white hover:bg-slate-800/50 hover:text-white transition-colors relative",
             collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5 gap-3"
           )}
         >

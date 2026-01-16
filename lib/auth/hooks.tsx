@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useMemo, createContext, useContext, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { apiMe } from '@/lib/api/auth'
 import type { User } from './types'
 import { hasPermission, hasAnyPermission, hasAllPermissions, type Permission } from './permissions'
+import { getToken, logout as authLogout, isAdmin } from '@/lib/auth'
 
 interface AuthContextType {
   user: User | null
   loading: boolean
   isAuthenticated: boolean
+  isAdminUser: boolean
   hasPermission: (permission: Permission) => boolean
   hasAnyPermission: (permissions: Permission[]) => boolean
   hasAllPermissions: (permissions: Permission[]) => boolean
@@ -30,64 +31,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUser = async () => {
     try {
-      // Check if token exists first
       if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('auth_token')
+        const token = getToken()
+        
+        // Check if token exists
         if (!token) {
           setUser(null)
           setLoading(false)
           return
         }
-        
-        // Try to load user from localStorage first (stored during login)
+
+        // Load user data from localStorage
         const storedUserData = localStorage.getItem('user_data')
         if (storedUserData) {
           try {
             const userData = JSON.parse(storedUserData)
-            setUser(userData)
-            // Still try to refresh from API in background, but don't block
-            apiMe().then((response) => {
-              setUser(response.user)
-              localStorage.setItem('user_data', JSON.stringify(response.user))
-            }).catch((error) => {
-              console.warn('apiMe failed, using stored user data:', error.message)
-            })
-            setLoading(false)
-            return
-          } catch (e) {
-            // Invalid stored data, continue to API call
-          }
-        }
-      }
-      
-      // Try to load user from API
-      try {
-        const response = await apiMe()
-        setUser(response.user)
-        // Store for future use
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('user_data', JSON.stringify(response.user))
-        }
-      } catch (meError: any) {
-        // If apiMe fails (timeout, etc), use stored data if available
-        console.warn('apiMe failed, trying stored user data:', meError.message)
-        if (typeof window !== 'undefined') {
-          const storedUserData = localStorage.getItem('user_data')
-          if (storedUserData) {
-            try {
-              const userData = JSON.parse(storedUserData)
-              setUser(userData)
-            } catch (e) {
+            
+            // Verify user is an admin
+            const adminCheck = isAdmin()
+            if (!adminCheck) {
+              // User is not an admin, clear everything and redirect
+              authLogout()
               setUser(null)
+              setLoading(false)
+              router.push('/login')
+              return
             }
-          } else {
+            
+            setUser(userData)
+          } catch (e) {
+            // Invalid stored data, clear and redirect
+            authLogout()
             setUser(null)
           }
         } else {
+          // No user data but token exists - might be stale, clear it
+          authLogout()
           setUser(null)
         }
       }
     } catch (error) {
+      authLogout()
       setUser(null)
     } finally {
       setLoading(false)
@@ -99,40 +83,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = async () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('user_data')
-      setUser(null)
-      router.push('/login')
-    }
+    authLogout()
+    setUser(null)
+    router.push('/login')
   }
 
+  // Check permissions based on user role
   const checkPermission = (permission: Permission): boolean => {
-    if (!user) return false
-    const userPermissions = user.permissions || []
-    return hasPermission(userPermissions, permission)
+    if (!user || !isAdmin()) return false
+    // For now, admin has all permissions
+    // Can be extended to check specific permissions from user.roles
+    return true
   }
 
   const checkAnyPermission = (permissions: Permission[]): boolean => {
-    if (!user) return false
-    const userPermissions = user.permissions || []
-    return hasAnyPermission(userPermissions, permissions)
+    if (!user || !isAdmin()) return false
+    return true
   }
 
   const checkAllPermissions = (permissions: Permission[]): boolean => {
-    if (!user) return false
-    const userPermissions = user.permissions || []
-    return hasAllPermissions(userPermissions, permissions)
+    if (!user || !isAdmin()) return false
+    return true
   }
 
-  // Check if user is authenticated - true if user exists OR token exists
-  // This allows access even if apiMe() times out but token is present
+  // Check authentication status
   const isAuthenticated = useMemo(() => {
-    if (user) return true
-    if (typeof window !== 'undefined') {
-      return !!localStorage.getItem('auth_token')
-    }
-    return false
+    const token = getToken()
+    const adminCheck = isAdmin()
+    return token !== null && adminCheck && user !== null
+  }, [user])
+
+  // Check if user is admin
+  const isAdminUser = useMemo(() => {
+    return isAdmin() && user !== null
   }, [user])
 
   return (
@@ -141,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         loading,
         isAuthenticated,
+        isAdminUser,
         hasPermission: checkPermission,
         hasAnyPermission: checkAnyPermission,
         hasAllPermissions: checkAllPermissions,

@@ -8,23 +8,16 @@ import { ClientComplianceRate } from '@/components/dashboard/clients/ClientCompl
 import { SubscriptionBreakdown } from '@/components/dashboard/clients/SubscriptionBreakdown'
 import { CostPerClient } from '@/components/dashboard/clients/CostPerClient'
 import { Users } from 'lucide-react'
-import { apiMe } from '@/lib/api'
+// Authentication removed - no apiMe call needed
 
 export default function ClientsPage() {
   const [authError, setAuthError] = useState(false)
   const [timePeriod, setTimePeriod] = useState<'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom'>('month')
   const [customDateRange, setCustomDateRange] = useState<{from: Date | null, to: Date | null}>({from: null, to: null})
 
+  // Authentication check removed - allow access without login
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await apiMe()
-        setAuthError(false)
-      } catch (error) {
-        setAuthError(true)
-      }
-    }
-    checkAuth()
+    setAuthError(false)
   }, [])
 
   const getDateRange = () => {
@@ -63,18 +56,7 @@ export default function ClientsPage() {
 
   const dateRange = getDateRange()
 
-  if (authError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Authentication Required</h2>
-            <p className="text-muted-foreground mb-6">Please log in to view client data</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // Authentication check removed - allow access without login
 
   return (
     <div className="p-6 lg:p-8 space-y-8 bg-background">

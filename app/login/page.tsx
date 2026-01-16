@@ -1,228 +1,139 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import { apiLogin } from '@/lib/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Mail, Lock, Twitter, Instagram, Facebook } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { Loader2, Wallet } from 'lucide-react'
+import { adminLogin } from '@/lib/auth'
+import type { LoginRequest } from '@/lib/auth'
 
 export default function LoginPage() {
-  const [mounted, setMounted] = useState(false)
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [emailOrPhone, setEmailOrPhone] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const onSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
+    setLoading(true)
+
     try {
-      // Login response already contains user data, no need to call apiMe()
-      const loginResponse = await apiLogin({ email, password })
-      
-      // Store user data in localStorage for use by AuthProvider
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user_data', JSON.stringify(loginResponse.user))
+      const loginRequest: LoginRequest = {
+        emailOrPhoneNumber: emailOrPhone.trim(),
+        password,
       }
+
+      await adminLogin(loginRequest)
       
-      // Use the user data from login response
-      const user = loginResponse.user
-      const userRole = user.role?.toLowerCase() || 'user'
-      const roles = user.roles || []
-      const permissions = user.permissions || []
-      const roleName = roles[0]?.name?.toLowerCase() || userRole
-      
-      // Debug logging
-      console.log('Login successful - User data:', {
-        role: userRole,
-        roleName,
-        roles: roles.map((r: any) => r.name),
-        permissions,
-      })
-      
-      // Route based on role/permissions - default to admin portal for authenticated users
-      const hasAdminRole = roleName === 'admin' || 
-                           roleName === 'super_admin' || 
-                           roleName.includes('admin')
-      
-      const hasAdminPermissions = permissions.some((p: string) => 
-        ['VIEW_USERS', 'VIEW_ROLES', 'MANAGE_SYSTEM_SETTINGS', 'VIEW_LOGS'].includes(p)
-      )
-      
-      const hasOfficerRole = roleName === 'officer' || roleName.includes('officer')
-      
-      // Route to admin portal if user has admin role/permissions, or if they have any permissions
-      // (assuming authenticated users with permissions should access admin portal)
-      if (hasAdminRole || hasAdminPermissions || permissions.length > 0) {
-        console.log('Redirecting to admin portal')
-        router.replace('/admin')
-      } else if (hasOfficerRole) {
-        console.log('Redirecting to officer portal')
-        router.replace('/officer')
-      } else {
-        // Default to admin portal for authenticated users (they can be redirected if needed)
-        console.log('Redirecting to admin portal (default for authenticated users)')
-        router.replace('/admin')
-      }
-    } catch (err: any) {
-      let errorMessage = err.message || 'Login failed'
-      if (errorMessage.includes('Invalid email or password')) {
-        errorMessage = 'Invalid email or password. Please check your credentials and try again.'
-      }
-      // Handle timeout errors gracefully
-      if (errorMessage.includes('timeout') || errorMessage.includes('504') || errorMessage.includes('Gateway')) {
-        errorMessage = 'The server is taking too long to respond. Please try again.'
-      }
+      // Redirect to admin dashboard on success
+      router.push('/admin')
+      router.refresh()
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
       setError(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
+  const handleInputChange = () => {
+    // Clear error when user starts typing
+    if (error) {
+      setError(null)
+    }
+  }
+
   return (
-    <div className="min-h-screen w-full bg-black relative overflow-hidden">
-      {/* Main Content Frame - Full Screen */}
-      <div 
-        className={`w-full h-screen overflow-hidden bg-slate-900 transition-all duration-700 ${
-          mounted ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-        }`}
-      >
-        <div className="grid lg:grid-cols-2 h-full">
-          {/* Left Panel - Image and Marketing Text */}
-          <div className="relative hidden lg:block">
-            <div className="absolute inset-0">
-              <Image
-                src="/images/Wallet.jpg"
-                alt="Movasafe Digital Wallet"
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-black/60" />
-            </div>
-            
-            {/* Template label - Top Left */}
-            <div className="absolute top-6 left-6 z-10">
-              <div className="flex items-center gap-2 text-white text-sm">
-                <span className="border border-dashed border-white/50 px-2 py-1 rounded">Movasafe</span>
-              </div>
-            </div>
-
-            {/* Marketing Content - Bottom Left */}
-            <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-              <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                 Movasafe Portal
-              </h2>
-              <p className="text-base md:text-lg text-white/90 font-light drop-shadow-md mb-8">
-                Secure digital wallet and payment platform for seamless transactions and escrow services.
-              </p>
-              
-              
-            </div>
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo/Brand Section */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-900 border border-slate-700 rounded-lg mb-4">
+            <Wallet className="w-8 h-8 text-white" strokeWidth={1.5} />
           </div>
-
-          {/* Right Panel - Login Form */}
-          <div className="bg-black p-8 md:p-12 flex flex-col justify-center relative">
-            {/* Template label - Top Right */}
-            <div className="absolute top-6 right-6">
-              <div className="flex items-center gap-2 text-white text-sm">
-                <span className="border border-dashed border-white/50 px-2 py-1 rounded">Movasafe</span>
-              </div>
-            </div>
-
-            <div className="max-w-md mx-auto w-full space-y-6">
-              {error && (
-                <div className="text-sm text-red-400 bg-red-900/20 border border-red-500/30 rounded p-3">
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={onSubmit} className="space-y-5">
-                {/* Email Field */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white" htmlFor="email">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-white/50">
-                      <Mail className="h-4 w-4" />
-                    </div>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="pl-10 bg-black border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-white/20"
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                </div>
-
-                {/* Password Field */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white" htmlFor="password">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-white/50">
-                      <Lock className="h-4 w-4" />
-                    </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="pl-10 bg-black border-white/20 text-white placeholder:text-white/40 focus:border-white/40 focus:ring-white/20"
-                      placeholder="Enter your password"
-                    />
-                  </div>
-                </div>
-
-                {/* Forgot Password */}
-                <div className="flex justify-end">
-                  <Link href="#" className="text-sm text-white/70 hover:text-white transition-colors">
-                    Forgot your password?
-                  </Link>
-                </div>
-
-                {/* Sign In Button */}
-                <Button
-                  type="submit"
-                  className="w-full h-12 bg-white hover:bg-white/90 text-black font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="inline-flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Signing in...
-                    </span>
-                  ) : (
-                    'SIGN IN'
-                  )}
-                </Button>
-              </form>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">MovaSafe Admin Portal</h1>
+          <p className="text-slate-400 text-sm">Sign in to access the admin dashboard</p>
         </div>
-      </div>
 
-      {/* Bottom Bar - Presented by */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-        <p className="text-white/60 text-xs">presented by <span className="font-bold">Movasafe</span></p>
+        {/* Login Card */}
+        <div className="bg-black border border-slate-800 rounded-lg p-8 shadow-2xl">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email or Phone Number Field */}
+            <div className="space-y-2">
+              <Label htmlFor="emailOrPhone" className="text-white">
+                Email or Phone Number
+              </Label>
+              <Input
+                id="emailOrPhone"
+                type="text"
+                placeholder="Enter your email or phone number"
+                value={emailOrPhone}
+                onChange={(e) => {
+                  setEmailOrPhone(e.target.value)
+                  handleInputChange()
+                }}
+                className="bg-black border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
+                required
+                disabled={loading}
+                autoComplete="username"
+              />
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-white">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  handleInputChange()
+                }}
+                className="bg-black border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
+                required
+                disabled={loading}
+                autoComplete="current-password"
+              />
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 rounded-md p-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              variant="gradient"
+              className="w-full h-11 text-base font-semibold"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign in as Admin'
+              )}
+            </Button>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-6 text-center text-sm text-slate-500">
+          <p>© {new Date().getFullYear()} MovaSafe. All rights reserved.</p>
+        </div>
       </div>
     </div>
   )

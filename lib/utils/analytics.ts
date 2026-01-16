@@ -96,7 +96,7 @@ export function computeTransactionAnalyticsData(
         acc[type] = { total: 0, successful: 0, failed: 0, totalAmount: 0 }
       }
       acc[type].total++
-      acc[type].totalAmount += t.amount
+      acc[type].totalAmount += t.amount || 0
       if (t.status === TransactionStatus.SUCCESSFUL) acc[type].successful++
       if (t.status === TransactionStatus.FAILED) acc[type].failed++
       return acc
@@ -106,7 +106,12 @@ export function computeTransactionAnalyticsData(
 
   return {
     byType: Object.entries(byType).map(([type, data]) => ({
-      type: type === TransactionType.CASH_IN ? 'Cash In' : 'Cash Out',
+      type:
+        type === TransactionType.CASH_IN
+          ? 'Cash In'
+          : type === TransactionType.CASH_OUT
+            ? 'Cash Out'
+            : String(type),
       count: data.total,
       successful: data.successful,
       failed: data.failed,
@@ -201,8 +206,12 @@ export function computeRevenueData(
         t.status === TransactionStatus.SUCCESSFUL
     )
 
-    const fees = dayTransactions.reduce((sum, t) => sum + (t.commissionAmount || 0), 0)
-    const revenue = dayTransactions.reduce((sum, t) => sum + t.amount, 0)
+    // Fees can be returned as chargeFee (preferred) or commissionAmount (legacy)
+    const fees = dayTransactions.reduce(
+      (sum, t) => sum + (t.chargeFee ?? t.commissionAmount ?? 0),
+      0
+    )
+    const revenue = dayTransactions.reduce((sum, t) => sum + (t.amount || 0), 0)
 
     return {
       date: format(day, 'MMM d'),
@@ -221,15 +230,20 @@ export function computeRevenueByTypeData(transactions: Transaction[]) {
         if (!acc[type]) {
           acc[type] = { revenue: 0, fees: 0 }
         }
-        acc[type].revenue += t.amount
-        acc[type].fees += t.commissionAmount || 0
+        acc[type].revenue += t.amount || 0
+        acc[type].fees += t.chargeFee ?? t.commissionAmount ?? 0
         return acc
       },
       {} as Record<string, { revenue: number; fees: number }>
     )
 
   return Object.entries(byType).map(([type, data]) => ({
-    type: type === TransactionType.CASH_IN ? 'Cash In' : 'Cash Out',
+    type:
+      type === TransactionType.CASH_IN
+        ? 'Cash In'
+        : type === TransactionType.CASH_OUT
+          ? 'Cash Out'
+          : String(type),
     revenue: data.revenue,
     fees: data.fees,
   }))
@@ -305,8 +319,9 @@ export function computeSummaryMetrics(transactions: Transaction[]): SummaryMetri
   const failed = transactions.filter((t) => t.status === TransactionStatus.FAILED)
   const uniqueUsers = new Set(transactions.map((t) => t.userId))
 
-  const totalVolume = successful.reduce((sum, t) => sum + t.amount, 0)
-  const totalFees = successful.reduce((sum, t) => sum + (t.commissionAmount || 0), 0)
+  const totalVolume = successful.reduce((sum, t) => sum + (t.amount || 0), 0)
+  // Fees can be returned as chargeFee (preferred) or commissionAmount (legacy)
+  const totalFees = successful.reduce((sum, t) => sum + (t.chargeFee ?? t.commissionAmount ?? 0), 0)
   const successRate =
     transactions.length > 0 ? (successful.length / transactions.length) * 100 : 0
 

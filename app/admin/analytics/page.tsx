@@ -85,19 +85,7 @@ export default function AnalyticsPage() {
     [filteredTransactions]
   )
 
-  if (authError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900/50">
-        <Card className="bg-card border-border">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
-            <p className="text-muted-foreground mb-6">Please log in to view analytics</p>
-            <Button onClick={() => router.push('/login')}>Go to Login</Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // Authentication check removed - allow access without login
 
   return (
     <div className="p-6 lg:p-8 space-y-8 bg-slate-50 dark:bg-slate-900/50">

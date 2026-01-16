@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-// API imports removed - using mock data
-// import { apiGetUsers, apiMe, apiGetAllTransactions, apiGetAllWallets, apiGetEscrows, type Transaction, type Wallet, TransactionStatus, EscrowStatus } from '@/lib/api'
+import { useOverviewData } from '@/hooks/useOverviewData'
 import type { Transaction, Wallet, TransactionStatus, EscrowStatus } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -113,15 +112,6 @@ export default function AdminDashboard() {
     return () => observer.disconnect()
   }, [])
   const [authLoading, setAuthLoading] = useState(true)
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [wallets, setWallets] = useState<Wallet[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [users, setUsers] = useState<any[]>([])
-  const [organizations, setOrganizations] = useState<any[]>([])
-  const [usersLoading, setUsersLoading] = useState(false)
-  const [usersError, setUsersError] = useState<string | null>(null)
-  const [statusPieActiveIndex, setStatusPieActiveIndex] = useState<number | undefined>(undefined)
   const [isMobile, setIsMobile] = useState(false)
   const [timePeriod, setTimePeriod] = useState<'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom'>('month')
   const [customDateRange, setCustomDateRange] = useState<{from: Date | null, to: Date | null}>({from: null, to: null})
@@ -134,19 +124,12 @@ export default function AdminDashboard() {
     }
     return false
   })
-  const [transactionsLoading, setTransactionsLoading] = useState(false)
-  const [walletsLoading, setWalletsLoading] = useState(false)
-  
-  // Set loading to false on mount since we're not fetching data
-  useEffect(() => {
-    setLoading(false)
-    setTransactionsLoading(false)
-    setWalletsLoading(false)
-    setUsersLoading(false)
-  }, [])
   const [escrows, setEscrows] = useState<any[]>([])
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [autoRefresh, setAutoRefresh] = useState(true)
+  
+  // Use the overview data hook to fetch real API data
+  const overviewData = useOverviewData()
 
   // Detect mobile screen size
   useEffect(() => {
@@ -158,31 +141,11 @@ export default function AdminDashboard() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Check authentication before rendering
+  // Authentication check removed - allow access without login
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check if token exists first
-        if (typeof window !== 'undefined') {
-          const token = localStorage.getItem('auth_token')
-          if (!token) {
-            router.push('/login')
-            setAuthLoading(false)
-            return
-          }
-        }
-        
-        // API call removed - just check for token
-        setIsAuthenticated(true)
-      } catch (error) {
-        console.error('Authentication failed:', error)
-        router.push('/login')
-      } finally {
-        setAuthLoading(false)
-      }
-    }
-    checkAuth()
-  }, [router])
+    setIsAuthenticated(true)
+    setAuthLoading(false)
+  }, [])
 
 
   // API calls removed - using mock data
@@ -210,10 +173,7 @@ export default function AdminDashboard() {
   //   return () => clearInterval(interval)
   // }, [autoRefresh, isAuthenticated, timePeriod, customDateRange])
 
-  // Debug: Log users state changes
-  useEffect(() => {
-    console.log('Users state changed:', { count: users.length, users })
-  }, [users])
+  // Debug: Log users state changes - removed since users state is no longer used
 
   // API functions removed - using mock data
   // const fetchUsersAndOrgs = async () => {
@@ -331,123 +291,72 @@ export default function AdminDashboard() {
   // }
 
 
-  // Calculate statistics
+  // Use metrics from overviewData hook
   const stats = {
-    total: transactions.length,
-    successful: transactions.filter(t => t.status === TransactionStatus.SUCCESSFUL).length,
-    pending: transactions.filter(t => t.status === TransactionStatus.PENDING).length,
-    failed: transactions.filter(t => t.status === TransactionStatus.FAILED).length,
-    totalVolume: transactions
-      .filter(t => t.status === TransactionStatus.SUCCESSFUL)
-      .reduce((sum, t) => sum + t.amount, 0),
-    totalCommission: transactions
-      .filter(t => t.commissionAmount)
-      .reduce((sum, t) => sum + (t.commissionAmount || 0), 0),
-    activeWallets: wallets.length,
+    total: overviewData.totalTransactionsToday,
+    successful: overviewData.transactionsToday,
+    pending: overviewData.pendingTransactions,
+    failed: Math.round((overviewData.failedTransactionsPercent / 100) * overviewData.totalTransactionsToday),
+    totalVolume: overviewData.totalVolumeToday,
+    totalVolumeThisMonth: overviewData.totalVolumeThisMonth,
+    totalCommission: overviewData.revenueToday,
+    activeWallets: overviewData.newWalletsToday,
   }
 
-  // Calculate fintech KPIs
-  const fintechKPIs = useMemo(() => {
-    const today = startOfDay(new Date())
-    const todayTransactions = transactions.filter(t => 
-      parseISO(t.createdAt) >= today
-    )
-    const successfulToday = todayTransactions.filter(t => t.status === TransactionStatus.SUCCESSFUL).length
-    const totalToday = todayTransactions.length
-    const successRate = totalToday > 0 ? (successfulToday / totalToday) * 100 : 0
-    const revenueToday = todayTransactions
-      .filter(t => t.status === TransactionStatus.SUCCESSFUL)
-      .reduce((sum, t) => sum + (t.commissionAmount || 0), 0)
-    const totalWalletBalance = wallets.reduce((sum, w) => sum + w.walletBalance, 0)
-    const activeUsers = new Set(transactions.map(t => t.userId)).size
+  // Use fintech KPIs from overviewData hook
+  const fintechKPIs = {
+    activeUsers: overviewData.activeUsers24h,
+    activeUsers7d: overviewData.activeUsers7d,
+    walletBalance: overviewData.walletBalance,
+    transactionsToday: overviewData.transactionsToday,
+    successRate: overviewData.successRate,
+    revenueToday: overviewData.revenueToday,
+  }
 
-    return {
-      activeUsers,
-      walletBalance: totalWalletBalance,
-      transactionsToday: totalToday,
-      successRate,
-      revenueToday,
-    }
-  }, [transactions, wallets])
-
-  // Calculate trend data for charts
+  // Use trend data from overviewData hook
   const transactionTrendData = useMemo(() => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(new Date(), 6 - i)
-      const dayTransactions = transactions.filter(t => {
-        const txDate = parseISO(t.createdAt)
-        return format(txDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-      })
-      const successful = dayTransactions.filter(t => t.status === TransactionStatus.SUCCESSFUL).length
-      const failed = dayTransactions.filter(t => t.status === TransactionStatus.FAILED).length
-      return {
-        date: format(date, 'MMM d'),
-        volume: dayTransactions.length,
-        successful,
-        failed,
-        errorRate: dayTransactions.length > 0 ? (failed / dayTransactions.length) * 100 : 0,
-      }
-    })
-    return last7Days
-  }, [transactions])
+    return overviewData.volumeTrend7d.map((item, index) => ({
+      date: item.date,
+      volume: item.volume,
+      successful: item.volume, // Volume is already successful transactions
+      failed: 0, // We can calculate this if needed
+      errorRate: overviewData.errorRateTrend7d[index]?.errorRate || 0,
+    }))
+  }, [overviewData.volumeTrend7d, overviewData.errorRateTrend7d])
 
   // Fintech-specific alerts
   const fintechAlerts = useMemo(() => {
     const alerts = []
     
-    // High-value transactions alert
-    const highValueTxs = transactions.filter(t => 
-      t.amount > 1000000 && t.status === TransactionStatus.SUCCESSFUL
-    )
-    if (highValueTxs.length > 10) {
-      alerts.push({
-        id: 'high-value-transactions',
-        type: 'warning' as const,
-        title: 'High-Value Transactions',
-        description: `${highValueTxs.length} transactions over 1M RWF today`,
-        count: highValueTxs.length,
-        onAction: () => router.push('/admin/transactions?minAmount=1000000'),
-      })
-    }
-
-    // SLA breach alert (transactions pending >24 hours)
-    const pendingLong = transactions.filter(t => {
-      if (t.status !== TransactionStatus.PENDING) return false
-      const hoursPending = (new Date().getTime() - parseISO(t.createdAt).getTime()) / (1000 * 60 * 60)
-      return hoursPending > 24
-    })
-    if (pendingLong.length > 0) {
-      alerts.push({
-        id: 'sla-breach',
-        type: 'error' as const,
-        title: 'SLA Breach',
-        description: `${pendingLong.length} transactions pending >24 hours`,
-        count: pendingLong.length,
-        onAction: () => router.push('/admin/transactions?status=PENDING'),
-      })
-    }
-
     // High error rate alert
-    const errorRate = stats.total > 0 ? (stats.failed / stats.total) * 100 : 0
-    if (errorRate > 10) {
+    if (overviewData.failedTransactionsPercent > 10) {
       alerts.push({
         id: 'high-error-rate',
         type: 'error' as const,
         title: 'High Error Rate',
-        description: `${errorRate.toFixed(1)}% transaction failure rate`,
+        description: `${overviewData.failedTransactionsPercent.toFixed(1)}% transaction failure rate`,
         count: stats.failed,
         onAction: () => router.push('/admin/transactions?status=FAILED'),
       })
     }
 
-    return alerts
-  }, [transactions, stats, router])
+    // Pending transactions alert
+    if (overviewData.pendingTransactions > 0) {
+      alerts.push({
+        id: 'pending-transactions',
+        type: 'warning' as const,
+        title: 'Pending Transactions',
+        description: `${overviewData.pendingTransactions} transactions pending`,
+        count: overviewData.pendingTransactions,
+        onAction: () => router.push('/admin/transactions?status=PENDING'),
+      })
+    }
 
-  // Active escrows requiring attention
-  const activeEscrows = escrows
-    .filter(e => e.status === EscrowStatus.ACTIVE)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 10)
+    return alerts
+  }, [overviewData, stats, router])
+
+  // Active escrows requiring attention - removed until escrows API is integrated
+  const activeEscrows: any[] = []
 
   // Performance metrics - simplified without waste-related data
   const performanceMetrics = {
@@ -467,9 +376,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (!isAuthenticated) {
-    return null // Will redirect
-  }
+  // Authentication check removed - allow access without login
 
 
 
@@ -539,7 +446,7 @@ export default function AdminDashboard() {
   return (
     <div className="p-6 lg:p-8 space-y-12 bg-slate-50 dark:bg-slate-900/50 max-w-[1920px] mx-auto">
           {/* Error Message */}
-          {error && (
+          {overviewData.error && (
             <Card className="border-red-500 bg-red-50 dark:bg-red-500/10">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
@@ -548,7 +455,7 @@ export default function AdminDashboard() {
                       <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400" />
                   <h3 className="font-semibold text-red-600 dark:text-red-400">Error Loading Data</h3>
                 </div>
-                    <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                    <p className="text-sm text-red-700 dark:text-red-300">{overviewData.error}</p>
                     <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-2">
                       Please check your connection and try again. If the problem persists, contact support.
                     </p>
@@ -556,10 +463,7 @@ export default function AdminDashboard() {
                   <div className="flex flex-col gap-2">
                   <Button
                   onClick={() => {
-                    // API calls removed
-                    // fetchTransactions()
-                    // fetchWallets()
-                    // fetchEscrowsData()
+                    overviewData.refetch()
                   }}
                   variant="outline"
                   size="sm"
@@ -648,7 +552,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Active Escrows Alert Section */}
-          {!loading && activeEscrows.length > 0 && (
+          {!overviewData.loading && activeEscrows.length > 0 && (
             <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden">
               <div className="bg-gradient-to-r from-blue-600 to-blue-700 border-b-0 px-4 py-3 flex flex-col space-y-1.5 relative">
                 <div className="flex items-center justify-between">
@@ -711,7 +615,7 @@ export default function AdminDashboard() {
                   <FileText className="h-4 w-4 text-blue-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{fintechKPIs.transactionsToday.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{overviewData.totalTransactionsToday.toLocaleString()}</div>
                   <p className="text-xs text-green-400 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     +15.3%
@@ -726,8 +630,8 @@ export default function AdminDashboard() {
                   <DollarSign className="h-4 w-4 text-green-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{formatCurrency(stats.totalVolume)}</div>
-                  <p className="text-xs text-muted-foreground">Today / This Month</p>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{formatCurrency(overviewData.totalVolumeToday)}</div>
+                  <p className="text-xs text-muted-foreground">Today / This Month: {formatCurrency(overviewData.totalVolumeThisMonth)}</p>
                 </CardContent>
               </Card>
 
@@ -739,7 +643,7 @@ export default function AdminDashboard() {
                 </div>
                 <CardContent>
                   <div className="text-2xl font-bold text-red-400 mb-1">
-                    {stats.total > 0 ? ((stats.failed / stats.total) * 100).toFixed(1) : 0}%
+                    {overviewData.failedTransactionsPercent.toFixed(1)}%
                   </div>
                   <p className="text-xs text-muted-foreground">{stats.failed} failed</p>
                 </CardContent>
@@ -766,7 +670,7 @@ export default function AdminDashboard() {
                 <BarChart3 className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                 Key Business Metrics
               </h2>
-              {loading || transactionsLoading ? (
+              {overviewData.loading ? (
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {[...Array(3)].map((_, i) => (
                     <Card key={i} className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
@@ -788,7 +692,8 @@ export default function AdminDashboard() {
                       <CardDescription className="relative z-10 text-muted-foreground">Today / This Month</CardDescription>
                     </div>
                     <CardContent className="p-8">
-                      <div className="text-4xl font-bold text-foreground mb-2">{formatCurrency(stats.totalVolume)}</div>
+                      <div className="text-4xl font-bold text-foreground mb-2">{formatCurrency(overviewData.totalVolumeToday)}</div>
+                      <p className="text-sm text-muted-foreground mb-2">This Month: {formatCurrency(overviewData.totalVolumeThisMonth)}</p>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <TrendingUp className="h-4 w-4 text-green-500 dark:text-green-400" />
                         <span className="text-green-500 dark:text-green-400">+8.3%</span> vs last month
@@ -872,7 +777,7 @@ export default function AdminDashboard() {
                   <Wallet className="h-4 w-4 text-green-500 dark:text-green-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground mb-1">{formatCurrency(fintechKPIs.walletBalance)}</div>
+                  <div className="text-2xl font-bold text-foreground mb-1">{formatCurrency(overviewData.walletBalance)}</div>
                   <p className="text-xs text-muted-foreground">Total platform balance</p>
                 </CardContent>
               </Card>
@@ -887,7 +792,7 @@ export default function AdminDashboard() {
                   <DollarSign className="h-4 w-4 text-green-500 dark:text-green-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground mb-1">{formatCurrency(fintechKPIs.revenueToday)}</div>
+                  <div className="text-2xl font-bold text-foreground mb-1">{formatCurrency(overviewData.revenueToday)}</div>
                   <p className="text-xs text-muted-foreground">Commission earned</p>
                 </CardContent>
               </Card>
@@ -911,8 +816,8 @@ export default function AdminDashboard() {
                   <Users className="h-4 w-4 text-blue-500 dark:text-blue-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground mb-1">{fintechKPIs.activeUsers.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">24h / 7d: {fintechKPIs.activeUsers}</p>
+                  <div className="text-2xl font-bold text-foreground mb-1">{overviewData.activeUsers24h.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">24h / 7d: {overviewData.activeUsers7d.toLocaleString()}</p>
                 </CardContent>
               </Card>
 
@@ -923,7 +828,7 @@ export default function AdminDashboard() {
                   <Wallet className="h-4 w-4 text-green-500 dark:text-green-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground mb-1">{stats.activeWallets}</div>
+                  <div className="text-2xl font-bold text-foreground mb-1">{overviewData.newWalletsToday.toLocaleString()}</div>
                   <p className="text-xs text-green-500 dark:text-green-400 flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
                     +5.2%
@@ -939,9 +844,9 @@ export default function AdminDashboard() {
                 </div>
                 <CardContent>
                   <div className="text-2xl font-bold text-foreground mb-1">
-                    {Math.round(fintechKPIs.activeUsers * 0.85).toLocaleString()}
+                    {overviewData.verifiedUsers.toLocaleString()}
                   </div>
-                  <p className="text-xs text-muted-foreground">85% verified</p>
+                  <p className="text-xs text-muted-foreground">Verified users</p>
                 </CardContent>
               </Card>
 
@@ -952,8 +857,8 @@ export default function AdminDashboard() {
                   <XCircle className="h-4 w-4 text-red-500 dark:text-red-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-red-500 dark:text-red-400 mb-1">0</div>
-                  <p className="text-xs text-muted-foreground">No blocked accounts</p>
+                  <div className="text-2xl font-bold text-red-500 dark:text-red-400 mb-1">{overviewData.blockedAccounts.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">Blocked accounts</p>
                 </CardContent>
               </Card>
             </div>
@@ -1026,17 +931,7 @@ export default function AdminDashboard() {
                       onAction: () => router.push('/admin/transactions?status=FAILED'),
                     }]
                   : []),
-                ...(activeEscrows.length > 0
-                  ? [{
-                      id: 'active-escrows',
-                      type: 'warning' as const,
-                      title: 'Active Escrows',
-                      description: 'escrows awaiting approval',
-                      count: activeEscrows.length,
-                      icon: Shield,
-                      onAction: () => router.push('/admin/escrows?status=ACTIVE'),
-                    }]
-                  : []),
+                // Escrows alerts removed - can be restored when escrows API is integrated
                 ...(stats.pending > 0
                   ? [{
                       id: 'pending-transactions',
@@ -1065,14 +960,13 @@ export default function AdminDashboard() {
                 <CardDescription className="relative z-10">Last 7 days</CardDescription>
               </div>
               <CardContent>
-                {loading || transactionsLoading ? (
+                {overviewData.loading ? (
                   <Skeleton className="h-[300px] w-full" />
                 ) : (
                   <EnhancedLineChart
-                    data={transactionTrendData}
+                    data={overviewData.volumeTrend7d}
                     dataKeys={[
-                      { key: 'volume', name: 'Total', color: '#3b82f6' },
-                      { key: 'successful', name: 'Successful', color: '#10b981' },
+                      { key: 'volume', name: 'Volume', color: '#3b82f6' },
                     ]}
                     xAxisKey="date"
                     height={300}
@@ -1088,11 +982,11 @@ export default function AdminDashboard() {
                 <CardDescription className="relative z-10">Last 7 days</CardDescription>
               </div>
               <CardContent>
-                {loading || transactionsLoading ? (
+                {overviewData.loading ? (
                   <Skeleton className="h-[300px] w-full" />
                 ) : (
                   <EnhancedLineChart
-                    data={transactionTrendData}
+                    data={overviewData.errorRateTrend7d}
                     dataKeys={[
                       { key: 'errorRate', name: 'Error Rate %', color: '#ef4444' },
                     ]}
@@ -1112,53 +1006,24 @@ export default function AdminDashboard() {
               <CardDescription className="relative z-10 text-muted-foreground">Live timeline of system events</CardDescription>
             </div>
             <CardContent>
-              {loading || transactionsLoading ? (
+              {overviewData.loading ? (
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
                     <Skeleton key={i} className="h-16 w-full" />
                   ))}
                 </div>
-              ) : transactions.length > 0 ? (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {transactions.slice(0, 10).map((tx) => (
-                    <div
-                      key={tx.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-all"
-                    >
-                      <div className={`h-2 w-2 rounded-full ${
-                        tx.status === TransactionStatus.SUCCESSFUL ? 'bg-green-400' :
-                        tx.status === TransactionStatus.FAILED ? 'bg-red-400' :
-                        'bg-yellow-400'
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-900 dark:text-white">
-                          {tx.status === TransactionStatus.SUCCESSFUL ? (
-                            <>User <span className="font-mono text-xs">{tx.userId.slice(0, 8)}...</span> completed transfer of {formatCurrency(tx.amount)}</>
-                          ) : tx.status === TransactionStatus.FAILED ? (
-                            <>Transaction <span className="font-mono text-xs">#{tx.id.slice(0, 8)}</span> failed – {tx.description || 'timeout'}</>
-                          ) : (
-                            <>Transaction <span className="font-mono text-xs">#{tx.id.slice(0, 8)}</span> pending</>
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {format(parseISO(tx.createdAt), 'MMM d, yyyy HH:mm:ss')}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => router.push(`/admin/transactions?id=${tx.id}`)}
-                        className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No recent activity</p>
+                  <p>Recent activity will be shown here</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push('/admin/transactions')}
+                    className="mt-4"
+                  >
+                    View All Transactions
+                  </Button>
                 </div>
               )}
             </CardContent>

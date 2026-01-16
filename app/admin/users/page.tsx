@@ -50,7 +50,6 @@ interface UsersFilters {
   nameEmailPhone: string
   status: 'all' | 'active' | 'suspended' | 'locked' | 'inactive' | 'pending_verification'
   kycStatus: 'all' | 'pending' | 'verified' | 'rejected' | 'expired'
-  accountType: AccountTypeFilter
   dateField: 'registration' | 'lastLogin'
   dateRange: 'all' | 'today' | '7d' | '30d' | 'custom'
   customStartDate: string
@@ -60,8 +59,6 @@ interface UsersFilters {
 type EnrichedUser = User & {
   walletBalance?: number
   walletId?: string
-  kycStatus?: string
-  accountType?: AccountTypeFilter
 }
 
 export default function UsersPage() {
@@ -75,9 +72,9 @@ export default function UsersPage() {
     nameEmailPhone: '',
     status: 'all',
     kycStatus: 'all',
-    accountType: 'all',
     dateField: 'registration',
-    dateRange: '7d',
+    // Default to all time so we don't filter out older users from the API
+    dateRange: 'all',
     customStartDate: '',
     customEndDate: '',
   })
@@ -104,7 +101,7 @@ export default function UsersPage() {
       setLoading(true)
       setError(null)
       const [usersResponse, walletsResponse] = await Promise.all([
-        apiGetUsers({ limit: 500 }),
+        apiGetUsers({ page: 0, limit: 500 }),
         apiGetAllWallets({ limit: 1000 }),
       ])
 
@@ -113,26 +110,12 @@ export default function UsersPage() {
         walletByUserId.set(w.userId, w)
       })
 
-      const enriched = usersResponse.data.map((user) => {
+      const enriched: EnrichedUser[] = usersResponse.data.map((user) => {
         const wallet = walletByUserId.get(user.id)
-        const rawKycStatus = (user as any).kycStatus as string | undefined
-        const derivedKycStatus =
-          rawKycStatus ||
-          (user.kycVerified ? 'verified' : 'pending')
-
-        const accountType: AccountTypeFilter =
-          user.userType === 'CLIENT'
-            ? 'personal'
-            : user.userType === 'VENDOR'
-            ? 'merchant'
-            : 'partner'
-
         return {
           ...user,
           walletBalance: wallet?.walletBalance ?? 0,
           walletId: wallet?.id,
-          kycStatus: derivedKycStatus,
-          accountType,
         }
       })
 
@@ -177,7 +160,6 @@ export default function UsersPage() {
       nameEmailPhone: '',
       status: 'all',
       kycStatus: 'all',
-      accountType: 'all',
       dateField: 'registration',
       dateRange: '7d',
       customStartDate: '',
@@ -221,13 +203,17 @@ export default function UsersPage() {
 
     if (filters.kycStatus !== 'all') {
       data = data.filter((user) => {
-        const kyc = ((user as any).kycStatus || 'pending').toLowerCase()
-        return kyc === filters.kycStatus
+        const kycVerified = (user as any).kycVerified
+        // Map boolean kycVerified to simple status buckets
+        const kyc =
+          kycVerified === true
+            ? 'verified'
+            : 'pending'
+        if (filters.kycStatus === 'verified') return kyc === 'verified'
+        if (filters.kycStatus === 'pending') return kyc === 'pending'
+        // For rejected/expired we currently have no explicit signal; treat as non-matching
+        return false
       })
-    }
-
-    if (filters.accountType !== 'all') {
-      data = data.filter((user) => (user as any).accountType === filters.accountType)
     }
 
     if (filters.dateRange !== 'all') {
@@ -368,38 +354,32 @@ export default function UsersPage() {
       key: 'id',
       header: 'User ID',
       accessor: (user) => (
-        <div className="flex flex-col">
-          <span className="font-mono text-xs text-foreground">{user.id.slice(0, 10)}...</span>
-          {(user as any).walletId && (
-            <span className="font-mono text-[11px] text-muted-foreground">
-              Wallet: {(user as any).walletId.slice(0, 8)}...
-            </span>
-          )}
-        </div>
+        <span className="font-mono text-xs text-foreground">{user.id}</span>
       ),
       sortable: true,
     },
     {
-      key: 'fullName',
-      header: 'Name / Contact',
-      accessor: (user) => (
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <UserIcon className="h-3 w-3 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{user.fullName}</span>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <Mail className="h-3 w-3" />
-            <span>{user.email}</span>
-          </div>
-          {user.phoneNumber && (
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-              <Phone className="h-3 w-3" />
-              <span>{user.phoneNumber}</span>
-            </div>
-          )}
-        </div>
-      ),
+      key: 'firstName',
+      header: 'First Name',
+      accessor: (user) => {
+        const first =
+          (user as any).firstname ||
+          user.profile?.firstName ||
+          (user.fullName ? user.fullName.split(' ')[0] : '')
+        return <span className="text-sm font-medium text-foreground">{first}</span>
+      },
+      sortable: true,
+    },
+    {
+      key: 'lastName',
+      header: 'Last Name',
+      accessor: (user) => {
+        const last =
+          (user as any).lastname ||
+          user.profile?.lastName ||
+          (user.fullName ? user.fullName.split(' ').slice(1).join(' ') : '')
+        return <span className="text-sm font-medium text-foreground">{last}</span>
+      },
       sortable: true,
     },
     {
@@ -450,37 +430,16 @@ export default function UsersPage() {
       key: 'kycStatus',
       header: 'Verification',
       accessor: (user) => {
-        const kycStatus = ((user as any).kycStatus || 'pending').toLowerCase()
-        const label = kycStatus.charAt(0).toUpperCase() + kycStatus.slice(1)
-        const classes =
-          kycStatus === 'verified'
-            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-            : kycStatus === 'rejected'
-            ? 'bg-red-500/10 text-red-400 border-red-500/20'
-            : kycStatus === 'expired'
-            ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
-            : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+        const isVerified = (user as any).kycVerified === true
+        const label = isVerified ? 'Verified' : 'Not Verified'
+        const classes = isVerified
+          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+          : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
 
         return (
           <Badge className={cn('border text-[11px] font-medium', classes)}>
             {label}
           </Badge>
-        )
-      },
-      sortable: true,
-    },
-    {
-      key: 'accountType',
-      header: 'Account Type',
-      accessor: (user) => {
-        const type = (user as any).accountType as AccountTypeFilter | undefined
-        const label =
-          type === 'personal' ? 'Personal' : type === 'merchant' ? 'Merchant' : 'Partner'
-        return (
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <Shield className="h-3 w-3 text-muted-foreground" />
-            {label}
-          </span>
         )
       },
       sortable: true,
@@ -492,11 +451,6 @@ export default function UsersPage() {
       <PageHeader
         title="User Management"
         description="Find, inspect, and manage Movasafe wallet users"
-        action={{
-          label: 'Create User',
-          onClick: () => router.push('/admin/users/create'),
-          icon: <Plus className="h-4 w-4 mr-2" />,
-        }}
       />
 
       {/* Sticky Filters */}
@@ -607,31 +561,6 @@ export default function UsersPage() {
                 <SelectItem value="expired">Expired</SelectItem>
               </SelectContent>
             </Select>
-              </div>
-
-              {/* Account Type */}
-              <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">
-                  Account Type
-                </Label>
-                <Select
-                  value={filters.accountType}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      accountType: e.target.value as AccountTypeFilter,
-                    }))
-                  }
-                  className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground"
-                >
-                  <SelectValue />
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="personal">Personal</SelectItem>
-                    <SelectItem value="merchant">Merchant</SelectItem>
-                    <SelectItem value="partner">Partner</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               {/* Date field */}
