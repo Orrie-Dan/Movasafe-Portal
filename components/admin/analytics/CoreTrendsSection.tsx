@@ -36,7 +36,13 @@ export function CoreTrendsSection({ data }: CoreTrendsSectionProps) {
               dataKeys={[{ key: 'volume', name: 'Volume (RWF)', color: '#3b82f6' }]}
               xAxisKey="date"
               height={300}
-              tooltipFormatter={(value: any) => [`${(value / 1000).toFixed(1)}K RWF`, 'Volume']}
+              tooltipFormatter={(value: any) => [
+                `${(value as number).toLocaleString('en-US', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })} RWF`,
+                'Volume',
+              ]}
             />
           </CardContent>
         </Card>

@@ -11,7 +11,7 @@ const getTransactionBase = (): string => {
   
   // Default to HTTP, but allow HTTPS if specified in environment
   // (If you serve the portal over HTTPS and do direct browser calls to HTTP, it will be blocked. Use the proxy.)
-  const defaultBase = "http://movasafe-transaction-env-2.eba-ydyugcws.eu-north-1.elasticbeanstalk.com"
+  const defaultBase = "https://transaction.movasafe.com"
   
   return envBase ?? defaultBase
 }

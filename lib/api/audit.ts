@@ -18,8 +18,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
     ...options.headers,
   }
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
+  if (token) {    // @ts-expect-error - HeadersInit doesn't support bracket notation for Authorization header    headers['Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -82,6 +81,7 @@ export async function apiExportAuditLogs(params?: AuditLogFilters): Promise<Blob
   const token = getToken()
   const headers: HeadersInit = {}
   if (token) {
+    // @ts-expect-error - HeadersInit doesn't support bracket notation for Authorization header
     headers['Authorization'] = `Bearer ${token}`
   }
 

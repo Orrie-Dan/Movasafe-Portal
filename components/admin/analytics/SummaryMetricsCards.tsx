@@ -33,7 +33,10 @@ export function SummaryMetricsCards({ metrics }: SummaryMetricsCardsProps) {
         </div>
         <CardContent>
           <div className="text-2xl font-bold mb-1 text-slate-900 dark:text-white">
-            {(metrics.totalVolume / 1000).toFixed(1)}K
+            {metrics.totalVolume.toLocaleString('en-US', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">RWF</p>
         </CardContent>

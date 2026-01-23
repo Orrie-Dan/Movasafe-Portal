@@ -111,14 +111,23 @@ export function TransactionsTable({
   }
 
   return (
-    <Card className="bg-black border-slate-800">
+    <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="border-slate-700 bg-slate-900/50">
+              <TableRow className="border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                 <TableHead
-                  className="text-xs font-medium text-slate-400 cursor-pointer hover:text-white"
+                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
+                  onClick={() => onSort('userId')}
+                >
+                  <div className="flex items-center gap-1">
+                    User ID
+                    {getSortIcon('userId')}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('createdAt')}
                 >
                   <div className="flex items-center gap-1">
@@ -127,7 +136,7 @@ export function TransactionsTable({
                   </div>
                 </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-slate-400 cursor-pointer hover:text-white"
+                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('id')}
                 >
                   <div className="flex items-center gap-1">
@@ -135,20 +144,8 @@ export function TransactionsTable({
                     {getSortIcon('id')}
                   </div>
                 </TableHead>
-                <TableHead className="text-xs font-medium text-slate-400">
-                  Reference
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-400">
-                  User Name
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-400">
-                  Phone Number
-                </TableHead>
-                <TableHead className="text-xs font-medium text-slate-400">
-                  National ID
-                </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-slate-400 cursor-pointer hover:text-white"
+                  className="text-xs font-medium text-slate-700 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('transactionType')}
                 >
                   <div className="flex items-center gap-1">
@@ -156,11 +153,11 @@ export function TransactionsTable({
                     {getSortIcon('transactionType')}
                   </div>
                 </TableHead>
-                <TableHead className="text-xs font-medium text-slate-400">
+                <TableHead className="text-xs font-medium text-black dark:text-slate-400">
                   Description
                 </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-slate-400 text-right cursor-pointer hover:text-white"
+                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white text-right"
                   onClick={() => onSort('amount')}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -169,7 +166,7 @@ export function TransactionsTable({
                   </div>
                 </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-slate-400 cursor-pointer hover:text-white"
+                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('status')}
                 >
                   <div className="flex items-center gap-1">
@@ -177,13 +174,13 @@ export function TransactionsTable({
                     {getSortIcon('status')}
                   </div>
                 </TableHead>
-                <TableHead className="text-xs font-medium text-slate-400">
+                <TableHead className="text-xs font-medium text-black dark:text-slate-400">
                   From
                 </TableHead>
-                <TableHead className="text-xs font-medium text-slate-400">
+                <TableHead className="text-xs font-medium text-black dark:text-slate-400">
                   To
                 </TableHead>
-                <TableHead className="text-xs font-medium text-slate-400 w-20">
+                <TableHead className="text-xs font-medium text-slate-700 dark:text-slate-400 w-20">
                   Actions
                 </TableHead>
               </TableRow>
@@ -201,37 +198,28 @@ export function TransactionsTable({
                 return (
                   <TableRow
                     key={transaction.id}
-                    className="border-slate-700 hover:bg-slate-800/50 cursor-pointer"
+                    className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer"
                     onClick={() => onRowClick(transaction)}
                   >
-                    <TableCell className="text-xs text-slate-300">
+                    <TableCell className="font-mono text-xs text-slate-900 dark:text-white">
+                      {transaction.userId}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-700 dark:text-slate-300">
                       {format(parseISO(transaction.createdAt), 'dd MMM yyyy, HH:mm')}
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-white">
-                      {transaction.id}
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-slate-300">
-                      {formatNullable(transaction.internalReference)}
-                    </TableCell>
-                    <TableCell className="text-xs text-slate-300">
-                      {formatNullable(transaction.userName)}
-                    </TableCell>
-                    <TableCell className="text-xs text-slate-300">
-                      {formatNullable(transaction.userPhoneNumber)}
-                    </TableCell>
-                    <TableCell className="text-xs text-slate-300">
-                      {formatNullable(transaction.userNationalId)}
+                    <TableCell className="font-mono text-xs text-slate-700 dark:text-slate-300">
+                      {formatNullable(transaction.id)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {getTransactionTypeIcon(transaction.transactionType)}
-                        <span className="text-xs text-white">{transaction.transactionType}</span>
+                        <span className="text-xs text-slate-900 dark:text-white">{transaction.transactionType}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-300">
+                    <TableCell className="text-xs text-slate-700 dark:text-slate-300">
                       {formatNullable(transaction.description)}
                     </TableCell>
-                    <TableCell className="text-right font-medium text-xs text-white">
+                    <TableCell className="text-right font-medium text-xs text-slate-900 dark:text-white">
                       {formatCurrency(transaction.amount, currency)}
                     </TableCell>
                     <TableCell>
@@ -241,10 +229,10 @@ export function TransactionsTable({
                         {transaction.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-300">
+                    <TableCell className="text-xs text-slate-700 dark:text-slate-300">
                       {fromAccount}
                     </TableCell>
-                    <TableCell className="text-xs text-slate-300">
+                    <TableCell className="text-xs text-slate-700 dark:text-slate-300">
                       {toAccount}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
@@ -252,7 +240,7 @@ export function TransactionsTable({
                         variant="ghost"
                         size="sm"
                         onClick={() => onRowClick(transaction)}
-                        className="h-7 w-7 p-0 text-slate-400 hover:text-white"
+                        className="h-7 w-7 p-0 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
                         title="View Details"
                       >
                         <Eye className="h-3.5 w-3.5" />
@@ -267,8 +255,8 @@ export function TransactionsTable({
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t border-slate-700">
-            <div className="text-sm text-slate-400">
+          <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="text-sm text-slate-600 dark:text-slate-400">
               Showing {(pagination.page - 1) * pagination.pageSize + 1} to{' '}
               {Math.min(pagination.page * pagination.pageSize, totalCount)} of {totalCount}{' '}
               transactions
@@ -279,11 +267,11 @@ export function TransactionsTable({
                 size="sm"
                 onClick={() => onPageChange(Math.max(1, pagination.page - 1))}
                 disabled={pagination.page === 1}
-                className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                className="border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <ChevronUp className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 Page {pagination.page} of {totalPages}
               </span>
               <Button
@@ -291,7 +279,7 @@ export function TransactionsTable({
                 size="sm"
                 onClick={() => onPageChange(Math.min(totalPages, pagination.page + 1))}
                 disabled={pagination.page === totalPages}
-                className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                className="border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <ChevronDown className="h-4 w-4" />
               </Button>

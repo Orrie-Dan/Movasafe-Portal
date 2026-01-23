@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 const BACKEND_BASE =
   process.env.NEXT_PUBLIC_TRANSACTION_API_URL ||
   process.env.NEXT_PUBLIC_TRANSACTION_API_BASE ||
-  "http://movasafe-transaction-env-2.eba-ydyugcws.eu-north-1.elasticbeanstalk.com";
+  "https://transaction.movasafe.com";
 
 /**
  * Proxy route for all transaction API endpoints

@@ -38,7 +38,13 @@ export function RevenueFeesSection({ revenueData, revenueByTypeData }: RevenueFe
               dataKeys={[{ key: 'fees', name: 'Fees (RWF)', color: '#f59e0b' }]}
               xAxisKey="date"
               height={300}
-              tooltipFormatter={(value: any) => [`${(value / 1000).toFixed(1)}K RWF`, 'Fees']}
+              tooltipFormatter={(value: any) => [
+                `${(value as number).toLocaleString('en-US', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })} RWF`,
+                'Fees',
+              ]}
             />
           </CardContent>
         </Card>
@@ -58,7 +64,13 @@ export function RevenueFeesSection({ revenueData, revenueByTypeData }: RevenueFe
               height={300}
               gradientColors={{ start: '#10b981', end: '#059669', startOpacity: 1, endOpacity: 0.8 }}
               name="Revenue (RWF)"
-              tooltipFormatter={(value: any) => [`${(value / 1000).toFixed(1)}K RWF`, 'Revenue']}
+              tooltipFormatter={(value: any) => [
+                `${(value as number).toLocaleString('en-US', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })} RWF`,
+                'Revenue',
+              ]}
             />
           </CardContent>
         </Card>

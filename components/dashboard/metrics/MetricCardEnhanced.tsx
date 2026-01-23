@@ -37,13 +37,15 @@ export function MetricCardEnhanced({
     
     switch (format) {
       case 'currency':
-        if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M ${currency}`
-        if (val >= 1000) return `${(val / 1000).toFixed(1)}K ${currency}`
-        return `${val.toFixed(0)} ${currency}`
+        return `${val.toLocaleString('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })} ${currency}`
       case 'weight':
-        if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M kg`
-        if (val >= 1000) return `${(val / 1000).toFixed(1)}K kg`
-        return `${val.toFixed(0)} kg`
+        return `${val.toLocaleString('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })} kg`
       case 'percentage':
         return `${val.toFixed(1)}%`
       default:
@@ -61,25 +63,25 @@ export function MetricCardEnhanced({
   const cardContent = (
     <Card
       className={cn(
-        'group bg-white dark:bg-black border-slate-200 dark:border-slate-800 transition-all duration-300',
-        'text-slate-900 dark:text-white',
-        onClick && 'cursor-pointer hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 hover:scale-[1.02] active:scale-[0.98]',
+        'group bg-black border-gray-800 dark:border-gray-800 transition-all duration-300',
+        'text-white dark:text-white',
+        onClick && 'cursor-pointer hover:border-gray-700/50 hover:shadow-xl hover:shadow-black/10 hover:scale-[1.02] active:scale-[0.98]',
         className
       )}
       onClick={onClick}
     >
-      <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-        <CardTitle size="xs" className="metric-label z-10 relative text-slate-900 dark:text-white">{title}</CardTitle>
+      <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-gray-800 dark:border-gray-800 bg-black dark:bg-black relative">
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-700/30 to-transparent" />
+        <CardTitle size="xs" className="metric-label z-10 relative text-white dark:text-white">{title}</CardTitle>
         <div className="relative z-10">
           <div className={cn('absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300', {
-            'bg-blue-500/20': variant === 'default',
+            'bg-gray-700/20': variant === 'default',
             'bg-red-500/20': variant === 'negative',
             'bg-yellow-500/20': variant === 'warning',
             'bg-green-500/20': variant === 'success',
           })} />
           <div className={cn('relative p-2 rounded-full border transition-all duration-300 group-hover:scale-110 group-hover:rotate-3', {
-            'bg-blue-500/10 border-blue-500/20': variant === 'default',
+            'bg-gray-800/10 border-gray-800/20': variant === 'default',
             'bg-red-500/10 border-red-500/20': variant === 'negative',
             'bg-yellow-500/10 border-yellow-500/20': variant === 'warning',
             'bg-green-500/10 border-green-500/20': variant === 'success',
@@ -89,7 +91,7 @@ export function MetricCardEnhanced({
         </div>
       </div>
       <CardContent>
-        <div className="metric-value text-2xl font-bold mb-1 text-slate-900 dark:text-white">
+        <div className="metric-value text-2xl font-bold mb-1 text-white dark:text-white">
           {formatValue(value)}
         </div>
         {change !== undefined && (
@@ -108,7 +110,7 @@ export function MetricCardEnhanced({
           </p>
         )}
         {!change && unit && format === 'number' && (
-          <p className="text-xs text-slate-600 dark:text-slate-400">{unit}</p>
+          <p className="text-xs text-white dark:text-white">{unit}</p>
         )}
       </CardContent>
     </Card>

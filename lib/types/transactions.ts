@@ -52,6 +52,8 @@ export interface Transaction {
   userId: string
   counterpartyUserId?: string | null
   userName?: string | null
+  userFirstName?: string | null
+  userLastName?: string | null
   userPhoneNumber?: string | null
   userNationalId?: string | null
   amount: number

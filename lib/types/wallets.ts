@@ -7,7 +7,7 @@ export interface Wallet {
   reservedBalance: number
   savingsBalance: number
   availableBalance: number // Calculated: walletBalance - reservedBalance
-  currency: string
+  version: number
   createdAt: string
   updatedAt: string
 }

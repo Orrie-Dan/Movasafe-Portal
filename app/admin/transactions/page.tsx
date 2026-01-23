@@ -139,7 +139,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-black">
+    <div className="p-6 lg:p-8 space-y-6 bg-white dark:bg-black">
       <PageHeader
         title="Transactions"
         description="Investigate and manage individual transactions"

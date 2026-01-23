@@ -17,10 +17,10 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = getToken()
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string> || {}),
   }
 
   if (token) {
@@ -92,6 +92,7 @@ export async function apiGetUserWallet(userId: string): Promise<Wallet> {
 /**
  * Get all wallets (admin only)
  * Uses /api/transactions/wallets/all endpoint
+ * Response is paginated with structure: { content: [...], pageable: {...}, totalPages: X, ... }
  */
 export async function apiGetAllWallets(filters?: WalletFilters): Promise<Wallet[]> {
   const queryParams = new URLSearchParams()
@@ -110,15 +111,22 @@ export async function apiGetAllWallets(filters?: WalletFilters): Promise<Wallet[
     method: 'GET',
   })
 
-  // Normalize different response shapes to always return Wallet[]
-  if (raw?.data?.content && Array.isArray(raw.data.content)) {
-    return raw.data.content as Wallet[]
+  // Handle paginated response structure: { content: [...], pageable: {...}, ... }
+  if (raw?.content && Array.isArray(raw.content)) {
+    return raw.content as Wallet[]
   }
 
+  // Handle flat array response
   if (Array.isArray(raw)) {
     return raw as Wallet[]
   }
 
+  // Handle nested data.content structure
+  if (raw?.data?.content && Array.isArray(raw.data.content)) {
+    return raw.data.content as Wallet[]
+  }
+
+  // Handle nested data array
   if (Array.isArray(raw?.data)) {
     return raw.data as Wallet[]
   }

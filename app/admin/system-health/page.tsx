@@ -118,7 +118,7 @@ export default function SystemHealthPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-black">
+    <div className="p-6 lg:p-8 space-y-6 bg-white dark:bg-black">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">

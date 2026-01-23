@@ -27,7 +27,8 @@ import {
   Activity,
   MessageSquare,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -52,6 +53,8 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
     return false
   })
   
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+  
   const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed
   
   const toggleCollapse = () => {
@@ -64,6 +67,14 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
         localStorage.setItem('sidebarCollapsed', String(newCollapsed))
       }
     }
+  }
+  
+  const toggleMenu = (menuId: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(menuId) 
+        ? prev.filter(id => id !== menuId)
+        : [...prev, menuId]
+    )
   }
   
   useEffect(() => {
@@ -84,8 +95,12 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
   ]
 
   const riskComplianceSection = [
-    { href: '/admin/risk-fraud', label: 'Risk & Fraud', icon: AlertTriangle, badge: null },
     { href: '/admin/compliance-kyc', label: 'Compliance & KYC', icon: CheckCircle2, badge: null },
+  ]
+
+  const refundDisputesSection = [
+    { href: '/admin/refund-disputes/escrow', label: 'Escrow Disputes', icon: AlertTriangle, badge: null },
+    { href: '/admin/refund-disputes/transactions', label: 'Transactions Disputes', icon: AlertTriangle, badge: null },
   ]
 
   const systemSection = [
@@ -139,6 +154,55 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
           </div>
         )}
       </Link>
+    )
+  }
+
+  const renderCollapsibleMenu = (menuId: string, label: string, icon: any, items: any[]) => {
+    const Icon = icon
+    // Determine if any child route matches the current pathname
+    const isChildActive = items.some(item => pathname === item.href || pathname?.startsWith(item.href + '/'))
+    // The menu button should be expanded when explicitly toggled or when a child is active
+    const isExpanded = expandedMenus.includes(menuId) || isChildActive
+    // Only mark the parent button as "active" when the menu's own route is selected directly
+    const menuHref = `/admin/${menuId}`
+    const isButtonActive = pathname === menuHref || pathname === `${menuHref}/`
+
+    return (
+      <div>
+        <button
+          key={`${menuId}-button`}
+          onClick={() => toggleMenu(menuId)}
+          title={collapsed ? label : undefined}
+          className={cn(
+            "w-full flex items-center justify-between gap-3 rounded-lg transition-colors group relative",
+            collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5",
+            isButtonActive
+              ? "bg-blue-600 text-white"
+              : "text-black dark:text-white hover:bg-slate-800/50 hover:text-white"
+          )}
+        >
+          <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+            <Icon className="h-4 w-4 flex-shrink-0" />
+            {!collapsed && <span className="text-sm">{label}</span>}
+          </div>
+          {!collapsed && (
+            <ChevronDown className={cn(
+              "h-4 w-4 transition-transform",
+              isExpanded ? "rotate-180" : ""
+            )} />
+          )}
+          {collapsed && (
+            <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+              {label}
+            </div>
+          )}
+        </button>
+        {!collapsed && isExpanded && (
+          <div key={`${menuId}-items`} className="mt-1 space-y-1 pl-4">
+            {items.map(item => renderNavItem(item))}
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -206,6 +270,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
             </div>
           )}
           <div className="space-y-1">
+            {!collapsed ? renderCollapsibleMenu('refund-disputes', 'Refund & Disputes', AlertTriangle, refundDisputesSection) : null}
             {riskComplianceSection.map(renderNavItem)}
           </div>
         </div>

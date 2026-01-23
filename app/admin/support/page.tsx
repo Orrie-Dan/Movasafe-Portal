@@ -782,7 +782,7 @@ export default function SupportPage() {
   const availableTags: TicketTag[] = ['Fraud', 'Urgent', 'VIP User', 'Refund', 'Technical']
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-black min-h-screen">
+    <div className="p-6 lg:p-8 space-y-6 bg-white dark:bg-black min-h-screen">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
@@ -798,7 +798,7 @@ export default function SupportPage() {
       <div className="space-y-4">
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -814,7 +814,7 @@ export default function SupportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -830,7 +830,7 @@ export default function SupportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -846,7 +846,7 @@ export default function SupportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -862,7 +862,7 @@ export default function SupportPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -881,7 +881,7 @@ export default function SupportPage() {
       </div>
 
       {/* Ticket Trends Chart */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-blue-400" />
@@ -915,7 +915,7 @@ export default function SupportPage() {
       </Card>
 
       {/* Ticket Queue */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -932,14 +932,14 @@ export default function SupportPage() {
                   placeholder="Search tickets..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 w-48 bg-black border-slate-200 dark:border-slate-700"
+                  className="pl-8 w-48 bg-white dark:bg-black border-slate-200 dark:border-slate-700"
                 />
               </div>
               <Select
                 value={filters.status}
                 onValueChange={(value) => setFilters({ ...filters, status: value })}
               >
-                <SelectTrigger className="w-32 bg-black border-slate-200 dark:border-slate-700">
+                <SelectTrigger className="w-32 bg-white dark:bg-black border-slate-200 dark:border-slate-700">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -955,7 +955,7 @@ export default function SupportPage() {
                 value={filters.priority}
                 onValueChange={(value) => setFilters({ ...filters, priority: value })}
               >
-                <SelectTrigger className="w-32 bg-black border-slate-200 dark:border-slate-700">
+                <SelectTrigger className="w-32 bg-white dark:bg-black border-slate-200 dark:border-slate-700">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -970,7 +970,7 @@ export default function SupportPage() {
                 value={filters.category}
                 onValueChange={(value) => setFilters({ ...filters, category: value })}
               >
-                <SelectTrigger className="w-36 bg-black border-slate-200 dark:border-slate-700">
+                <SelectTrigger className="w-36 bg-white dark:bg-black border-slate-200 dark:border-slate-700">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -1008,7 +1008,7 @@ export default function SupportPage() {
       </Card>
 
       {/* Notifications */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-blue-400" />
@@ -1095,7 +1095,7 @@ export default function SupportPage() {
       {/* Ticket Details Modal */}
       {selectedTicket && (
         <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-          <DialogContent className="max-w-5xl bg-black border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl bg-white dark:bg-black border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-blue-400" />
@@ -1129,7 +1129,7 @@ export default function SupportPage() {
                         handleChangeStatus(selectedTicket, value as TicketStatus)
                       }
                     >
-                      <SelectTrigger className="w-40 bg-black border-slate-200 dark:border-slate-700">
+                      <SelectTrigger className="w-40 bg-white dark:bg-black border-slate-200 dark:border-slate-700">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1151,7 +1151,7 @@ export default function SupportPage() {
                         handleChangePriority(selectedTicket, value as TicketPriority)
                       }
                     >
-                      <SelectTrigger className="w-32 bg-black border-slate-200 dark:border-slate-700">
+                      <SelectTrigger className="w-32 bg-white dark:bg-black border-slate-200 dark:border-slate-700">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1284,7 +1284,7 @@ export default function SupportPage() {
               {/* Conversation Thread */}
               <div>
                 <Label className="text-muted-foreground mb-2">Conversation</Label>
-                <div className="border rounded-lg p-4 bg-black max-h-96 overflow-y-auto space-y-4">
+                <div className="border rounded-lg p-4 bg-white dark:bg-black max-h-96 overflow-y-auto space-y-4">
                   {selectedTicket.messages.map((message) => (
                     <div
                       key={message.id}
@@ -1336,7 +1336,7 @@ export default function SupportPage() {
                   placeholder="Type your reply..."
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
-                  className="bg-black border-slate-200 dark:border-slate-700 mb-2"
+                  className="bg-white dark:bg-black border-slate-200 dark:border-slate-700 mb-2"
                   rows={3}
                 />
                 <Button onClick={() => handleSendReply(selectedTicket)}>
@@ -1352,7 +1352,7 @@ export default function SupportPage() {
                   placeholder="Add an internal note (not visible to user)..."
                   value={internalNote}
                   onChange={(e) => setInternalNote(e.target.value)}
-                  className="bg-black border-slate-200 dark:border-slate-700 mb-2"
+                  className="bg-white dark:bg-black border-slate-200 dark:border-slate-700 mb-2"
                   rows={2}
                 />
                 <Button variant="outline" onClick={() => handleAddInternalNote(selectedTicket)}>
@@ -1377,7 +1377,7 @@ export default function SupportPage() {
       )}
 
       {/* Support Activity Log */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-blue-400" />

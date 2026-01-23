@@ -3,7 +3,7 @@
 export const API_CONFIG = {
   AUTH: {
     baseUrl: process.env.NEXT_PUBLIC_AUTH_API_URL || 
-      'http://authentificationv2-env.eba-zxhbu6ur.eu-north-1.elasticbeanstalk.com',
+      'https://auth.movasafe.com',
     endpoints: {
       // Authentication
       signin: '/api/auth/open/signin',
@@ -66,7 +66,7 @@ export const API_CONFIG = {
   TRANSACTION: {
     baseUrl: process.env.NEXT_PUBLIC_TRANSACTION_API_URL || 
       process.env.NEXT_PUBLIC_TRANSACTION_API_BASE ||
-      'http://movasafe-transaction-env-2.eba-ydyugcws.eu-north-1.elasticbeanstalk.com',
+      'https://transaction.movasafe.com',
     endpoints: {
       // Wallet Accounts
       createWalletAccount: '/api/transactions/accounts',
@@ -86,10 +86,11 @@ export const API_CONFIG = {
     baseUrl: process.env.NEXT_PUBLIC_ESCROW_API_URL || 
       process.env.NEXT_PUBLIC_TRANSACTION_API_URL || 
       process.env.NEXT_PUBLIC_TRANSACTION_API_BASE ||
-      'http://movasafe-transaction-env-2.eba-ydyugcws.eu-north-1.elasticbeanstalk.com',
+      'https://transaction.movasafe.com',
     endpoints: {
       create: '/api/escrows/create',
       list: '/api/escrows/my-escrows/list',
+      allEscrows: '/api/admin/escrows/all',
       approve: '/api/escrows/approve',
       release: '/api/escrows/release',
       refund: '/api/escrows/refund',

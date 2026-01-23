@@ -31,6 +31,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
   }
 
   if (token) {
+    // @ts-expect-error
     headers['Authorization'] = `Bearer ${token}`
   }
 
@@ -153,6 +154,7 @@ export async function apiGetUsers(params?: UserListParams): Promise<UserListResp
       },
       // Preserve raw API name fields for UI convenience (used in columns)
       // These extra properties are accessed via (user as any).firstname / lastname
+      // @ts-expect-error - intentional: properties not in User type but needed for UI
       firstname: u.firstname,
       lastname: u.lastname,
     }

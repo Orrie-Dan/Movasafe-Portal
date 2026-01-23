@@ -381,6 +381,178 @@ export async function apiCreateEscrowPayment(data: CreateEscrowPaymentDTO): Prom
   })
 }
 
+/**
+ * Standard Transaction Reversal
+ * Reverses a wallet-to-wallet transfer if safety conditions are met
+ * Requires: FORCE_REVERSE_TRANSACTION permission
+ */
+export interface StandardReversalRequest {
+  reason: string
+  adminNotes: string
+  idempotencyKey: string
+}
+
+export interface StandardReversalResponse {
+  status: string
+  message: string
+  data: {
+    originalSenderTransactionId: string
+    originalReceiverTransactionId: string
+    reversalSenderTransactionId: string
+    reversalReceiverTransactionId: string
+    reversalAmount: number
+    senderBalanceBefore: number
+    senderBalanceAfter: number
+    receiverBalanceBefore: number
+    receiverBalanceAfter: number
+    reversalTimestamp: string
+    reversedBy: string
+    reason: string
+  }
+}
+
+export async function apiStandardReversal(
+  internalReference: string,
+  payload: StandardReversalRequest
+): Promise<StandardReversalResponse> {
+  const token = getToken()
+  if (!token) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+    throw new Error('No authentication token found')
+  }
+
+  const url = `${API_CONFIG.TRANSACTION.baseUrl}/api/admin/transactions/reverse/${internalReference}`
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('user_data')
+          window.location.href = '/login'
+        }
+        throw new Error('Unauthorized. Please sign in again.')
+      }
+
+      const errorText = await response.text()
+      let errorMessage = `Failed with status ${response.status}`
+      try {
+        const errorData = JSON.parse(errorText)
+        console.error('[Standard Reversal] Error response:', errorData)
+        errorMessage = errorData.message || errorData.error || errorMessage
+      } catch {
+        console.error('[Standard Reversal] Error text:', errorText)
+        errorMessage = errorText || errorMessage
+      }
+      throw new Error(errorMessage)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Standard reversal error:', error)
+    throw error
+  }
+}
+
+/**
+ * Force Transaction Reversal with Debt Creation
+ * Forces reversal even if receiver has insufficient funds
+ * Creates debt record for shortfall
+ * Requires: FORCE_REVERSE_TRANSACTION permission
+ */
+export interface ForceReversalRequest {
+  reason: string
+  adminNotes: string
+  idempotencyKey: string
+  createDebtIfInsufficientFunds: boolean
+  debtDueDays: number
+}
+
+export interface ForceReversalResponse {
+  status: string
+  message: string
+  data: {
+    originalSenderTransactionId: string
+    originalReceiverTransactionId: string
+    reversalSenderTransactionId: string
+    reversalReceiverTransactionId: string
+    debtRecordId: string
+    reversalAmount: number
+    receiverAvailableBalance: number
+    amountCollectedImmediately: number
+    debtCreated: number
+    autoCollectionRate: number
+    reversalTimestamp: string
+  }
+}
+
+export async function apiForceReversal(
+  internalReference: string,
+  payload: ForceReversalRequest
+): Promise<ForceReversalResponse> {
+  const token = getToken()
+  if (!token) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+    throw new Error('No authentication token found')
+  }
+
+  const url = `${API_CONFIG.TRANSACTION.baseUrl}/api/admin/transactions/force-reverse/${internalReference}`
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('user_data')
+          window.location.href = '/login'
+        }
+        throw new Error('Unauthorized. Please sign in again.')
+      }
+
+      const errorText = await response.text()
+      let errorMessage = `Failed with status ${response.status}`
+      try {
+        const errorData = JSON.parse(errorText)
+        console.error('[Force Reversal] Error response:', errorData)
+        errorMessage = errorData.message || errorData.error || errorMessage
+      } catch {
+        console.error('[Force Reversal] Error text:', errorText)
+        errorMessage = errorText || errorMessage
+      }
+      throw new Error(errorMessage)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Force reversal error:', error)
+    throw error
+  }
+}
+
 
 
 

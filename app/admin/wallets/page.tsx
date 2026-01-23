@@ -34,7 +34,13 @@ import {
   XCircle,
 } from 'lucide-react'
 import { apiGetAllWallets } from '@/lib/api/wallets'
+import { apiGetAllTransactions } from '@/lib/api/transactions'
+import { apiGetAuditLogs } from '@/lib/api/audit'
+import { apiGetEscrows } from '@/lib/api/escrows'
 import type { Wallet as ApiWallet } from '@/lib/types/wallets'
+import type { Transaction } from '@/lib/api/transactions'
+import type { AuditLog } from '@/lib/types/audit'
+import type { EscrowTransaction } from '@/lib/types/escrows'
 import { format, subDays, subHours, parseISO } from 'date-fns'
 
 // ============================================================================
@@ -193,6 +199,8 @@ export default function WalletsPage() {
   const [wallets, setWallets] = useState<WalletData[]>([])
   const [selectedWallet, setSelectedWallet] = useState<WalletData | null>(null)
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
+  const [recentApiTransactions, setRecentApiTransactions] = useState<WalletTransaction[]>([])
+  const [escrows, setEscrows] = useState<EscrowTransaction[]>([])
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([])
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
@@ -251,27 +259,88 @@ export default function WalletsPage() {
 
   // Initialize data from real API
   useEffect(() => {
-    const loadWallets = async () => {
+    const loadData = async () => {
       try {
         setLoading(true)
+        // Load wallets
         const apiWallets = await apiGetAllWallets({ page: 0, limit: 100 })
-        const mappedWallets = apiWallets.map(mapApiWalletToWalletData)
-        setWallets(mappedWallets)
-        // Keep activity log as simulated for now
-        setActivityLog(generateMockActivityLog())
+        
+        if (apiWallets && apiWallets.length > 0) {
+          const mappedWallets = apiWallets.map(mapApiWalletToWalletData)
+          setWallets(mappedWallets)
+        } else {
+          // Fallback to mock data if API returns empty
+          console.warn('API returned no wallets, using mock data')
+          setWallets(generateMockWallets())
+        }
+
+        // Load transactions
+        try {
+          const transactionsResponse = await apiGetAllTransactions({ limit: 10 })
+          if (transactionsResponse?.data?.content) {
+            const mappedTransactions = transactionsResponse.data.content.map((txn: Transaction) => ({
+              id: txn.id,
+              walletId: txn.userId,
+              type: txn.transactionType === 'CASH_IN' ? 'deposit' : 'transfer',
+              amount: txn.amount,
+              status: (txn.status?.toLowerCase() || 'pending') as TransactionStatus,
+              description: txn.description || 'Transaction',
+              timestamp: txn.createdAt,
+              relatedTransactionId: txn.internalReference,
+            }))
+            setRecentApiTransactions(mappedTransactions)
+          }
+        } catch (txnError) {
+          console.warn('Failed to load transactions:', txnError)
+          setRecentApiTransactions([])
+        }
+
+        // Load escrows
+        try {
+          const escrowsData = await apiGetEscrows({ limit: 100 })
+          setEscrows(Array.isArray(escrowsData) ? escrowsData : [])
+        } catch (escrowError) {
+          console.warn('Failed to load escrows:', escrowError)
+          setEscrows([])
+        }
+
+        // Load audit logs
+        try {
+          const auditResponse = await apiGetAuditLogs({ limit: 15, resource: 'wallet' })
+          if (auditResponse?.data && Array.isArray(auditResponse.data)) {
+            const mappedLogs: ActivityLog[] = auditResponse.data.map((log: AuditLog) => ({
+              id: log.id,
+              action: log.action,
+              walletId: log.resourceId || '',
+              userId: log.userId,
+              details: log.action,
+              timestamp: log.timestamp,
+              performedBy: log.username || 'admin',
+            }))
+            setActivityLog(mappedLogs)
+          }
+        } catch (auditError) {
+          console.warn('Failed to load audit logs:', auditError)
+          // Fall back to empty array
+          setActivityLog([])
+        }
       } catch (error) {
-        console.error('Failed to load wallets:', error)
+        console.error('Failed to load wallets from API:', error)
+        // Fallback to mock data on error
+        setWallets(generateMockWallets())
+        setActivityLog(generateMockActivityLog())
+        
         toast({
-          title: 'Error loading wallets',
-          description: error instanceof Error ? error.message : 'Failed to load wallets',
-          variant: 'destructive',
+          title: 'Using sample data',
+          description: 'Could not load live data. Displaying sample wallets.',
+          variant: 'default',
         })
       } finally {
         setLoading(false)
       }
     }
 
-    loadWallets()
+    loadData()
   }, [])
 
   // Calculate metrics
@@ -289,18 +358,25 @@ export default function WalletsPage() {
     }
   }, [wallets])
 
-  // Calculate escrow summary
+  // Calculate escrow summary from real API data
   const escrowSummary: EscrowSummary = useMemo(() => {
-    const totalAmount = wallets.reduce((sum, w) => sum + w.reservedBalance, 0)
-    const activeEscrows = wallets.filter((w) => w.reservedBalance > 0).length
-    const pendingReleases = Math.floor(activeEscrows * 0.3)
+    const totalAmount = escrows.reduce((sum, e) => sum + (e.amount || 0), 0)
+
+    // Count active accounts from wallets (active wallet status)
+    const activeEscrows = wallets.filter((w) => w.status === 'active').length
+
+    // Count escrows that are in a pending state (API status may be 'PENDING')
+    const pendingReleases = escrows.filter((e) => {
+      const status = (e.status || '').toString().toUpperCase()
+      return status === 'PENDING'
+    }).length
 
     return {
       totalAmount,
       activeEscrows,
       pendingReleases,
     }
-  }, [wallets])
+  }, [escrows, wallets])
 
   // Filter wallets
   const filteredWallets = useMemo(() => {
@@ -338,21 +414,19 @@ export default function WalletsPage() {
     })
   }, [wallets, searchQuery, statusFilter, currencyFilter, balanceRangeFilter])
 
-  // Get recent transactions (all wallets)
+  // Get recent transactions (from API)
   const recentTransactions = useMemo(() => {
-    const allTransactions: WalletTransaction[] = []
-    wallets.forEach((wallet) => {
-      allTransactions.push(...generateMockTransactions(wallet.id))
-    })
-    return allTransactions
+    return recentApiTransactions
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, 10)
-  }, [wallets])
+  }, [recentApiTransactions])
 
-  // Handle wallet selection
+  // Handle wallet selection - fetch transactions for the selected wallet
   const handleViewWallet = (wallet: WalletData) => {
     setSelectedWallet(wallet)
-    setWalletTransactions(generateMockTransactions(wallet.id))
+    // Use recent API transactions filtered by wallet ID
+    const walletTxns = recentApiTransactions.filter((txn) => txn.walletId === wallet.userId)
+    setWalletTransactions(walletTxns.length > 0 ? walletTxns : [])
   }
 
   // Handle freeze wallet
@@ -462,9 +536,10 @@ export default function WalletsPage() {
 
   // Format currency
   const formatCurrency = (amount: number, currency: string = 'RWF'): string => {
-    if (amount >= 1000000) return `${(amount / 1000000).toFixed(2)}M ${currency}`
-    if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K ${currency}`
-    return `${amount.toFixed(2)} ${currency}`
+    return `${amount.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })} ${currency}`
   }
 
   // Table columns
@@ -597,7 +672,7 @@ export default function WalletsPage() {
   ]
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-black min-h-screen">
+    <div className="p-6 lg:p-8 space-y-6 bg-white dark:bg-black min-h-screen">
       {/* Page Header */}
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
@@ -611,7 +686,7 @@ export default function WalletsPage() {
 
       {/* Wallet Overview Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -627,7 +702,7 @@ export default function WalletsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -647,7 +722,7 @@ export default function WalletsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -667,7 +742,7 @@ export default function WalletsPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -695,7 +770,7 @@ export default function WalletsPage() {
             Comprehensive overview of funds held in escrow, active escrow transactions, and pending release operations
           </p>
         </div>
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-blue-400" />
@@ -745,7 +820,7 @@ export default function WalletsPage() {
             Complete wallet registry with advanced filtering, sorting, and search capabilities for comprehensive wallet monitoring
           </p>
         </div>
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -829,7 +904,7 @@ export default function WalletsPage() {
             Real-time view of recent wallet transactions including deposits, transfers, escrow operations, and withdrawals across all wallets
           </p>
         </div>
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-blue-400" />
@@ -916,7 +991,7 @@ export default function WalletsPage() {
             Complete audit log of all wallet-related actions, status changes, and administrative operations for compliance and tracking
           </p>
         </div>
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-blue-400" />
@@ -966,7 +1041,7 @@ export default function WalletsPage() {
       {/* Wallet Details Modal */}
       {selectedWallet && (
         <Dialog open={!!selectedWallet} onOpenChange={() => setSelectedWallet(null)}>
-          <DialogContent className="max-w-4xl bg-black border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl bg-white dark:bg-black border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Wallet className="h-5 w-5 text-blue-400" />

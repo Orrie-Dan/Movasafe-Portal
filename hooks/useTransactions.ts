@@ -72,7 +72,7 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
   })
   const [pagination, setPagination] = useState<PaginationState>({
     page: 1,
-    pageSize: 100, // Default limit per API
+    pageSize: 20, // Default limit per API
   })
 
   const getDateRange = () => {

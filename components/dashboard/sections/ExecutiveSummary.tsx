@@ -34,9 +34,10 @@ export function ExecutiveSummary({
     
     switch (metric.format) {
       case 'currency':
-        if (metric.value >= 1000000) return `${(metric.value / 1000000).toFixed(1)}M`
-        if (metric.value >= 1000) return `${(metric.value / 1000).toFixed(1)}K`
-        return metric.value.toFixed(0)
+        return metric.value.toLocaleString('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })
       case 'percentage':
         return `${metric.value.toFixed(1)}%`
       default:

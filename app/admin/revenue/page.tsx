@@ -73,7 +73,7 @@ export default function RevenuePage() {
   }, [])
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-black min-h-screen">
+    <div className="p-6 lg:p-8 space-y-6 bg-white dark:bg-black min-h-screen">
       {/* Page Header */}
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2 sm:gap-3">
@@ -87,7 +87,7 @@ export default function RevenuePage() {
 
       {/* Revenue KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -115,7 +115,7 @@ export default function RevenuePage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -138,7 +138,7 @@ export default function RevenuePage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -161,7 +161,7 @@ export default function RevenuePage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -186,7 +186,7 @@ export default function RevenuePage() {
       </div>
 
       {/* Revenue Trends Chart */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-blue-400" />
@@ -253,7 +253,7 @@ export default function RevenuePage() {
           </p>
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Store className="h-5 w-5 text-blue-400" />
@@ -297,7 +297,7 @@ export default function RevenuePage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-400" />
@@ -338,7 +338,7 @@ export default function RevenuePage() {
       </div>
 
       {/* Cohort Analysis */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-blue-400" />

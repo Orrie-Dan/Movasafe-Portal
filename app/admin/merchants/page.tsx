@@ -14,9 +14,10 @@ import { format, parseISO } from 'date-fns'
 import { toast } from '@/hooks/use-toast'
 
 function formatCurrency(amount: number, currency: string = 'RWF'): string {
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(2)}M ${currency}`
-  if (amount >= 1000) return `${(amount / 1000).toFixed(2)}K ${currency}`
-  return `${amount.toFixed(2)} ${currency}`
+  return `${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} ${currency}`
 }
 
 export default function MerchantsPage() {

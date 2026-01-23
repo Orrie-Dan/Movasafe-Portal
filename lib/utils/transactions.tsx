@@ -49,18 +49,13 @@ export function formatCurrency(
 ): string {
   // 🚨 Guard against undefined / null / NaN
   if (typeof amount !== 'number' || isNaN(amount)) {
-    return `0.00 ${currency}`
+    return `0 ${currency}`
   }
 
-  if (amount >= 1_000_000) {
-    return `${(amount / 1_000_000).toFixed(2)}M ${currency}`
-  }
-
-  if (amount >= 1_000) {
-    return `${(amount / 1_000).toFixed(2)}K ${currency}`
-  }
-
-  return `${amount.toFixed(2)} ${currency}`
+  return `${amount.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })} ${currency}`
 }
 
 /* =========================

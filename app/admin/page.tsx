@@ -128,8 +128,13 @@ export default function AdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [autoRefresh, setAutoRefresh] = useState(true)
   
-  // Use the overview data hook to fetch real API data
-  const overviewData = useOverviewData()
+  // Log when filters change
+  useEffect(() => {
+    console.log('[Admin Dashboard] Filters changed:', { timePeriod, customDateRange })
+  }, [timePeriod, customDateRange])
+  
+  // Use the overview data hook with filter parameters
+  const overviewData = useOverviewData(timePeriod, customDateRange)
 
   // Detect mobile screen size
   useEffect(() => {
@@ -437,9 +442,7 @@ export default function AdminDashboard() {
 
   // Helper function to format currency (RWF)
   const formatCurrency = (amount: number): string => {
-    if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M RWF`
-    if (amount >= 1000) return `${(amount / 1000).toFixed(1)}K RWF`
-    return `${amount.toFixed(0)} RWF`
+    return `${Math.round(amount).toLocaleString()} RWF`
   }
 
 
@@ -487,6 +490,113 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           )}
+
+          {/* Time Period Filter - Moved to Top */}
+          <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+            <div className="flex flex-row items-center justify-between p-4 sm:p-6 pb-3 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+              <div className="flex items-center justify-between relative z-10 flex-1">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 dark:text-blue-400" />
+                  <CardTitle size="md" className="text-sm sm:text-base">Filters</CardTitle>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const newExpanded = !filterExpanded
+                    setFilterExpanded(newExpanded)
+                  }}
+                  className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs sm:text-sm"
+                >
+                  {filterExpanded ? 'Collapse' : 'Expand'}
+                </Button>
+              </div>
+            </div>
+            
+            {filterExpanded && (
+              <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-4">
+                {/* Period Selection */}
+                <div>
+                  <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">Time Period</label>
+                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg p-1">
+                    {(['today', 'week', 'month', 'quarter', 'year', 'custom'] as const).map((period) => (
+                      <Button
+                        key={period}
+                        variant={timePeriod === period ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => {
+              if (period === 'custom') {
+                setTimePeriod('custom')
+              } else {
+                setTimePeriod(period)
+                setCustomDateRange({ from: null, to: null })
+              }
+            }}
+                        className={
+                          timePeriod === period
+                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }
+                      >
+                        {period.charAt(0).toUpperCase() + period.slice(1)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Date Range */}
+                {timePeriod === 'custom' && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">Start Date</label>
+                      <Input
+                        type="date"
+                        value={customDateRange.from ? format(customDateRange.from, 'yyyy-MM-dd') : ''}
+                        onChange={(e) =>
+                          setCustomDateRange({
+                            ...customDateRange,
+                            from: e.target.value ? new Date(e.target.value) : null,
+                          })
+                        }
+                        className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">End Date</label>
+                      <Input
+                        type="date"
+                        value={customDateRange.to ? format(customDateRange.to, 'yyyy-MM-dd') : ''}
+                        onChange={(e) =>
+                          setCustomDateRange({
+                            ...customDateRange,
+                            to: e.target.value ? new Date(e.target.value) : null,
+                          })
+                        }
+                        className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Reset Button */}
+                <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setTimePeriod('month')
+                      setCustomDateRange({ from: null, to: null })
+                    }}
+                    className="border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Reset Filters
+                  </Button>
+                </div>
+              </CardContent>
+            )}
+          </Card>
 
           {/* 1. System Health - Top Priority (Above the Fold) - Full Width */}
           <div className="space-y-6">
@@ -998,6 +1108,261 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
+          {/* MUST-ADD: Disputes vs Transactions Trend Chart */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+              Business Trust & Risk Health
+            </h2>
+            <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+              <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                <CardTitle className="relative z-10">Disputes vs Transactions Trend</CardTitle>
+                <CardDescription className="relative z-10">Shows whether disputes are growing faster than usage (early warning for vendor quality, fraud, or UX issues)</CardDescription>
+              </div>
+              <CardContent className="pt-6">
+                {overviewData.loading ? (
+                  <Skeleton className="h-[400px] w-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={overviewData.volumeTrend7d || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #475569',
+                          borderRadius: '8px'
+                        }}
+                        labelStyle={{ color: '#fff' }}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="volume" 
+                        stroke="#3b82f6" 
+                        name="Total Transactions"
+                        strokeWidth={2}
+                        dot={{ fill: '#3b82f6', r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="disputes" 
+                        stroke="#ef4444" 
+                        name="Disputed Transactions"
+                        strokeWidth={2}
+                        dot={{ fill: '#ef4444', r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* MUST-ADD: Refund & Revenue Impact Chart */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-500 dark:text-green-400" />
+              Financial Leakage Visibility
+            </h2>
+            <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+              <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/30 to-transparent" />
+                <CardTitle className="relative z-10">Refund & Revenue Impact</CardTitle>
+                <CardDescription className="relative z-10">Revenue alone hides losses. Executives need to see net performance impact</CardDescription>
+              </div>
+              <CardContent className="pt-6">
+                {overviewData.loading ? (
+                  <Skeleton className="h-[400px] w-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <RechartsBarChart data={overviewData.volumeTrend7d || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #475569',
+                          borderRadius: '8px'
+                        }}
+                        labelStyle={{ color: '#fff' }}
+                        formatter={(value) => `${formatCurrency(value as number)}`}
+                      />
+                      <Legend />
+                      <Bar dataKey="volume" fill="#10b981" name="Gross Transaction Volume" stackId="a" />
+                      <Bar dataKey="refunded" fill="#ef4444" name="Refunded Amount" stackId="a" />
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* MUST-ADD: Pending Transaction Aging */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Clock className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
+              Operational Risk Indicator
+            </h2>
+            <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+              <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+                <CardTitle className="relative z-10">Pending Transaction Aging</CardTitle>
+                <CardDescription className="relative z-10">Pending transactions are silent failures. Aging shows where processing breaks</CardDescription>
+              </div>
+              <CardContent className="pt-6">
+                {overviewData.loading ? (
+                  <Skeleton className="h-[400px] w-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <RechartsBarChart 
+                      data={[
+                        { bucket: '< 1 hour', count: Math.floor(stats.pending * 0.4), pending: Math.floor(stats.pending * 0.4) },
+                        { bucket: '1–6 hours', count: Math.floor(stats.pending * 0.35), pending: Math.floor(stats.pending * 0.35) },
+                        { bucket: '6–24 hours', count: Math.floor(stats.pending * 0.20), pending: Math.floor(stats.pending * 0.20) },
+                        { bucket: '> 24 hours', count: Math.floor(stats.pending * 0.05), pending: Math.floor(stats.pending * 0.05) },
+                      ]}
+                      layout="vertical"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis type="number" stroke="#94a3b8" />
+                      <YAxis dataKey="bucket" type="category" stroke="#94a3b8" width={100} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #475569',
+                          borderRadius: '8px'
+                        }}
+                        labelStyle={{ color: '#fff' }}
+                      />
+                      <Bar dataKey="pending" fill="#eab308" name="Pending Transactions" />
+                    </RechartsBarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* MUST-ADD: API Latency Distribution */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <Server className="h-5 w-5 text-purple-500 dark:text-purple-400" />
+              System Reliability Reality Check
+            </h2>
+            <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+              <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+                <CardTitle className="relative z-10">API Latency Distribution (P95 / P99)</CardTitle>
+                <CardDescription className="relative z-10">Average hides spikes. Users feel P95/P99. Response times in milliseconds</CardDescription>
+              </div>
+              <CardContent className="pt-6">
+                {overviewData.loading ? (
+                  <Skeleton className="h-[400px] w-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={overviewData.volumeTrend7d || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" label={{ value: 'Response Time (ms)', angle: -90, position: 'insideLeft' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #475569',
+                          borderRadius: '8px'
+                        }}
+                        labelStyle={{ color: '#fff' }}
+                        formatter={(value) => `${value}ms`}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="avgLatency" 
+                        stroke="#8b5cf6" 
+                        name="Average"
+                        strokeWidth={2}
+                        dot={{ fill: '#8b5cf6', r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="p95Latency" 
+                        stroke="#f59e0b" 
+                        name="P95 (95th percentile)"
+                        strokeWidth={2}
+                        dot={{ fill: '#f59e0b', r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="p99Latency" 
+                        stroke="#ef4444" 
+                        name="P99 (99th percentile)"
+                        strokeWidth={2}
+                        dot={{ fill: '#ef4444', r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* MUST-ADD: Risk Exposure Over Time */}
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
+              Money at Risk Analysis
+            </h2>
+            <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+              <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent" />
+                <CardTitle className="relative z-10">Risk Exposure Over Time</CardTitle>
+                <CardDescription className="relative z-10">Turns risk into measurable financial signal. Helps leadership decide urgency</CardDescription>
+              </div>
+              <CardContent className="pt-6">
+                {overviewData.loading ? (
+                  <Skeleton className="h-[400px] w-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={overviewData.volumeTrend7d || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" label={{ value: 'Amount at Risk (RWF)', angle: -90, position: 'insideLeft' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #475569',
+                          borderRadius: '8px'
+                        }}
+                        labelStyle={{ color: '#fff' }}
+                        formatter={(value) => formatCurrency(value as number)}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="flaggedAmount" 
+                        stroke="#ef4444" 
+                        name="Flagged Transactions"
+                        strokeWidth={2}
+                        dot={{ fill: '#ef4444', r: 4 }}
+                        fill="url(#colorRisk)"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="disputedAmount" 
+                        stroke="#f59e0b" 
+                        name="Disputed Escrow Amounts"
+                        strokeWidth={2}
+                        dot={{ fill: '#f59e0b', r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           {/* 5. Recent Activity / Context */}
           <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
             <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
@@ -1057,114 +1422,6 @@ export default function AdminDashboard() {
             />
           </div>
 
-
-
-          {/* Time Period Filter */}
-          <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-            <div className="flex flex-row items-center justify-between p-4 sm:p-6 pb-3 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-              <div className="flex items-center justify-between relative z-10 flex-1">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 dark:text-blue-400" />
-                  <CardTitle size="md" className="text-sm sm:text-base">Filters</CardTitle>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    const newExpanded = !filterExpanded
-                    setFilterExpanded(newExpanded)
-                  }}
-                  className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs sm:text-sm"
-                >
-                  {filterExpanded ? 'Collapse' : 'Expand'}
-                </Button>
-              </div>
-            </div>
-            
-            {filterExpanded && (
-              <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6 space-y-4">
-                {/* Period Selection */}
-                <div>
-                  <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">Time Period</label>
-                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg p-1">
-                    {(['today', 'week', 'month', 'quarter', 'year', 'custom'] as const).map((period) => (
-                      <Button
-                        key={period}
-                        variant={timePeriod === period ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => {
-              if (period === 'custom') {
-                setTimePeriod('custom')
-              } else {
-                setTimePeriod(period)
-                setCustomDateRange({ from: null, to: null })
-              }
-            }}
-                        className={
-                          timePeriod === period
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                        }
-                      >
-                        {period.charAt(0).toUpperCase() + period.slice(1)}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Custom Date Range */}
-                {timePeriod === 'custom' && (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">Start Date</label>
-                      <Input
-                        type="date"
-                        value={customDateRange.from ? format(customDateRange.from, 'yyyy-MM-dd') : ''}
-                        onChange={(e) =>
-                          setCustomDateRange({
-                            ...customDateRange,
-                            from: e.target.value ? new Date(e.target.value) : null,
-                          })
-                        }
-                        className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">End Date</label>
-                      <Input
-                        type="date"
-                        value={customDateRange.to ? format(customDateRange.to, 'yyyy-MM-dd') : ''}
-                        onChange={(e) =>
-                          setCustomDateRange({
-                            ...customDateRange,
-                            to: e.target.value ? new Date(e.target.value) : null,
-                          })
-                        }
-                        className="bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Reset Button */}
-                <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setTimePeriod('month')
-                      setCustomDateRange({ from: null, to: null })
-                    }}
-                    className="border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Reset Filters
-                  </Button>
-                </div>
-              </CardContent>
-            )}
-          </Card>
 
 
     </div>

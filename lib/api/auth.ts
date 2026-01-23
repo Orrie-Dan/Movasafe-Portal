@@ -37,6 +37,7 @@ async function apiRequest<T>(
   }
 
   if (token) {
+    // @ts-expect-error - HeadersInit doesn't support bracket notation for Authorization header
     headers['Authorization'] = `Bearer ${token}`
   }
 

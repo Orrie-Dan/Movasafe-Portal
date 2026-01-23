@@ -5,18 +5,12 @@ export function formatCurrency(
   currency: 'RWF' | 'USD' | 'EUR' = 'RWF',
   options?: { decimals?: number; compact?: boolean }
 ): string {
-  const { decimals = 0, compact = true } = options || {}
+  const { decimals = 0 } = options || {}
   
-  if (compact) {
-    if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(1)}M ${currency}`
-    }
-    if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(1)}K ${currency}`
-    }
-  }
-  
-  return `${amount.toFixed(decimals)} ${currency}`
+  return `${amount.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })} ${currency}`
 }
 
 export function calculatePercentageChange(

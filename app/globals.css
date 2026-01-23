@@ -218,11 +218,59 @@
 /* Ensure Select dropdown appears above dialogs */
 [data-slot="select-content"] {
   z-index: 3000 !important;
+  background-color: white !important;
+  color: rgb(15, 23, 42) !important;
+  border: 1px solid rgb(226, 232, 240) !important;
+}
+
+.dark [data-slot="select-content"] {
+  background-color: #000000 !important;
+  color: rgb(255, 255, 255) !important;
+  border: 1px solid rgb(26, 26, 26) !important;
 }
 
 /* Radix Select Portal z-index */
 [data-radix-portal] [data-slot="select-content"] {
   z-index: 3000 !important;
+  background-color: white !important;
+  color: rgb(15, 23, 42) !important;
+  border: 1px solid rgb(226, 232, 240) !important;
+}
+
+.dark [data-radix-portal] [data-slot="select-content"] {
+  background-color: #000000 !important;
+  color: rgb(255, 255, 255) !important;
+  border: 1px solid rgb(26, 26, 26) !important;
+}
+
+/* Style select items light mode */
+[data-slot="select-content"] [role="option"] {
+  color: rgb(15, 23, 42) !important;
+  background-color: white !important;
+}
+
+[data-slot="select-content"] [role="option"]:hover {
+  background-color: rgb(241, 245, 249) !important;
+}
+
+[data-slot="select-content"] [role="option"][aria-selected="true"] {
+  background-color: rgb(219, 234, 254) !important;
+  color: rgb(15, 23, 42) !important;
+}
+
+/* Style select items dark mode */
+.dark [data-slot="select-content"] [role="option"] {
+  color: rgb(255, 255, 255) !important;
+  background-color: #000000 !important;
+}
+
+.dark [data-slot="select-content"] [role="option"]:hover {
+  background-color: rgb(10, 10, 10) !important;
+}
+
+.dark [data-slot="select-content"] [role="option"][aria-selected="true"] {
+  background-color: rgb(30, 30, 30) !important;
+  color: rgb(255, 255, 255) !important;
 }
 
 /* Global Black Theme Override - Convert all slate backgrounds to black (Dark Mode Only) */

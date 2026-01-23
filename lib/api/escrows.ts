@@ -24,6 +24,7 @@ async function apiRequest<T>(
   }
 
   if (token) {
+    // @ts-expect-error - HeadersInit doesn't support bracket notation for Authorization header
     headers['Authorization'] = `Bearer ${token}`
   }
 
@@ -76,6 +77,7 @@ export async function apiCreateEscrow(data: CreateEscrowDTO): Promise<EscrowResp
 
 /**
  * Get escrows (user's escrows or all for admin)
+ * Response is paginated with structure: { content: [...], pageable: {...}, totalPages: X, ... }
  */
 export async function apiGetEscrows(filters?: EscrowFilters): Promise<EscrowTransaction[]> {
   const queryParams = new URLSearchParams()
@@ -91,9 +93,55 @@ export async function apiGetEscrows(filters?: EscrowFilters): Promise<EscrowTran
   const queryString = queryParams.toString()
   const endpoint = `${API_CONFIG.ESCROW.endpoints.list}${queryString ? `?${queryString}` : ''}`
   
-  return apiRequest<EscrowTransaction[]>(endpoint, {
+  const raw = await apiRequest<any>(endpoint, {
     method: 'GET',
   })
+
+  // Handle paginated response structure: { content: [...], pageable: {...}, ... }
+  if (raw?.content && Array.isArray(raw.content)) {
+    return raw.content as EscrowTransaction[]
+  }
+
+  // Handle flat array response
+  if (Array.isArray(raw)) {
+    return raw as EscrowTransaction[]
+  }
+
+  return []
+}
+
+/**
+ * Get all escrows (admin endpoint)
+ */
+export async function apiGetAllEscrows(filters?: EscrowFilters): Promise<EscrowTransaction[]> {
+  const queryParams = new URLSearchParams()
+  
+  if (filters?.clientId) queryParams.append('clientId', filters.clientId)
+  if (filters?.vendorId) queryParams.append('vendorId', filters.vendorId)
+  if (filters?.status) queryParams.append('status', filters.status)
+  if (filters?.startDate) queryParams.append('startDate', filters.startDate)
+  if (filters?.endDate) queryParams.append('endDate', filters.endDate)
+  if (filters?.limit) queryParams.append('limit', filters.limit.toString())
+  if (filters?.offset) queryParams.append('offset', filters.offset.toString())
+
+  const queryString = queryParams.toString()
+  const endpoint = `${API_CONFIG.ESCROW.endpoints.allEscrows}${queryString ? `?${queryString}` : ''}`
+  
+  const raw = await apiRequest<any>(endpoint, {
+    method: 'GET',
+  })
+
+  // Handle paginated response structure: { content: [...], pageable: {...}, ... }
+  if (raw?.content && Array.isArray(raw.content)) {
+    return raw.content as EscrowTransaction[]
+  }
+
+  // Handle flat array response
+  if (Array.isArray(raw)) {
+    return raw as EscrowTransaction[]
+  }
+
+  return []
 }
 
 /**
@@ -130,6 +178,101 @@ export async function apiRefundEscrow(escrowId: string): Promise<EscrowResponse>
   return apiRequest<EscrowResponse>(`${API_CONFIG.ESCROW.endpoints.refund}/${escrowId}`, {
     method: 'POST',
   })
+}
+
+/**
+ * Admin: Get all escrows by status (DISPUTED, REFUNDED, ACTIVE)
+ */
+export async function apiGetEscrowsByStatus(status: 'DISPUTED' | 'REFUNDED' | 'ACTIVE'): Promise<EscrowTransaction[]> {
+  const queryParams = new URLSearchParams()
+  queryParams.append('status', status)
+  
+  const queryString = queryParams.toString()
+  const endpoint = `/api/admin/escrows${queryString ? `?${queryString}` : ''}`
+  
+  const raw = await apiRequest<any>(endpoint, {
+    method: 'GET',
+  })
+
+  // Handle paginated response structure: { content: [...], pageable: {...}, ... }
+  if (raw?.content && Array.isArray(raw.content)) {
+    return raw.content as EscrowTransaction[]
+  }
+
+  // Handle flat array response
+  if (Array.isArray(raw)) {
+    return raw as EscrowTransaction[]
+  }
+
+  return []
+}
+
+/**
+ * Admin: Resolve a dispute
+ * Action can be 'RELEASE' (vendor wins) or 'REFUND' (client wins)
+ */
+export async function apiResolveDispute(
+  escrowId: string,
+  action: 'RELEASE' | 'REFUND',
+  notes: string
+): Promise<EscrowResponse> {
+  return apiRequest<EscrowResponse>(`/api/admin/escrows/resolve-dispute/${escrowId}`, {
+    method: 'POST',
+    body: JSON.stringify({
+      action,
+      notes,
+    }),
+  })
+}
+
+/**
+ * Admin: Process direct refund
+ */
+export async function apiProcessRefund(escrowId: string): Promise<EscrowResponse> {
+  return apiRequest<EscrowResponse>(`/api/admin/escrows/refund/${escrowId}`, {
+    method: 'POST',
+  })
+}
+
+/**
+ * Admin: Get audit log for refund and dispute resolutions
+ */
+export async function apiGetEscrowAuditLog(): Promise<any[]> {
+  const raw = await apiRequest<any>('/api/admin/escrows/audit-log', {
+    method: 'GET',
+  })
+
+  if (Array.isArray(raw)) {
+    return raw
+  }
+
+  if (raw?.content && Array.isArray(raw.content)) {
+    return raw.content
+  }
+
+  return []
+}
+
+/**
+ * Admin: Get all disputed escrows
+ * Endpoint: GET /api/admin/escrows/disputed
+ */
+export async function apiGetDisputedEscrows(): Promise<EscrowTransaction[]> {
+  const raw = await apiRequest<any>('/api/admin/escrows/disputed', {
+    method: 'GET',
+  })
+
+  // Handle paginated response structure: { content: [...], pageable: {...}, ... }
+  if (raw?.content && Array.isArray(raw.content)) {
+    return raw.content as EscrowTransaction[]
+  }
+
+  // Handle flat array response
+  if (Array.isArray(raw)) {
+    return raw as EscrowTransaction[]
+  }
+
+  return []
 }
 
 

@@ -21,6 +21,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promi
   }
 
   if (token) {
+    // @ts-expect-error - HeadersInit doesn't support bracket notation for Authorization header
     headers['Authorization'] = `Bearer ${token}`
   }
 

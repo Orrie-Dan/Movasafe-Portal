@@ -677,7 +677,7 @@ export default function ComplianceKYCPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-black min-h-screen">
+    <div className="p-6 lg:p-8 space-y-6 bg-white dark:bg-black min-h-screen">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -697,7 +697,7 @@ export default function ComplianceKYCPage() {
 
       {/* KYC Overview Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -713,7 +713,7 @@ export default function ComplianceKYCPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -734,7 +734,7 @@ export default function ComplianceKYCPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -750,7 +750,7 @@ export default function ComplianceKYCPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-black border-slate-200 dark:border-slate-800">
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -768,7 +768,7 @@ export default function ComplianceKYCPage() {
       </div>
 
       {/* KYC Status Chart */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle>KYC Verification Trends</CardTitle>
           <CardDescription>Last 7 days of KYC verifications</CardDescription>
@@ -792,7 +792,7 @@ export default function ComplianceKYCPage() {
       </Card>
 
       {/* KYC Verification Queue */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -870,7 +870,7 @@ export default function ComplianceKYCPage() {
       </Card>
 
       {/* Notifications */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-blue-400" />
@@ -949,7 +949,7 @@ export default function ComplianceKYCPage() {
       {/* KYC Review Modal */}
       {selectedUser && (
         <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-          <DialogContent className="max-w-5xl bg-black border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl bg-white dark:bg-black border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-blue-400" />
@@ -1048,7 +1048,7 @@ export default function ComplianceKYCPage() {
                   {selectedUser.documents.map((doc) => (
                     <div
                       key={doc.id}
-                      className="border rounded-lg p-3 bg-black"
+                      className="border rounded-lg p-3 bg-white dark:bg-black"
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -1111,7 +1111,7 @@ export default function ComplianceKYCPage() {
               {selectedUser.amlCheck && (
                 <div>
                   <Label className="text-muted-foreground mb-2">AML & Watchlist Checks</Label>
-                  <div className="border rounded-lg p-4 bg-black">
+                  <div className="border rounded-lg p-4 bg-white dark:bg-black">
                     <div className="grid grid-cols-3 gap-4 mb-3">
                       <div>
                         <Label className="text-xs text-muted-foreground">Watchlist</Label>
@@ -1233,7 +1233,7 @@ export default function ComplianceKYCPage() {
       {/* Document Viewer Modal */}
       {selectedDocument && selectedUser && (
         <Dialog open={!!selectedDocument} onOpenChange={() => setSelectedDocument(null)}>
-          <DialogContent className="max-w-4xl bg-black border-slate-200 dark:border-slate-800">
+          <DialogContent className="max-w-4xl bg-white dark:bg-black border-slate-200 dark:border-slate-800">
             <DialogHeader>
               <DialogTitle>{getDocumentTypeLabel(selectedDocument.type)}</DialogTitle>
               <DialogDescription>
@@ -1304,7 +1304,7 @@ export default function ComplianceKYCPage() {
       )}
 
       {/* KYC History & Audit Log */}
-      <Card className="bg-black border-slate-200 dark:border-slate-800">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-blue-400" />
