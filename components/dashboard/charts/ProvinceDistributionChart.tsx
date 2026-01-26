@@ -2,6 +2,7 @@
 
 import { ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, Tooltip, Legend } from 'recharts'
 import { EmptyState } from '@/components/ui/empty-state'
+import { LucideIcon } from 'lucide-react'
 
 export interface ProvinceDistributionChartProps {
   data: Array<{ name: string; count: number }>
@@ -11,7 +12,7 @@ export interface ProvinceDistributionChartProps {
   isMobile?: boolean
   colors?: string[]
   centerLabel?: { total: string; selected?: string }
-  emptyState?: { title: string; description: string; icon?: React.ComponentType }
+  emptyState?: { title: string; description: string; icon?: LucideIcon }
   showLegend?: boolean
   showTooltip?: boolean
   ariaLabel?: string

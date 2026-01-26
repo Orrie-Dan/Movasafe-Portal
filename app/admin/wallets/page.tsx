@@ -67,7 +67,7 @@ interface WalletData {
 interface WalletTransaction {
   id: string
   walletId: string
-  type: TransactionType
+  type: string
   amount: number
   status: TransactionStatus
   description: string
@@ -547,14 +547,14 @@ export default function WalletsPage() {
     {
       key: 'id',
       header: 'Wallet ID',
-      render: (wallet) => (
+      accessor: (wallet) => (
         <span className="font-mono text-sm text-foreground">{wallet.id}</span>
       ),
     },
     {
       key: 'userName',
       header: 'User ID',
-      render: (wallet) => (
+      accessor: (wallet) => (
         <div>
           <div className="font-mono text-sm text-foreground">{wallet.userId}</div>
         </div>
@@ -563,7 +563,7 @@ export default function WalletsPage() {
     {
       key: 'currency',
       header: 'Currency',
-      render: (wallet) => (
+      accessor: (wallet) => (
         <Badge variant="outline" className="text-foreground">
           {wallet.currency}
         </Badge>
@@ -572,7 +572,7 @@ export default function WalletsPage() {
     {
       key: 'availableBalance',
       header: 'Available',
-      render: (wallet) => (
+      accessor: (wallet) => (
         <span className="font-semibold text-green-400">
           {formatCurrency(wallet.availableBalance, wallet.currency)}
         </span>
@@ -581,7 +581,7 @@ export default function WalletsPage() {
     {
       key: 'reservedBalance',
       header: 'Reserved',
-      render: (wallet) => (
+      accessor: (wallet) => (
         <span className="text-yellow-400">
           {formatCurrency(wallet.reservedBalance, wallet.currency)}
         </span>
@@ -590,7 +590,7 @@ export default function WalletsPage() {
     {
       key: 'totalBalance',
       header: 'Total',
-      render: (wallet) => (
+      accessor: (wallet) => (
         <span className="font-semibold text-foreground">
           {formatCurrency(wallet.totalBalance, wallet.currency)}
         </span>
@@ -599,7 +599,7 @@ export default function WalletsPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (wallet) => {
+      accessor: (wallet) => {
         const statusColors = {
           active: 'bg-green-500/20 text-green-400 border-green-500/30',
           frozen: 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -616,7 +616,7 @@ export default function WalletsPage() {
     {
       key: 'lastActivity',
       header: 'Last Activity',
-      render: (wallet) => (
+      accessor: (wallet) => (
         <span className="text-sm text-muted-foreground">
           {format(parseISO(wallet.lastActivity), 'MMM d, HH:mm')}
         </span>
@@ -625,7 +625,7 @@ export default function WalletsPage() {
     {
       key: 'actions',
       header: 'Actions',
-      render: (wallet) => (
+      accessor: (wallet) => (
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"

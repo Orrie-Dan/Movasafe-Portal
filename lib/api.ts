@@ -464,16 +464,6 @@ export async function apiGetReport(reportId: string) {
   }
 }
 
-export async function apiCreateUser(payload: CreateUserPayload) {
-  // TODO: Replace with actual API call
-  return {
-    success: true,
-    user: {
-      id: Date.now().toString(),
-      ...payload,
-    },
-  }
-}
 
 export async function apiUpdateUserPassword(userId: string, newPassword: string) {
   // TODO: Replace with actual API call
@@ -680,14 +670,6 @@ export type ApiReport = {
   status: string
   type: string
   createdAt: string
-  [key: string]: any
-}
-
-export type User = {
-  id: string
-  email: string
-  fullName: string
-  role: 'admin' | 'officer'
   [key: string]: any
 }
 

@@ -97,7 +97,7 @@ export default function AuditLogsPage() {
   const failedLoginAlerts = useMemo(() => {
     const failedLogins = logs.filter(log => 
       log.action?.toLowerCase().includes('login') && 
-      (log.status === 'failed' || log.status === 'error')
+      (log.status === 'failure' || log.status === 'error')
     )
     
     if (failedLogins.length === 0) return []
@@ -120,9 +120,9 @@ export default function AuditLogsPage() {
       header: 'Admin',
       accessor: (log) => (
         <div>
-          <div className="font-medium text-foreground">{log.user?.fullName || log.userId}</div>
-          {log.user?.role && (
-            <div className="text-xs text-muted-foreground">{log.user.role}</div>
+          <div className="font-medium text-foreground">{log.username || log.userEmail || log.userId}</div>
+          {log.userId && (
+            <div className="text-xs text-muted-foreground">ID: {log.userId}</div>
           )}
         </div>
       ),

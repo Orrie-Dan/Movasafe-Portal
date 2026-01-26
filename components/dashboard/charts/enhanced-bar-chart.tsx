@@ -9,7 +9,7 @@ export interface EnhancedBarChartProps {
   dataKey: string
   xAxisKey?: string
   height?: number
-  colors?: string[]
+  colors?: readonly string[]
   gradientColors?: { start: string; end: string; startOpacity?: number; endOpacity?: number }
   xAxisAngle?: number
   xAxisInterval?: number | 'preserveStartEnd' | 'preserveStart' | 'preserveEnd'

@@ -1,7 +1,7 @@
 // User and role management types
 
 import type { User, Role, Permission } from './auth'
-export type { User } from './auth'
+export type { User, Role, Permission } from './auth'
 
 
 export interface CreateUserRequest {

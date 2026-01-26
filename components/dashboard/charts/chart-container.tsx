@@ -1,8 +1,8 @@
-import { ReactNode } from 'react'
+import { ReactElement } from 'react'
 import { ResponsiveContainer } from 'recharts'
 
 export interface ChartContainerProps {
-  children: ReactNode
+  children: ReactElement
   height?: number
   className?: string
 }

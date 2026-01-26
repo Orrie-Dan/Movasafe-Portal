@@ -37,7 +37,7 @@ export function TransactionDetailsDialog({
 
   const failureInfo = useMemo(() => {
     if (!transaction) return null
-    return getFailureCategory(transaction.status, transaction.description)
+    return getFailureCategory(transaction.status as TransactionStatus, transaction.description)
   }, [transaction])
 
   const relatedFailures = useMemo(() => {
@@ -97,12 +97,6 @@ export function TransactionDetailsDialog({
                 <Label className="text-xs text-muted-foreground">Amount</Label>
                 <div className="font-semibold mt-1">{formatCurrency(transaction.amount, transaction.currency || 'RWF')}</div>
               </div>
-              {transaction.chargeFee && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Fee</Label>
-                  <div className="font-medium mt-1">{formatCurrency(transaction.chargeFee, transaction.currency || 'RWF')}</div>
-                </div>
-              )}
               <div>
                 <Label className="text-xs text-muted-foreground">Reference</Label>
                 <div className="font-mono text-xs mt-1">{transaction.internalReference}</div>
@@ -126,12 +120,6 @@ export function TransactionDetailsDialog({
                 <Label className="text-xs text-muted-foreground">From User ID</Label>
                 <div className="font-mono text-xs mt-1 truncate">{transaction.userId}</div>
               </div>
-              {transaction.counterpartyUserId && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">To User ID</Label>
-                  <div className="font-mono text-xs mt-1 truncate">{transaction.counterpartyUserId}</div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -172,23 +160,6 @@ export function TransactionDetailsDialog({
                 <Label className="text-xs text-muted-foreground">Updated</Label>
                 <div className="text-xs mt-1">{format(parseISO(transaction.updatedAt), 'PPp')}</div>
               </div>
-              {transaction.isReversed && (
-                <>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Reversed</Label>
-                    <div className="text-xs mt-1 flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-orange-500" />
-                      Yes
-                    </div>
-                  </div>
-                  {transaction.reversalReason && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Reason</Label>
-                      <div className="text-xs mt-1">{transaction.reversalReason}</div>
-                    </div>
-                  )}
-                </>
-              )}
             </div>
           </div>
 

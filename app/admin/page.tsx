@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useOverviewData } from '@/hooks/useOverviewData'
-import type { Transaction, Wallet, TransactionStatus, EscrowStatus } from '@/lib/api'
+import type { Transaction, TransactionStatus, EscrowStatus } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -475,16 +475,6 @@ export default function AdminDashboard() {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Retry
                 </Button>
-                    <Button
-                      onClick={() => {
-                        setError(null)
-                      }}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
-                    >
-                      Dismiss
-                    </Button>
               </div>
             </div>
               </CardContent>

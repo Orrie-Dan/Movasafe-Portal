@@ -89,7 +89,7 @@ export function GlobalAlertCenter({
       </div>
       <AlertCenter
         alerts={alertCards}
-        onAlertClick={onAlertClick}
+        onAlertClick={onAlertClick as (alert: Alert) => void}
         title="Global Alert Center"
         description="System-wide alerts and notifications"
       />

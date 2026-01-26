@@ -5,7 +5,7 @@ import { CHART_COLORS } from '@/components/constants/chart-colors'
 export interface PieChartProps {
   data: Array<{ name: string; value: number }>
   height?: number
-  colors?: string[]
+  colors?: readonly string[]
   showLegend?: boolean
   showLabels?: boolean
   outerRadius?: number

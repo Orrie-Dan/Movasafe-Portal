@@ -8,11 +8,12 @@ interface TabsContextValue {
 
 const TabsContext = React.createContext<TabsContextValue | undefined>(undefined)
 
-export const Tabs = ({ defaultValue, value, onValueChange, children }: {
+export const Tabs = ({ defaultValue, value, onValueChange, children, className }: {
   defaultValue?: string
   value?: string
   onValueChange?: (value: string) => void
   children: React.ReactNode
+  className?: string
 }) => {
   const [internalValue, setInternalValue] = React.useState(defaultValue || "")
   const currentValue = value !== undefined ? value : internalValue
@@ -20,7 +21,7 @@ export const Tabs = ({ defaultValue, value, onValueChange, children }: {
 
   return (
     <TabsContext.Provider value={{ value: currentValue, onValueChange: handleChange }}>
-      <div>{children}</div>
+      <div className={className}>{children}</div>
     </TabsContext.Provider>
   )
 }

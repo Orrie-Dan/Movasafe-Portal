@@ -294,6 +294,16 @@ export async function apiChangePassword(data: { currentPassword: string; newPass
   return { success: true }
 }
 
+export async function apiSetUserPassword(userId: string): Promise<{ success: boolean; temporaryPassword?: string }> {
+  const response = await apiRequest<any>(`${endpoints.setPassword}/${userId}`, {
+    method: 'POST',
+  })
+  return {
+    success: true,
+    temporaryPassword: response.data?.temporaryPassword || response.temporaryPassword
+  }
+}
+
 export async function apiChangeCurrentPassword(data: ChangeCurrentPasswordDTO): Promise<{ success: boolean }> {
   await apiRequest(endpoints.changeCurrentPassword, {
     method: 'POST',

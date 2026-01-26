@@ -17,6 +17,8 @@ export interface Transaction {
   status: string
   description: string
   internalReference: string
+  chargeFee?: number | null
+  commissionAmount?: number | null
   createdAt: string
   updatedAt: string
   currency?: string // Currency code (e.g., 'RWF') - can be derived from toDetails or fromDetails
@@ -207,7 +209,7 @@ export async function apiGetAllTransactions(filters?: TransactionFilters): Promi
   if (filters?.offset !== undefined) queryParams.append('offset', filters.offset.toString())
 
   const params = queryParams
-  // Use Next.js API proxy route to avoid mixed-content issues (HTTPS frontend -> HTTP backend)
+  // Call backend directly (CORS must be configured on backend for portal-demo.movasafe.com)
   const url = `${API_CONFIG.TRANSACTION.baseUrl}${API_CONFIG.TRANSACTION.endpoints.allTransactions}?${params.toString()}`
   
   const token = getToken()

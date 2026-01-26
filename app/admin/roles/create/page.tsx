@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { apiCreateRole, apiGetPermissions } from '@/lib/api/roles'
 import type { CreateRoleRequest } from '@/lib/types/user'
-import type { Permission } from '@/lib/types/permission'
+import type { Permission } from '@/lib/types/auth'
 import { toast } from '@/hooks/use-toast'
 
 export default function CreateRolePage() {

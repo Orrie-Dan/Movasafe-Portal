@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 interface TooltipProps {
   children: React.ReactNode
-  content: string
+  content: React.ReactNode
   side?: 'top' | 'bottom' | 'left' | 'right'
   className?: string
 }

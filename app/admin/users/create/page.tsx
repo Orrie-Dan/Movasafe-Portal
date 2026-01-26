@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { apiCreateUser, apiGetRoles } from '@/lib/api/users'
-import { apiGetRoles as getRoles } from '@/lib/api/roles'
+import { apiCreateUser } from '@/lib/api/users'
+import { apiGetRoles } from '@/lib/api/roles'
 import type { CreateUserRequest } from '@/lib/types/user'
 import type { Role } from '@/lib/types/auth'
 import { toast } from '@/hooks/use-toast'
@@ -36,7 +36,7 @@ export default function CreateUserPage() {
 
   const loadRoles = async () => {
     try {
-      const response = await getRoles()
+      const response = await apiGetRoles()
       setRoles(response.data)
     } catch (error) {
       console.error('Failed to load roles:', error)
@@ -132,8 +132,8 @@ export default function CreateUserPage() {
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={formData.status}
-                  onValueChange={(value: 'active' | 'suspended' | 'inactive') =>
-                    setFormData({ ...formData, status: value })
+                  onValueChange={(value: string) =>
+                    setFormData({ ...formData, status: value as 'active' | 'suspended' | 'inactive' })
                   }
                 >
                   <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
@@ -205,8 +205,8 @@ export default function CreateUserPage() {
               <Checkbox
                 id="emailVerified"
                 checked={formData.emailVerified}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, emailVerified: checked === true })
+                onChange={(event) =>
+                  setFormData({ ...formData, emailVerified: event.target.checked })
                 }
               />
               <Label htmlFor="emailVerified" className="cursor-pointer">

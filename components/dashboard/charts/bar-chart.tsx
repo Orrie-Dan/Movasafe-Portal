@@ -15,7 +15,7 @@ export interface BarChartProps {
   dataKey: string
   xAxisKey?: string
   height?: number
-  colors?: string[]
+  colors?: readonly string[]
   showLegend?: boolean
   showGrid?: boolean
   barRadius?: number | [number, number, number, number]

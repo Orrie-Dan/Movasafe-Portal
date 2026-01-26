@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 export interface AlertBadgeProps {
   severity: 'low' | 'medium' | 'high' | 'critical'
   title: string
-  description?: string
+  description?: React.ReactNode
   className?: string
 }
 

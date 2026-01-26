@@ -13,12 +13,13 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
 
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   }
 
-  if (token) {    // @ts-expect-error - HeadersInit doesn't support bracket notation for Authorization header    headers['Authorization'] = `Bearer ${token}`
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -79,9 +80,8 @@ export async function apiExportAuditLogs(params?: AuditLogFilters): Promise<Blob
   const queryString = queryParams.toString()
   
   const token = getToken()
-  const headers: HeadersInit = {}
+  const headers: Record<string, string> = {}
   if (token) {
-    // @ts-expect-error - HeadersInit doesn't support bracket notation for Authorization header
     headers['Authorization'] = `Bearer ${token}`
   }
 

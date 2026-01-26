@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { apiGetUsers, apiGetEscrows, type User, EscrowStatus } from '@/lib/api'
+import { apiGetUsers, apiGetEscrows, EscrowStatus } from '@/lib/api'
+import type { User } from '@/lib/types/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
