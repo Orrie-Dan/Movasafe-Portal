@@ -122,7 +122,7 @@ export function DataTable<T extends Record<string, any>>({
           <TableHeader>
             <TableRow className="border-slate-800">
               {columns.map((column) => (
-                <TableHead key={column.key} className="text-slate-300">
+                <TableHead key={column.key} className="text-sm font-medium text-slate-600">
                   {column.header}
                 </TableHead>
               ))}
@@ -165,7 +165,7 @@ export function DataTable<T extends Record<string, any>>({
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className={`text-slate-300 ${column.className || ''}`}
+                  className={`text-sm font-medium text-slate-600 ${column.className || ''}`}
                 >
                   {column.sortable && onSort ? (
                     <Button
@@ -211,7 +211,7 @@ export function DataTable<T extends Record<string, any>>({
                     </TableCell>
                   )}
                   {columns.map((column) => (
-                    <TableCell key={column.key} className={column.className}>
+                    <TableCell key={column.key} className={`text-sm ${column.className || ''}`}>
                       {column.render ? column.render(item) : item[column.key]}
                     </TableCell>
                   ))}

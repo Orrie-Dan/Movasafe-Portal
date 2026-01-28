@@ -305,32 +305,32 @@ export default function TransactionDisputesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="dark:border-b dark:border-slate-700 dark:bg-slate-900/50">
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">Reference</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">User ID</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">Date</th>
-                    <th className="text-right py-3 px-2 text-xs font-medium dark:text-slate-400">Amount</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">Type</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">Description</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">Status</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">From</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">To</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium dark:text-slate-400">Actions</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Reference</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">User ID</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Date</th>
+                    <th className="text-right py-3 px-2 text-sm font-medium dark:text-slate-400">Amount</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Type</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Description</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Status</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">From</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">To</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {transactions.map((transaction) => (
                     <tr key={transaction.id} className="dark:border-b dark:border-slate-700 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="py-3 px-2 font-mono text-xs dark:text-white">{transaction.internalReference}</td>
-                      <td className="py-3 px-2 font-mono text-xs dark:text-white">{transaction.userId || '-'}</td>
-                      <td className="py-3 px-2 dark:text-slate-300 text-xs">{format(new Date(transaction.createdAt || 0), 'MMM dd, HH:mm')}</td>
+                      <td className="py-3 px-2 font-mono text-sm dark:text-white">{transaction.internalReference}</td>
+                      <td className="py-3 px-2 font-mono text-sm dark:text-white">{transaction.userId || '-'}</td>
+                      <td className="py-3 px-2 dark:text-slate-300 text-sm">{format(new Date(transaction.createdAt || 0), 'MMM dd, HH:mm')}</td>
                       <td className="py-3 px-2 text-right font-mono font-bold dark:text-white">{new Intl.NumberFormat('en-US').format(transaction.amount || 0)} RWF</td>
                       <td className="py-3 px-2 text-sm dark:text-slate-300">{transaction.transactionType}</td>
                       <td className="py-3 px-2">
-                        <Badge variant="outline" className="text-xs">{transaction.description}</Badge>
+                        <Badge variant="outline" className="text-sm">{transaction.description}</Badge>
                       </td>
                       <td className="py-3 px-2">
                         <Badge
-                          className={`text-xs ${
+                          className={`text-sm ${
                             transaction.status === 'SUCCESSFUL'
                               ? 'bg-green-500 text-white hover:bg-green-600'
                               : transaction.status === 'PENDING'
@@ -343,14 +343,14 @@ export default function TransactionDisputesPage() {
                       </td>
                       <td className="py-3 px-2 text-sm">
                         <div className="space-y-1">
-                          <div className="dark:text-slate-400 text-xs">{transaction.fromDetails?.accountSource || '-'}</div>
-                          <div className="font-mono text-xs dark:text-slate-500">{transaction.fromDetails?.accountNumber?.substring(0, 8) || '-'}...</div>
+                          <div className="dark:text-slate-400 text-sm">{transaction.fromDetails?.accountSource || '-'}</div>
+                          <div className="font-mono text-sm dark:text-slate-500">{transaction.fromDetails?.accountNumber?.substring(0, 8) || '-'}...</div>
                         </div>
                       </td>
                       <td className="py-3 px-2 text-sm">
                         <div className="space-y-1">
-                          <div className="dark:text-slate-400 text-xs">{transaction.toDetails?.accountSource || '-'}</div>
-                          <div className="font-mono text-xs dark:text-slate-500">{transaction.toDetails?.accountNumber?.substring(0, 8) || '-'}...</div>
+                          <div className="dark:text-slate-400 text-sm">{transaction.toDetails?.accountSource || '-'}</div>
+                          <div className="font-mono text-sm dark:text-slate-500">{transaction.toDetails?.accountNumber?.substring(0, 8) || '-'}...</div>
                         </div>
                       </td>
                       <td className="py-3 px-2">
@@ -367,36 +367,6 @@ export default function TransactionDisputesPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          {transaction.status === 'SUCCESSFUL' && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="hover:bg-amber-500/20 hover:text-amber-400"
-                                onClick={() => {
-                                  setSelectedTransaction(transaction)
-                                  setStandardReversalOpen(true)
-                                }}
-                                title="Reverse transfer"
-                              >
-                                <RotateCcw className="w-4 h-4" />
-                              </Button>
-                              {hasPermission('FORCE_REVERSE_TRANSACTION') && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="hover:bg-red-500/20 hover:text-red-400"
-                                  onClick={() => {
-                                    setSelectedTransaction(transaction)
-                                    setForceReversalOpen(true)
-                                  }}
-                                  title="Force reverse transfer"
-                                >
-                                  <AlertCircle className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </>
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -649,6 +619,34 @@ export default function TransactionDisputesPage() {
             </div>
 
             <div className="border-t border-gray-700 pt-4 flex justify-end gap-2">
+              {selectedTransaction?.status === 'SUCCESSFUL' && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDetailDialogOpen(false)
+                      setStandardReversalOpen(true)
+                    }}
+                    className="hover:bg-amber-500/20 hover:text-amber-400"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Reverse
+                  </Button>
+                  {hasPermission('FORCE_REVERSE_TRANSACTION') && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setDetailDialogOpen(false)
+                        setForceReversalOpen(true)
+                      }}
+                      className="hover:bg-red-500/20 hover:text-red-400"
+                    >
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      Force Reverse
+                    </Button>
+                  )}
+                </>
+              )}
               <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
                 Close
               </Button>

@@ -195,7 +195,7 @@ export default function UsersPage() {
 
     if (filters.status !== 'all') {
       if (filters.status === 'pending_verification') {
-        data = data.filter((user) => !user.emailVerified || !(user as any).kycVerified)
+        data = data.filter((user) => !user.emailVerified && !(user as any).kycVerified)
       } else {
         data = data.filter((user) => user.status === filters.status)
       }
@@ -453,30 +453,29 @@ export default function UsersPage() {
         description="Find, inspect, and manage Movasafe wallet users"
       />
 
-      {/* Sticky Filters */}
-      <div className="sticky top-0 z-10">
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 shadow-sm">
-          <CardContent className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-blue-400" />
-                <span className="text-sm font-medium text-foreground">Filters</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={loadUsers}
-                  title="Refresh"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={resetFilters}>
-                  Clear
-                </Button>
-              </div>
+      {/* Filters */}
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 shadow-sm">
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-blue-400" />
+              <span className="text-sm font-medium text-foreground">Filters</span>
             </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={loadUsers}
+                title="Refresh"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={resetFilters}>
+                Clear
+              </Button>
+            </div>
+          </div>
 
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {/* User / Wallet ID */}
@@ -517,10 +516,10 @@ export default function UsersPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">Status</Label>
                 <Select
                   value={filters.status}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      status: e.target.value as UsersFilters['status'],
+                      status: value as UsersFilters['status'],
                     }))
                   }
                   className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground"
@@ -544,10 +543,10 @@ export default function UsersPage() {
                 </Label>
             <Select 
                   value={filters.kycStatus}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      kycStatus: e.target.value as UsersFilters['kycStatus'],
+                      kycStatus: value as UsersFilters['kycStatus'],
                     }))
                   }
                   className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground"
@@ -568,10 +567,10 @@ export default function UsersPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">Date Field</Label>
                 <Select
                   value={filters.dateField}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      dateField: e.target.value as UsersFilters['dateField'],
+                      dateField: value as UsersFilters['dateField'],
                     }))
                   }
                   className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground"
@@ -589,10 +588,10 @@ export default function UsersPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">Date Range</Label>
                 <Select
                   value={filters.dateRange}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      dateRange: e.target.value as UsersFilters['dateRange'],
+                      dateRange: value as UsersFilters['dateRange'],
                     }))
                   }
                   className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground"
@@ -647,7 +646,6 @@ export default function UsersPage() {
           </div>
         </CardContent>
       </Card>
-      </div>
 
       {/* Users table */}
       <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">

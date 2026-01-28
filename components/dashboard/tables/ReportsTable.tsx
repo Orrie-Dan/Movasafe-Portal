@@ -569,7 +569,7 @@ export function ReportsTable({
                     </button>
                   </TableHead>
                   {visibleColumns.has('title') && (
-                    <TableHead className="text-slate-300">
+                    <TableHead className="text-sm font-medium text-slate-600">
                       <button
                         onClick={() => handleSort('title')}
                         className="flex items-center gap-1 hover:text-white"
@@ -584,7 +584,7 @@ export function ReportsTable({
                     </TableHead>
                   )}
                   {visibleColumns.has('type') && (
-                    <TableHead className="text-slate-300">
+                    <TableHead className="text-sm font-medium text-slate-600">
                       <button
                         onClick={() => handleSort('type')}
                         className="flex items-center gap-1 hover:text-white"
@@ -599,7 +599,7 @@ export function ReportsTable({
                     </TableHead>
                   )}
                   {visibleColumns.has('severity') && (
-                    <TableHead className="text-slate-300">
+                    <TableHead className="text-sm font-medium text-slate-600">
                       <button
                         onClick={() => handleSort('severity')}
                         className="flex items-center gap-1 hover:text-white"
@@ -614,7 +614,7 @@ export function ReportsTable({
                     </TableHead>
                   )}
                   {visibleColumns.has('status') && (
-                    <TableHead className="text-slate-300">
+                    <TableHead className="text-sm font-medium text-slate-600">
                       <button
                         onClick={() => handleSort('status')}
                         className="flex items-center gap-1 hover:text-white"
@@ -629,16 +629,16 @@ export function ReportsTable({
                     </TableHead>
                   )}
                   {visibleColumns.has('location') && (
-                    <TableHead className="text-slate-300">Location</TableHead>
+                    <TableHead className="text-sm font-medium text-slate-600">Location</TableHead>
                   )}
                   {visibleColumns.has('assignedTo') && (
-                    <TableHead className="text-slate-300">Assigned To</TableHead>
+                    <TableHead className="text-sm font-medium text-slate-600">Assigned To</TableHead>
                   )}
                   {visibleColumns.has('photos') && (
-                    <TableHead className="text-slate-300">Photos</TableHead>
+                    <TableHead className="text-sm font-medium text-slate-600">Photos</TableHead>
                   )}
                   {visibleColumns.has('createdAt') && (
-                    <TableHead className="text-slate-300">
+                    <TableHead className="text-sm font-medium text-slate-600">
                       <button
                         onClick={() => handleSort('createdAt')}
                         className="flex items-center gap-1 hover:text-white"
@@ -653,7 +653,7 @@ export function ReportsTable({
                     </TableHead>
                   )}
                   {visibleColumns.has('actions') && (
-                    <TableHead className="text-slate-300">Actions</TableHead>
+                    <TableHead className="text-sm font-medium text-slate-600">Actions</TableHead>
                   )}
                 </TableRow>
               </TableHeader>
@@ -743,18 +743,18 @@ export function ReportsTable({
                         </button>
                       </TableCell>
                       {visibleColumns.has('title') && (
-                        <TableCell className="font-medium text-white max-w-xs truncate">{report.title}</TableCell>
+                        <TableCell className="font-medium text-white max-w-xs truncate text-sm">{report.title}</TableCell>
                       )}
                       {visibleColumns.has('type') && (
                         <TableCell className="whitespace-nowrap">
-                          <Badge variant="outline" className="border-slate-700 text-slate-300 whitespace-nowrap px-2 py-1 min-w-[80px] text-center inline-block">
+                          <Badge variant="outline" className="border-slate-700 text-slate-300 whitespace-nowrap px-2 py-1 min-w-[80px] text-center inline-block text-xs">
                             {getTypeDisplayName(report.type)}
                           </Badge>
                         </TableCell>
                       )}
                       {visibleColumns.has('severity') && (
                         <TableCell>
-                          <Badge variant={report.severity === 'high' ? 'destructive' : report.severity === 'medium' ? 'default' : 'secondary'} className="px-2 py-1 min-w-[80px] text-center inline-block">
+                          <Badge variant={report.severity === 'high' ? 'destructive' : report.severity === 'medium' ? 'default' : 'secondary'} className="px-2 py-1 min-w-[80px] text-center inline-block text-xs">
                             {report.severity}
                           </Badge>
                         </TableCell>

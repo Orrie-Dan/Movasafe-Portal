@@ -449,14 +449,17 @@ export async function apiStandardReversal(
       }
 
       const errorText = await response.text()
-      let errorMessage = `Failed with status ${response.status}`
-      try {
-        const errorData = JSON.parse(errorText)
-        console.error('[Standard Reversal] Error response:', errorData)
-        errorMessage = errorData.message || errorData.error || errorMessage
-      } catch {
-        console.error('[Standard Reversal] Error text:', errorText)
-        errorMessage = errorText || errorMessage
+      let errorMessage = `Failed with status ${response.status}: ${response.statusText}`
+      
+      if (errorText) {
+        try {
+          const errorData = JSON.parse(errorText)
+          console.error('[Standard Reversal] Error response:', errorData)
+          errorMessage = errorData.message || errorData.error || errorData.data?.message || errorMessage
+        } catch {
+          console.error('[Standard Reversal] Error text:', errorText)
+          errorMessage = errorText || errorMessage
+        }
       }
       throw new Error(errorMessage)
     }
@@ -536,14 +539,17 @@ export async function apiForceReversal(
       }
 
       const errorText = await response.text()
-      let errorMessage = `Failed with status ${response.status}`
-      try {
-        const errorData = JSON.parse(errorText)
-        console.error('[Force Reversal] Error response:', errorData)
-        errorMessage = errorData.message || errorData.error || errorMessage
-      } catch {
-        console.error('[Force Reversal] Error text:', errorText)
-        errorMessage = errorText || errorMessage
+      let errorMessage = `Failed with status ${response.status}: ${response.statusText}`
+      
+      if (errorText) {
+        try {
+          const errorData = JSON.parse(errorText)
+          console.error('[Force Reversal] Error response:', errorData)
+          errorMessage = errorData.message || errorData.error || errorData.data?.message || errorMessage
+        } catch {
+          console.error('[Force Reversal] Error text:', errorText)
+          errorMessage = errorText || errorMessage
+        }
       }
       throw new Error(errorMessage)
     }

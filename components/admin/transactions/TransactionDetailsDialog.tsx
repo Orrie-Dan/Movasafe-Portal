@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Copy, CheckCircle2, XCircle, AlertTriangle, RefreshCw, DollarSign, ArrowLeftRight, Flag } from 'lucide-react'
+import { Copy, CheckCircle2, XCircle, AlertTriangle, RefreshCw, DollarSign, ArrowLeftRight, Flag, RotateCcw, AlertCircle } from 'lucide-react'
 import { Transaction, TransactionStatus } from '@/lib/api'
 import { format, parseISO } from 'date-fns'
 import { toast } from '@/hooks/use-toast'
@@ -24,6 +24,8 @@ interface TransactionDetailsDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAction: (type: 'retry' | 'refund' | 'reverse' | 'flag', transaction: Transaction) => void
+  onStandardReversal?: (transaction: Transaction) => void
+  onForceReversal?: (transaction: Transaction) => void
 }
 
 export function TransactionDetailsDialog({
@@ -32,6 +34,8 @@ export function TransactionDetailsDialog({
   open,
   onOpenChange,
   onAction,
+  onStandardReversal,
+  onForceReversal,
 }: TransactionDetailsDialogProps) {
   const [internalNote, setInternalNote] = useState('')
 
@@ -199,64 +203,47 @@ export function TransactionDetailsDialog({
           )}
         </div>
 
-        <DialogFooter className="mt-6 border-t pt-4">
-          <div className="flex items-center justify-between w-full gap-2">
-            <div className="flex items-center gap-2">
-              {transaction.status === TransactionStatus.FAILED && (
-                <Button
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => {
-                    onOpenChange(false)
-                    onAction('retry', transaction)
-                  }}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              )}
-              {transaction.status === TransactionStatus.SUCCESSFUL && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      onOpenChange(false)
-                      onAction('refund', transaction)
-                    }}
-                  >
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    Refund
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-orange-600 hover:bg-orange-700 text-white"
-                    onClick={() => {
-                      onOpenChange(false)
-                      onAction('reverse', transaction)
-                    }}
-                  >
-                    <ArrowLeftRight className="h-4 w-4 mr-2" />
-                    Reverse
-                  </Button>
-                </>
-              )}
+        <DialogFooter className="mt-6 border-t pt-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            {transaction.status === TransactionStatus.FAILED && (
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white"
                 onClick={() => {
                   onOpenChange(false)
-                  onAction('flag', transaction)
+                  onAction('retry', transaction)
                 }}
               >
-                <Flag className="h-4 w-4 mr-2" />
-                Flag for Review
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
               </Button>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-              Close
-            </Button>
+            )}
           </div>
+          {transaction.status === TransactionStatus.SUCCESSFUL && (
+            <div className="flex items-center gap-2 w-full">
+              {onStandardReversal && (
+                <Button
+                  className="bg-amber-600 hover:bg-amber-700 text-white flex-1 py-4 text-sm"
+                  onClick={() => onStandardReversal(transaction)}
+                >
+                  <RotateCcw className="h-4 w-4 mr-1.5" />
+                  Reverse Transfer
+                </Button>
+              )}
+              {onForceReversal && (
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white flex-1 py-4 text-sm"
+                  onClick={() => onForceReversal(transaction)}
+                >
+                  <AlertCircle className="h-4 w-4 mr-1.5" />
+                  Force Reverse
+                </Button>
+              )}
+            </div>
+          )}
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="w-full">
+            Close
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

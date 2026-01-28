@@ -192,7 +192,7 @@ export function DataTable<T extends Record<string, any>>({
         </Table>
       </div>
 
-      {pagination && totalPages > 1 && (
+      {pagination && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
             Showing {(currentPage - 1) * pagination.pageSize + 1} to{' '}

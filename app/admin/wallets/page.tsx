@@ -885,7 +885,7 @@ export default function WalletsPage() {
             <DataTable
               data={filteredWallets}
               columns={walletColumns}
-              pagination={{ pageSize: 10 }}
+              pagination={{ pageSize: 20 }}
               emptyMessage="No wallets found"
             />
           )}

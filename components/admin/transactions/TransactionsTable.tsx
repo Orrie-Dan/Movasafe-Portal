@@ -26,6 +26,8 @@ import {
   ChevronDown,
   ArrowUpDown,
   Eye,
+  RotateCcw,
+  AlertCircle,
 } from 'lucide-react'
 import type { SortingState, PaginationState } from '@/hooks/useTransactions'
 
@@ -40,6 +42,8 @@ interface TransactionsTableProps {
   totalCount: number
   onPageChange: (page: number) => void
   onRowClick: (transaction: Transaction) => void
+  onStandardReversal?: (transaction: Transaction) => void
+  onForceReversal?: (transaction: Transaction) => void
 }
 
 export function TransactionsTable({
@@ -53,6 +57,8 @@ export function TransactionsTable({
   totalCount,
   onPageChange,
   onRowClick,
+  onStandardReversal,
+  onForceReversal,
 }: TransactionsTableProps) {
   const getSortIcon = (column: string) => {
     if (sorting.column !== column) {
@@ -118,7 +124,7 @@ export function TransactionsTable({
             <TableHeader>
               <TableRow className="border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                 <TableHead
-                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('userId')}
                 >
                   <div className="flex items-center gap-1">
@@ -127,7 +133,7 @@ export function TransactionsTable({
                   </div>
                 </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('createdAt')}
                 >
                   <div className="flex items-center gap-1">
@@ -136,7 +142,7 @@ export function TransactionsTable({
                   </div>
                 </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('id')}
                 >
                   <div className="flex items-center gap-1">
@@ -145,7 +151,7 @@ export function TransactionsTable({
                   </div>
                 </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-slate-700 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('transactionType')}
                 >
                   <div className="flex items-center gap-1">
@@ -153,11 +159,11 @@ export function TransactionsTable({
                     {getSortIcon('transactionType')}
                   </div>
                 </TableHead>
-                <TableHead className="text-xs font-medium text-black dark:text-slate-400">
+                <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">
                   Description
                 </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white text-right"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white text-right"
                   onClick={() => onSort('amount')}
                 >
                   <div className="flex items-center justify-end gap-1">
@@ -166,7 +172,7 @@ export function TransactionsTable({
                   </div>
                 </TableHead>
                 <TableHead
-                  className="text-xs font-medium text-black dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
                   onClick={() => onSort('status')}
                 >
                   <div className="flex items-center gap-1">
@@ -174,13 +180,13 @@ export function TransactionsTable({
                     {getSortIcon('status')}
                   </div>
                 </TableHead>
-                <TableHead className="text-xs font-medium text-black dark:text-slate-400">
+                <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">
                   From
                 </TableHead>
-                <TableHead className="text-xs font-medium text-black dark:text-slate-400">
+                <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">
                   To
                 </TableHead>
-                <TableHead className="text-xs font-medium text-slate-700 dark:text-slate-400 w-20">
+                <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400 w-20">
                   Actions
                 </TableHead>
               </TableRow>
@@ -201,50 +207,52 @@ export function TransactionsTable({
                     className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer"
                     onClick={() => onRowClick(transaction)}
                   >
-                    <TableCell className="font-mono text-xs text-slate-900 dark:text-white">
+                    <TableCell className="font-mono text-sm text-slate-900 dark:text-white">
                       {transaction.userId}
                     </TableCell>
-                    <TableCell className="text-xs text-slate-700 dark:text-slate-300">
+                    <TableCell className="text-sm text-slate-700 dark:text-slate-300">
                       {format(parseISO(transaction.createdAt), 'dd MMM yyyy, HH:mm')}
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-slate-700 dark:text-slate-300">
+                    <TableCell className="font-mono text-sm text-slate-700 dark:text-slate-300">
                       {formatNullable(transaction.id)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {getTransactionTypeIcon(transaction.transactionType)}
-                        <span className="text-xs text-slate-900 dark:text-white">{transaction.transactionType}</span>
+                        <span className="text-sm text-slate-900 dark:text-white">{transaction.transactionType}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-700 dark:text-slate-300">
+                    <TableCell className="text-sm text-slate-700 dark:text-slate-300">
                       {formatNullable(transaction.description)}
                     </TableCell>
-                    <TableCell className="text-right font-medium text-xs text-slate-900 dark:text-white">
+                    <TableCell className="text-right font-medium text-sm text-slate-900 dark:text-white">
                       {formatCurrency(transaction.amount, currency)}
                     </TableCell>
                     <TableCell>
                       <Badge
-                        className={cn('text-xs', getTransactionStatusBadge(transaction.status))}
+                        className={cn('text-sm', getTransactionStatusBadge(transaction.status))}
                       >
                         {transaction.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-700 dark:text-slate-300">
+                    <TableCell className="text-sm text-slate-700 dark:text-slate-300">
                       {fromAccount}
                     </TableCell>
-                    <TableCell className="text-xs text-slate-700 dark:text-slate-300">
+                    <TableCell className="text-sm text-slate-700 dark:text-slate-300">
                       {toAccount}
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRowClick(transaction)}
-                        className="h-7 w-7 p-0 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                        title="View Details"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
+                    <TableCell onClick={(e) => e.stopPropagation()} className="whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onRowClick(transaction)}
+                          className="h-8 px-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
+                          title="View Details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )

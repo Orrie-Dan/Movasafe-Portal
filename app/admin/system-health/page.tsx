@@ -246,22 +246,22 @@ export default function SystemHealthPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-slate-700">
-                  <TableHead className="text-slate-400">Service</TableHead>
-                  <TableHead className="text-slate-400">Status</TableHead>
-                  <TableHead className="text-slate-400">Uptime</TableHead>
-                  <TableHead className="text-slate-400">Response Time</TableHead>
-                  <TableHead className="text-slate-400">Error Rate</TableHead>
-                  <TableHead className="text-slate-400">Last Checked</TableHead>
+                  <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">Service</TableHead>
+                  <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">Status</TableHead>
+                  <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">Uptime</TableHead>
+                  <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">Response Time</TableHead>
+                  <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">Error Rate</TableHead>
+                  <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400">Last Checked</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredServices.map((service) => (
                   <TableRow key={service.service} className="border-slate-700 hover:bg-slate-800/50">
-                    <TableCell className="font-medium text-white">{service.service}</TableCell>
-                    <TableCell>{getStatusBadge(service.status)}</TableCell>
-                    <TableCell className="text-slate-300">{service.uptime.toFixed(2)}%</TableCell>
-                    <TableCell className="text-slate-300">{service.responseTime}ms</TableCell>
-                    <TableCell className="text-slate-300">{service.errorRate.toFixed(2)}%</TableCell>
+                    <TableCell className="font-medium text-sm text-white">{service.service}</TableCell>
+                    <TableCell className="text-sm">{getStatusBadge(service.status)}</TableCell>
+                    <TableCell className="text-sm text-slate-300">{service.uptime.toFixed(2)}%</TableCell>
+                    <TableCell className="text-sm text-slate-300">{service.responseTime}ms</TableCell>
+                    <TableCell className="text-sm text-slate-300">{service.errorRate.toFixed(2)}%</TableCell>
                     <TableCell className="text-slate-400 text-sm">
                       {new Date(service.lastChecked).toLocaleString()}
                     </TableCell>

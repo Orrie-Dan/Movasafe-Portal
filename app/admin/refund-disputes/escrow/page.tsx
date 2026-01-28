@@ -933,17 +933,17 @@ export default function EscrowDisputesAnalyticsPage() {
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gray-50 dark:bg-gray-800">
-                            <TableHead className="text-xs font-semibold text-gray-700 dark:text-gray-300">Month</TableHead>
-                            <TableHead className="text-right text-xs font-semibold text-gray-700 dark:text-gray-300">New Disputes</TableHead>
-                            <TableHead className="text-right text-xs font-semibold text-gray-700 dark:text-gray-300">Resolved</TableHead>
+                            <TableHead className="text-sm font-semibold text-gray-700 dark:text-gray-300">Month</TableHead>
+                            <TableHead className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">New Disputes</TableHead>
+                            <TableHead className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Resolved</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {chartData.trends.map((item) => (
                             <TableRow key={item.month} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                              <TableCell className="text-xs font-medium text-gray-900 dark:text-white">{item.monthYear}</TableCell>
-                              <TableCell className="text-right text-xs font-semibold text-red-600 dark:text-red-400">{item['New Disputes']}</TableCell>
-                              <TableCell className="text-right text-xs font-semibold text-green-600 dark:text-green-400">{item['Resolved Disputes']}</TableCell>
+                              <TableCell className="text-sm font-medium text-gray-900 dark:text-white">{item.monthYear}</TableCell>
+                              <TableCell className="text-right text-sm font-semibold text-red-600 dark:text-red-400">{item['New Disputes']}</TableCell>
+                              <TableCell className="text-right text-sm font-semibold text-green-600 dark:text-green-400">{item['Resolved Disputes']}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -1013,9 +1013,9 @@ export default function EscrowDisputesAnalyticsPage() {
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-gray-50 dark:bg-gray-800">
-                            <TableHead className="text-xs font-semibold text-gray-700 dark:text-gray-300">Duration Range</TableHead>
-                            <TableHead className="text-right text-xs font-semibold text-gray-700 dark:text-gray-300">Disputes</TableHead>
-                            <TableHead className="text-right text-xs font-semibold text-gray-700 dark:text-gray-300">Percentage</TableHead>
+                            <TableHead className="text-sm font-semibold text-gray-700 dark:text-gray-300">Duration Range</TableHead>
+                            <TableHead className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Disputes</TableHead>
+                            <TableHead className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Percentage</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
