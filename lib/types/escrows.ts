@@ -35,6 +35,8 @@ export interface EscrowTransaction {
   // Optional display fields
   clientName?: string
   vendorName?: string
+  internalReference?: string
+  serviceDescription?: string
 }
 
 export interface CreateEscrowDTO {

@@ -15,8 +15,10 @@ import { Label } from '@/components/ui/label'
 import { RefreshCw, Eye, AlertCircle, CheckCircle2, Loader2, DollarSign, Clock, User, BarChart3, PieChart, TrendingUp, TrendingDown, Scale, Filter, Calendar, Info, Table as TableIcon } from 'lucide-react'
 import { format, parseISO, subDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns'
 import { toast } from '@/hooks/use-toast'
-import { apiGetDisputedEscrows, apiProcessRefund, apiResolveDispute } from '@/lib/api/escrows'
+import { apiGetAllEscrows, apiProcessRefund, apiResolveDispute } from '@/lib/api/escrows'
+import { apiGetUsers } from '@/lib/api/users'
 import type { EscrowTransaction } from '@/lib/types/escrows'
+import type { User } from '@/lib/types/user'
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar } from 'recharts'
 import { MetricCardEnhanced } from '@/components/dashboard/metrics/MetricCardEnhanced'
 import { useAuth } from '@/lib/auth/hooks'
@@ -64,11 +66,11 @@ function KPICard({
   purpose?: string
 }) {
   const colorClasses: Record<string, string> = {
-    red: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950',
-    green: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950',
-    blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950',
-    orange: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950',
-    purple: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950',
+    red: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-black',
+    green: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-black',
+    blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-black',
+    orange: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-black',
+    purple: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-black',
   }
   
   return (
@@ -113,6 +115,7 @@ export default function EscrowDisputesAnalyticsPage() {
   const hasResolvePermission = hasPermission(PERMISSIONS.RESOLVE_DISPUTE)
 
   const [escrows, setEscrows] = useState<EscrowWithResolution[]>([])
+  const [users, setUsers] = useState<Map<string, User>>(new Map())
   const [loading, setLoading] = useState(true)
   const [selectedEscrow, setSelectedEscrow] = useState<EscrowWithResolution | null>(null)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
@@ -136,15 +139,30 @@ export default function EscrowDisputesAnalyticsPage() {
     fetchEscrows()
   }, [])
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await apiGetUsers({ limit: 1000 })
+        const userMap = new Map<string, User>()
+        if (response.data && Array.isArray(response.data)) {
+          response.data.forEach((user: User) => userMap.set(user.id, user))
+        }
+        setUsers(userMap)
+      } catch (err) {
+        console.error('Failed to load users for escrow names:', err)
+      }
+    }
+    fetchUsers()
+  }, [])
+
   const fetchEscrows = async () => {
     setLoading(true)
     try {
-      // Get disputed escrows from the dedicated API endpoint
-      const disputedEscrows = await apiGetDisputedEscrows()
-      
-      // Also fetch resolved escrows to show in analytics
-      // We'll filter them from the disputed endpoint or add a status filter
-      setEscrows((disputedEscrows || []) as EscrowWithResolution[])
+      // Get full escrow list from admin endpoint so that
+      // analytics and tables can include ACTIVE, DISPUTED,
+      // RELEASED and REFUNDED escrows.
+      const allEscrows = await apiGetAllEscrows({ limit: 100 })
+      setEscrows((allEscrows || []) as EscrowWithResolution[])
     } catch (error) {
       console.error('Fetch error:', error)
       toast({
@@ -173,16 +191,31 @@ export default function EscrowDisputesAnalyticsPage() {
     }
 
     const disputed = filtered.filter(e => e.status === 'DISPUTED' || e.escrowStatus === 'DISPUTED')
-    const resolved = filtered.filter(e => e.status === 'RELEASED' || e.status === 'REFUNDED' || e.escrowStatus === 'RELEASED' || e.escrowStatus === 'REFUNDED')
-    const refunded = filtered.filter(e => e.status === 'REFUNDED' || e.escrowStatus === 'REFUNDED' || e.resolutionAction === 'REFUND')
-    const released = filtered.filter(e => e.status === 'RELEASED' || e.escrowStatus === 'RELEASED' || e.resolutionAction === 'RELEASE')
+    const resolved = filtered.filter(e =>
+      e.status === 'RELEASED' ||
+      e.status === 'REFUNDED' ||
+      e.escrowStatus === 'RELEASED' ||
+      e.escrowStatus === 'REFUNDED' ||
+      e.resolutionAction === 'RELEASE' ||
+      e.resolutionAction === 'REFUND'
+    )
+    const refunded = filtered.filter(e =>
+      e.status === 'REFUNDED' ||
+      e.escrowStatus === 'REFUNDED' ||
+      e.resolutionAction === 'REFUND'
+    )
+    const released = filtered.filter(e =>
+      e.status === 'RELEASED' ||
+      e.escrowStatus === 'RELEASED' ||
+      e.resolutionAction === 'RELEASE'
+    )
     const active = filtered.filter(e => e.status === 'ACTIVE' || e.escrowStatus === 'ACTIVE')
 
     const clientWins = refunded.length
     const vendorWins = released.length
     const totalResolved = resolved.length
 
-    // KPI Formulas
+    // KPI Formulas based on resolution outcomes
     const clientWinRate = totalResolved > 0 ? ((clientWins / totalResolved) * 100).toFixed(1) : '0'
     const vendorWinRate = totalResolved > 0 ? ((vendorWins / totalResolved) * 100).toFixed(1) : '0'
     const fairnessIndex = (1 - Math.abs(Number(clientWinRate) - Number(vendorWinRate)) / 100).toFixed(2)
@@ -203,32 +236,87 @@ export default function EscrowDisputesAnalyticsPage() {
     const avgResolutionTime =
       resolutionTimes.length > 0 ? (resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length).toFixed(1) : '0'
     
-    // Value at Risk: SUM(escrowAmount) WHERE escrowStatus = DISPUTED
-    const totalValueAtRisk = disputed.reduce((sum, e) => sum + (e.escrowAmount || e.amount), 0)
+    // Financial and lifecycle metrics derived directly from the API payload
+    const now = new Date().getTime()
+
+    // Total disputed amount (amount currently in DISPUTED status)
+    const totalDisputedAmount = disputed.reduce((sum, e) => sum + (e.amount || e.escrowAmount || 0), 0)
+
+    // Total value at risk (kept for backward compatibility, same definition as totalDisputedAmount)
+    const totalValueAtRisk = totalDisputedAmount
+
+    // Total commission at risk and average commission percentage on disputed escrows
+    const totalCommissionAtRisk = disputed.reduce((sum, e) => sum + (e.commissionAmount || 0), 0)
+    const commissionPercents = disputed
+      .map(e => (typeof e.commissionPercentage === 'number' ? e.commissionPercentage : null))
+      .filter((v): v is number => v !== null)
+    const avgCommissionPct =
+      commissionPercents.length > 0
+        ? (commissionPercents.reduce((a, b) => a + b, 0) / commissionPercents.length).toFixed(1)
+        : '0'
+
+    // Average dispute age in days for currently disputed escrows
+    const disputeAges = disputed
+      .map(e => {
+        const base = e.disputedAt ? new Date(e.disputedAt).getTime() : (e.createdAt ? new Date(e.createdAt).getTime() : null)
+        if (!base) return null
+        return (now - base) / (1000 * 60 * 60 * 24)
+      })
+      .filter((v): v is number => v !== null)
+    const avgDisputeAgeDays =
+      disputeAges.length > 0 ? (disputeAges.reduce((a, b) => a + b, 0) / disputeAges.length).toFixed(1) : '0'
+
+    // Average contractual expiration window (expirationDays) from API
+    const expirationDaysValues = disputed
+      .map(e => (typeof e.expirationDays === 'number' ? e.expirationDays : null))
+      .filter((v): v is number => v !== null)
+    const avgExpirationDays =
+      expirationDaysValues.length > 0
+        ? (expirationDaysValues.reduce((a, b) => a + b, 0) / expirationDaysValues.length).toFixed(1)
+        : '0'
+
+    // Disputes approaching expiry within the next 7 days
+    const disputesApproachingExpiry = disputed.filter(e => {
+      if (e.isExpired) return false
+      const effective = e.effectiveExpiresAt || e.expiresAt
+      if (!effective) return false
+      const expTime = new Date(effective).getTime()
+      const diffDays = (expTime - now) / (1000 * 60 * 60 * 24)
+      return diffDays >= 0 && diffDays <= 7
+    }).length
 
     return {
+      // Core counts
       pendingDisputes: disputed.length,
       totalResolved,
+      activeEscrows: active.length,
+
+      // Outcome metrics (still used by charts)
       clientWinRate,
       vendorWinRate,
-      avgResolutionTime,
       fairnessIndex,
-      totalValueAtRisk,
       clientWins,
       vendorWins,
-      activeEscrows: active.length,
+      avgResolutionTime,
+
+      // Financial metrics
+      totalDisputedAmount,
+      totalValueAtRisk,
+      totalCommissionAtRisk,
+      avgCommissionPct,
+
+      // Lifecycle metrics
+      avgDisputeAgeDays,
+      avgExpirationDays,
+      disputesApproachingExpiry,
+
+      // Base data for filtered views
       allEscrows: filtered,
     }
   }, [escrows, filters.dateRange])
 
   // ============ Chart Data - Using Real API Data ============
   const chartData = useMemo(() => {
-    // Pie Chart: Outcome Distribution
-    const outcomeData = [
-      { name: 'Vendor Wins (Released)', value: metrics.vendorWins, fill: '#10b981' },
-      { name: 'Client Wins (Refunded)', value: metrics.clientWins, fill: '#f97316' },
-    ]
-
     // Line Chart: Monthly Trends from real data
     const now = new Date()
     const monthlyData = []
@@ -287,7 +375,6 @@ export default function EscrowDisputesAnalyticsPage() {
     }))
 
     return {
-      outcomes: outcomeData,
       trends: monthlyData,
       durations: durationData,
     }
@@ -343,20 +430,26 @@ export default function EscrowDisputesAnalyticsPage() {
   }, [escrows])
 
   const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) return `${(amount / 1000000).toFixed(2)}M RWF`
-    if (amount >= 1000) return `${(amount / 1000).toFixed(2)}K RWF`
-    return `${amount.toFixed(2)} RWF`
+    return `${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} RWF`
   }
 
+  // Client Name column: use API clientName, else resolve from users by clientId
   const getClientName = (escrow: EscrowWithResolution) => {
-    if (escrow.clientName && escrow.clientName.trim()) return escrow.clientName.trim()
-    if (escrow.clientId && escrow.clientId.trim()) return escrow.clientId.substring(0, 16)
+    const fromApi = escrow.clientName != null && String(escrow.clientName).trim() !== ''
+    if (fromApi) return String(escrow.clientName).trim()
+    const user = escrow.clientId ? users.get(escrow.clientId) : undefined
+    if (user?.fullName?.trim()) return user.fullName.trim()
+    if (escrow.clientId?.trim()) return escrow.clientId.substring(0, 16)
     return 'N/A'
   }
 
+  // Vendor Name column: use API vendorName, else resolve from users by vendorId
   const getVendorName = (escrow: EscrowWithResolution) => {
-    if (escrow.vendorName && escrow.vendorName.trim()) return escrow.vendorName.trim()
-    if (escrow.vendorId && escrow.vendorId.trim()) return escrow.vendorId.substring(0, 16)
+    const fromApi = escrow.vendorName != null && String(escrow.vendorName).trim() !== ''
+    if (fromApi) return String(escrow.vendorName).trim()
+    const user = escrow.vendorId ? users.get(escrow.vendorId) : undefined
+    if (user?.fullName?.trim()) return user.fullName.trim()
+    if (escrow.vendorId?.trim()) return escrow.vendorId.substring(0, 16)
     return 'N/A'
   }
 
@@ -442,7 +535,7 @@ export default function EscrowDisputesAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col p-6">
+      <div className="flex-1 flex flex-col bg-white dark:bg-black p-6">
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="h-20 w-full" />
@@ -453,10 +546,10 @@ export default function EscrowDisputesAnalyticsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-950">
+    <div className="flex-1 flex flex-col bg-white dark:bg-black">
       <main className="flex-1 overflow-auto p-6 space-y-6">
         {/* Page Header */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+        <div className="bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
@@ -475,20 +568,19 @@ export default function EscrowDisputesAnalyticsPage() {
         </div>
 
         {/* Filters Section */}
-        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-b">
+        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-black">
+          <CardHeader className="bg-white dark:bg-black border-b">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
-                  <Filter className="h-5 w-5 text-blue-600" />
-                  Filters & Search
+                  <Filter className="h-5 w-5 text-blue-500" />
+                  Filters
                 </CardTitle>
-                <CardDescription className="mt-1">Refine your view by date range, status, resolution action, and admin resolver</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Date Range Filter */}
               <div>
                 <Label className="text-sm font-semibold mb-2 block">Date Range</Label>
@@ -518,9 +610,12 @@ export default function EscrowDisputesAnalyticsPage() {
               {/* Escrow Status Filter */}
               <div>
                 <Label className="text-sm font-semibold mb-2 block">Escrow Status</Label>
-                <Select value={filters.escrowStatus} onValueChange={(value: any) => setFilters(prev => ({ ...prev, escrowStatus: value }))}>
-                  <SelectTrigger>
-                    <SelectValue />
+                <Select
+                  value={filters.escrowStatus}
+                  onValueChange={(value: any) => setFilters(prev => ({ ...prev, escrowStatus: value }))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
@@ -591,472 +686,11 @@ export default function EscrowDisputesAnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* KPI Section - Row 1: Core Dispute Metrics */}
-        <div className="space-y-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <BarChart3 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Core Dispute Resolution Metrics
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  Essential performance indicators tracking dispute volume, resolution rates, and processing efficiency. 
-                  These metrics help monitor operational health and identify areas requiring attention.
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <MetricCardEnhanced
-              title="Pending Disputes"
-              value={metrics.pendingDisputes}
-              icon={AlertCircle}
-              variant="warning"
-              format="number"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Tracks active disputes</div>
-                  <div className="text-gray-500">Count of escrows currently in DISPUTED status requiring admin action.</div>
-                </div>
-              )}
-            />
-            <MetricCardEnhanced
-              title="Total Resolved"
-              value={metrics.totalResolved}
-              icon={CheckCircle2}
-              variant="success"
-              format="number"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Resolved disputes</div>
-                  <div className="text-gray-500">Total disputes adjudicated during the current dataset.</div>
-                </div>
-              )}
-            />
-            <MetricCardEnhanced
-              title="Client Win Rate"
-              value={Number(metrics.clientWinRate)}
-              icon={User}
-              variant="default"
-              format="percentage"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Client victory rate</div>
-                  <div className="text-gray-500">Percentage of resolved disputes that resulted in refunds to clients.</div>
-                </div>
-              )}
-            />
-            <MetricCardEnhanced
-              title="Vendor Win Rate"
-              value={Number(metrics.vendorWinRate)}
-              icon={User}
-              variant="default"
-              format="percentage"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Vendor victory rate</div>
-                  <div className="text-gray-500">Percentage of resolved disputes that resulted in release of funds to vendors.</div>
-                </div>
-              )}
-            />
-            <MetricCardEnhanced
-              title="Avg Resolution Time"
-              value={Number(metrics.avgResolutionTime)}
-              icon={Clock}
-              variant="default"
-              format="number"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Average resolution time</div>
-                  <div className="text-gray-500">Average number of days between dispute filing and resolution.</div>
-                </div>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* KPI Section - Row 2: Financial & Fairness Metrics */}
-        <div className="space-y-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Financial & Fairness Metrics
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  Financial risk assessment and fairness analysis of dispute resolutions. 
-                  Tracks total value at risk, resolution outcomes distribution, and ensures balanced adjudication between clients and vendors.
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCardEnhanced
-              title="Value at Risk"
-              value={metrics.totalValueAtRisk}
-              icon={DollarSign}
-              variant="negative"
-              format="currency"
-              currency="RWF"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Financial exposure</div>
-                  <div className="text-gray-500">Sum of amounts currently held in disputed escrows.</div>
-                </div>
-              )}
-            />
-            <MetricCardEnhanced
-              title="Fairness Index"
-              value={Number(metrics.fairnessIndex)}
-              icon={Scale}
-              variant="default"
-              format="number"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Fairness index</div>
-                  <div className="text-gray-500">1.0 indicates perfectly balanced outcomes between clients and vendors.</div>
-                </div>
-              )}
-            />
-            <MetricCardEnhanced
-              title="Client Wins"
-              value={metrics.clientWins}
-              icon={CheckCircle2}
-              variant="default"
-              format="number"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Client wins</div>
-                  <div className="text-gray-500">Total disputes resolved in favor of clients (refunds issued).</div>
-                </div>
-              )}
-            />
-            <MetricCardEnhanced
-              title="Vendor Wins"
-              value={metrics.vendorWins}
-              icon={CheckCircle2}
-              variant="success"
-              format="number"
-              tooltip={(
-                <div className="text-xs">
-                  <div className="font-medium">Vendor wins</div>
-                  <div className="text-gray-500">Total disputes resolved in favor of vendors (funds released).</div>
-                </div>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Charts Section */}
-        {(chartData.outcomes.some(o => o.value > 0) || chartData.trends.some(item => (item['New Disputes'] || 0) > 0 || (item['Resolved Disputes'] || 0) > 0) || chartData.durations.some(d => d.count > 0)) && (
-          <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <PieChart className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Dispute Analytics & Visualizations
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  Comprehensive visual analysis of dispute patterns, resolution trends, and time-to-resolution metrics. 
-                  These charts provide insights into dispute volume, outcome distribution, and processing efficiency over time.
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Pie Chart: Resolution Outcomes */}
-            {chartData.outcomes.some(o => o.value > 0) && (
-              <Card className="border border-gray-200 dark:border-gray-800 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
-                      <PieChart className="h-6 w-6 text-blue-600" />
-                      Resolution Outcomes Distribution
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      Distribution of dispute resolutions: Client Wins (REFUND) vs Vendor Wins (RELEASE)
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                {chartData.outcomes.some(o => o.value > 0) ? (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-center">
-                      <ResponsiveContainer width="100%" height={300}>
-                        <RechartsPieChart>
-                          <Pie 
-                            data={chartData.outcomes} 
-                            cx="50%" 
-                            cy="50%" 
-                            labelLine={false} 
-                            label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                            outerRadius={100} 
-                            fill="#8884d8" 
-                            dataKey="value"
-                          >
-                            {chartData.outcomes.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            formatter={(value: any) => [`${value} disputes`, 'Count']}
-                            contentStyle={{ 
-                              backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px',
-                              padding: '8px 12px'
-                            }}
-                          />
-                          <Legend 
-                            verticalAlign="bottom" 
-                            height={36}
-                            formatter={(value) => value}
-                          />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Breakdown</h4>
-                      <div className="space-y-2">
-                        {chartData.outcomes.map((item) => {
-                          const total = chartData.outcomes.reduce((sum, o) => sum + o.value, 0)
-                          const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0'
-                          return (
-                            <div key={item.name} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                              <div className="flex items-center gap-2">
-                                <span className="inline-block w-4 h-4 rounded-full" style={{ backgroundColor: item.fill }}></span>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</span>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">{percentage}%</span>
-                                <span className="text-sm font-semibold text-gray-900 dark:text-white">{item.value}</span>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="h-[300px] flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
-                    <PieChart className="h-16 w-16 mb-4 text-gray-300 dark:text-gray-600" />
-                    <p className="text-sm font-medium">No resolution data available</p>
-                    <p className="text-xs mt-1">Resolve disputes to see outcome distribution</p>
-                  </div>
-                )}
-              </CardContent>
-              </Card>
-            )}
-
-            {/* Line Chart: Resolution Trends */}
-            {chartData.trends.some(item => (item['New Disputes'] || 0) > 0 || (item['Resolved Disputes'] || 0) > 0) && (
-              <Card className="border border-gray-200 dark:border-gray-800 shadow-lg hover:shadow-xl transition-shadow">
-              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-b">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
-                      <TrendingUp className="h-6 w-6 text-green-600" />
-                      Resolution Trends Over Time
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      12-month trend analysis of new disputes filed vs disputes resolved
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RechartsLineChart data={chartData.trends} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
-                      <XAxis 
-                        dataKey="month" 
-                        stroke="#6b7280"
-                        tick={{ fill: '#6b7280', fontSize: 12 }}
-                        label={{ value: 'Month', position: 'insideBottom', offset: -5, fill: '#6b7280', style: { fontSize: '12px' } }}
-                      />
-                      <YAxis 
-                        stroke="#6b7280"
-                        tick={{ fill: '#6b7280', fontSize: 12 }}
-                        label={{ value: 'Number of Disputes', angle: -90, position: 'insideLeft', fill: '#6b7280', style: { fontSize: '12px' } }}
-                      />
-                      <Tooltip 
-                        formatter={(value: any) => [`${value} disputes`, '']}
-                        labelFormatter={(label) => `Month: ${label}`}
-                        contentStyle={{ 
-                          backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                        }}
-                      />
-                      <Legend 
-                        wrapperStyle={{ paddingTop: '20px' }}
-                        iconType="line"
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="New Disputes" 
-                        stroke="#ef4444" 
-                        strokeWidth={3}
-                        dot={{ fill: '#ef4444', r: 5, strokeWidth: 2, stroke: '#fff' }}
-                        activeDot={{ r: 7 }}
-                        name="New Disputes"
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="Resolved Disputes" 
-                        stroke="#10b981" 
-                        strokeWidth={3}
-                        dot={{ fill: '#10b981', r: 5, strokeWidth: 2, stroke: '#fff' }}
-                        activeDot={{ r: 7 }}
-                        name="Resolved Disputes"
-                      />
-                    </RechartsLineChart>
-                  </ResponsiveContainer>
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Monthly Summary</h4>
-                    <div className="max-h-[180px] overflow-y-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-gray-50 dark:bg-gray-800">
-                            <TableHead className="text-sm font-semibold text-gray-700 dark:text-gray-300">Month</TableHead>
-                            <TableHead className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">New Disputes</TableHead>
-                            <TableHead className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Resolved</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {chartData.trends.map((item) => (
-                            <TableRow key={item.month} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                              <TableCell className="text-sm font-medium text-gray-900 dark:text-white">{item.monthYear}</TableCell>
-                              <TableCell className="text-right text-sm font-semibold text-red-600 dark:text-red-400">{item['New Disputes']}</TableCell>
-                              <TableCell className="text-right text-sm font-semibold text-green-600 dark:text-green-400">{item['Resolved Disputes']}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              </Card>
-            )}
-          </div>
-
-          {/* Bar Chart: Resolution Duration Distribution */}
-          {chartData.durations.some(d => d.count > 0) && (
-            <Card className="border border-gray-200 dark:border-gray-800 shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-b">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
-                    <Clock className="h-6 w-6 text-orange-600" />
-                    Resolution Time Distribution
-                  </CardTitle>
-                  <CardDescription className="mt-1">
-                    Analysis of dispute resolution timeframes: How long disputes take from filing to resolution
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-6">
-                {chartData.durations.some(d => d.count > 0) ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={chartData.durations} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
-                        <XAxis 
-                          dataKey="duration"
-                          stroke="#6b7280"
-                          tick={{ fill: '#6b7280', fontSize: 12 }}
-                          label={{ value: 'Resolution Timeframe', position: 'insideBottom', offset: -5, fill: '#6b7280', style: { fontSize: '12px' } }}
-                        />
-                        <YAxis 
-                          stroke="#6b7280"
-                          tick={{ fill: '#6b7280', fontSize: 12 }}
-                          label={{ value: 'Number of Disputes', angle: -90, position: 'insideLeft', fill: '#6b7280', style: { fontSize: '12px' } }}
-                        />
-                        <Tooltip 
-                          formatter={(value: any) => [`${value} disputes`, 'Count']}
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            padding: '8px 12px',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                          }}
-                        />
-                        <Bar 
-                          dataKey="count" 
-                          fill="#8b5cf6" 
-                          radius={[8, 8, 0, 0]}
-                          name="Disputes"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Timeframe Breakdown</h4>
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-gray-50 dark:bg-gray-800">
-                            <TableHead className="text-sm font-semibold text-gray-700 dark:text-gray-300">Duration Range</TableHead>
-                            <TableHead className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Disputes</TableHead>
-                            <TableHead className="text-right text-sm font-semibold text-gray-700 dark:text-gray-300">Percentage</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {chartData.durations.map((item) => {
-                            const total = chartData.durations.reduce((sum, d) => sum + d.count, 0)
-                            const percentage = total > 0 ? ((item.count / total) * 100).toFixed(1) : '0'
-                            return (
-                              <TableRow key={item.duration} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                                <TableCell className="text-sm font-medium text-gray-900 dark:text-white">{item.duration}</TableCell>
-                                <TableCell className="text-right text-sm font-semibold text-gray-900 dark:text-white">{item.count}</TableCell>
-                                <TableCell className="text-right text-sm text-gray-600 dark:text-gray-400">{percentage}%</TableCell>
-                              </TableRow>
-                            )
-                          })}
-                          <TableRow className="bg-gray-50 dark:bg-gray-800 font-semibold">
-                            <TableCell className="text-sm text-gray-900 dark:text-white">Total</TableCell>
-                            <TableCell className="text-right text-sm text-gray-900 dark:text-white">{chartData.durations.reduce((sum, d) => sum + d.count, 0)}</TableCell>
-                            <TableCell className="text-right text-sm text-gray-900 dark:text-white">100%</TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </>
-                ) : (
-                  <div className="h-[300px] flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
-                    <Clock className="h-16 w-16 mb-4 text-gray-300 dark:text-gray-600" />
-                    <p className="text-sm font-medium">No resolution time data available</p>
-                    <p className="text-xs mt-1">Resolve disputes to see time distribution analysis</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            </Card>
-          )}
-          </div>
-        )}
 
         {/* Tables Section */}
         <div className="space-y-6">
           {/* Section Header */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+          <div className="bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
                 <TableIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
@@ -1074,19 +708,14 @@ export default function EscrowDisputesAnalyticsPage() {
           </div>
 
           {/* Table 1: Pending Disputes (Actionable) */}
-          <Card className="border border-gray-200 dark:border-gray-800 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 border-b">
+          <Card className="border border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-black">
+            <CardHeader className="bg-white dark:bg-black border-b">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
                     <AlertCircle className="h-6 w-6 text-red-600" />
-                    Pending Disputes Requiring Action
+                    Pending Disputes
                   </CardTitle>
-                  <CardDescription className="mt-1">
-                    <strong>Data Source:</strong> escrows WHERE escrowStatus = 'DISPUTED' | 
-                    <strong> Purpose:</strong> Actionable list of disputes requiring immediate admin resolution | 
-                    <strong> Admin Decision:</strong> Prioritize disputes by age (Days Pending) and amount (Escrow Amount) for efficient resolution workflow
-                  </CardDescription>
                 </div>
                 <Badge variant="destructive" className="text-sm px-3 py-1">
                   {filteredEscrows.filter(e => {
@@ -1097,20 +726,23 @@ export default function EscrowDisputesAnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent className="p-6">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                Pending Disputes
+              </h3>
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-800 border-b">
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Client ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Vendor ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow Amount</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Created At</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Disputed At</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Days Pending</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50 dark:bg-black border-b">
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Internal reference</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Client Name</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Vendor Name</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow Amount</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Created At</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Disputed At</TableHead>
+                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Days Pending</TableHead>
+                        <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {filteredEscrows.filter(e => {
                       const status = e.escrowStatus || e.status
@@ -1133,10 +765,10 @@ export default function EscrowDisputesAnalyticsPage() {
                         const disputedDate = escrow.disputedAt ? new Date(escrow.disputedAt) : (escrow.createdAt ? new Date(escrow.createdAt) : new Date())
                         const daysPending = Math.floor((Date.now() - disputedDate.getTime()) / (1000 * 60 * 60 * 24))
                         return (
-                          <TableRow key={escrow.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                            <TableCell className="font-mono text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title={escrow.id}>{escrow.id.substring(0, 12)}...</TableCell>
-                            <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.clientId}>{escrow.clientId.substring(0, 16)}...</TableCell>
-                            <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.vendorId}>{escrow.vendorId.substring(0, 16)}...</TableCell>
+                          <TableRow key={escrow.id} className="hover:bg-gray-50 dark:hover:bg-black/60 border-b border-gray-100 dark:border-gray-800">
+                            <TableCell className="font-mono text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title={escrow.internalReference || escrow.id}>{escrow.internalReference || escrow.id}</TableCell>
+                            <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={getClientName(escrow)}>{getClientName(escrow)}</TableCell>
+                            <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={getVendorName(escrow)}>{getVendorName(escrow)}</TableCell>
                             <TableCell className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{formatCurrency(escrow.escrowAmount || escrow.amount)}</TableCell>
                             <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{escrow.createdAt ? format(parseISO(escrow.createdAt), 'MMM dd, yyyy') : 'N/A'}</TableCell>
                             <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{escrow.disputedAt ? format(parseISO(escrow.disputedAt), 'MMM dd, yyyy') : 'N/A'}</TableCell>
@@ -1146,7 +778,7 @@ export default function EscrowDisputesAnalyticsPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(escrow)} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(escrow)} className="hover:bg-gray-100 dark:hover:bg-black">
                                 <Eye className="h-4 w-4" />
                                 <span className="ml-2 text-xs">View</span>
                               </Button>
@@ -1162,51 +794,64 @@ export default function EscrowDisputesAnalyticsPage() {
           </Card>
 
           {/* Table 2: Resolved Disputes (Audit-Focused, Read-Only) */}
-          <Card className="border border-gray-200 dark:border-gray-800 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-b">
+          <Card className="border border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-black">
+            <CardHeader className="bg-white dark:bg-black border-b">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
                     <CheckCircle2 className="h-6 w-6 text-green-600" />
-                    Resolved Disputes - Audit Trail & History
+                    Resolved Disputes
                   </CardTitle>
-                  <CardDescription className="mt-1">
-                    <strong>Data Source:</strong> escrows WHERE escrowStatus IN ('RELEASED', 'REFUNDED') | 
-                    <strong> Purpose:</strong> Immutable audit trail of all resolved disputes with complete resolution details | 
-                    <strong> Admin Decision:</strong> Review resolution patterns, admin performance metrics, and ensure compliance with dispute resolution policies
-                  </CardDescription>
                 </div>
                 <Badge variant="outline" className="text-sm px-3 py-1 border-green-500 text-green-700 dark:text-green-400">
                   {filteredEscrows.filter(e => {
                     const status = e.escrowStatus || e.status
-                    return status === 'RELEASED' || status === 'REFUNDED'
+                    const action = e.resolutionAction
+                    return (
+                      status === 'RELEASED' ||
+                      status === 'REFUNDED' ||
+                      action === 'RELEASE' ||
+                      action === 'REFUND'
+                    )
                   }).length} Resolved
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="p-6">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+                Resolved Disputes
+              </h3>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-800 border-b">
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Client ID</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Vendor ID</TableHead>
+                    <TableRow className="bg-gray-50 dark:bg-black border-b">
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Internal reference</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Client Name</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Vendor Name</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow Amount</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow Status</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Resolution Action</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">commissionPercentage</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">commissionAmount</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">vendorAmount</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">serviceDescription</TableHead>
                       <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Resolved At</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Resolved By</TableHead>
+                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">disputeResolvedBy</TableHead>
                       <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredEscrows.filter(e => {
                       const status = e.escrowStatus || e.status
-                      return status === 'RELEASED' || status === 'REFUNDED'
+                      const action = e.resolutionAction
+                      return (
+                        status === 'RELEASED' ||
+                        status === 'REFUNDED' ||
+                        action === 'RELEASE' ||
+                        action === 'REFUND'
+                      )
                     }).length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-12">
+                        <TableCell colSpan={12} className="text-center py-12">
                           <div className="flex flex-col items-center justify-center">
                             <CheckCircle2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
                             <p className="text-sm font-medium text-gray-900 dark:text-white">No Resolved Disputes</p>
@@ -1217,29 +862,30 @@ export default function EscrowDisputesAnalyticsPage() {
                     ) : (
                       filteredEscrows.filter(e => {
                         const status = e.escrowStatus || e.status
-                        return status === 'RELEASED' || status === 'REFUNDED'
+                        const action = e.resolutionAction
+                        return (
+                          status === 'RELEASED' ||
+                          status === 'REFUNDED' ||
+                          action === 'RELEASE' ||
+                          action === 'REFUND'
+                        )
                       }).map(escrow => (
-                        <TableRow key={escrow.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
-                          <TableCell className="font-mono text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title={escrow.id}>{escrow.id.substring(0, 12)}...</TableCell>
-                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.clientId}>{escrow.clientId.substring(0, 16)}...</TableCell>
-                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.vendorId}>{escrow.vendorId.substring(0, 16)}...</TableCell>
+                        <TableRow key={escrow.id} className="hover:bg-gray-50 dark:hover:bg-black/60 border-b border-gray-100 dark:border-gray-800">
+                          <TableCell className="font-mono text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title={escrow.internalReference || escrow.id}>{escrow.internalReference || escrow.id}</TableCell>
+                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={getClientName(escrow)}>{getClientName(escrow)}</TableCell>
+                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={getVendorName(escrow)}>{getVendorName(escrow)}</TableCell>
                           <TableCell className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{formatCurrency(escrow.escrowAmount || escrow.amount)}</TableCell>
                           <TableCell>{getStatusBadge(escrow.escrowStatus || escrow.status)}</TableCell>
-                          <TableCell>
-                            {escrow.resolutionAction ? (
-                              <Badge className={escrow.resolutionAction === 'RELEASE' ? 'bg-green-500' : 'bg-orange-500'}>
-                                {escrow.resolutionAction}
-                              </Badge>
-                            ) : (
-                              <span className="text-gray-400">N/A</span>
-                            )}
-                          </TableCell>
+                          <TableCell className="text-gray-700 dark:text-gray-300">{escrow.commissionPercentage != null ? `${escrow.commissionPercentage}%` : 'N/A'}</TableCell>
+                          <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{escrow.commissionAmount != null ? formatCurrency(escrow.commissionAmount) : 'N/A'}</TableCell>
+                          <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{escrow.vendorAmount != null ? formatCurrency(escrow.vendorAmount) : 'N/A'}</TableCell>
+                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.serviceDescription ?? ''}>{escrow.serviceDescription ?? 'N/A'}</TableCell>
                           <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
                             {escrow.disputeResolvedAt ? format(parseISO(escrow.disputeResolvedAt), 'MMM dd, yyyy HH:mm') : 'N/A'}
                           </TableCell>
-                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.disputeResolvedBy || 'System'}>{escrow.disputeResolvedBy || 'System'}</TableCell>
+                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.disputeResolvedBy ?? 'System'}>{escrow.disputeResolvedBy ?? 'System'}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(escrow)} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(escrow)} className="hover:bg-gray-100 dark:hover:bg-black">
                               <Eye className="h-4 w-4" />
                               <span className="ml-2 text-xs">View</span>
                             </Button>
@@ -1278,8 +924,8 @@ export default function EscrowDisputesAnalyticsPage() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-6 border-b border-gray-200 dark:border-gray-700 pb-6">
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Transaction ID</label>
-                  <p className="text-sm font-mono mt-2 text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-900 p-2 rounded">{selectedEscrow.id}</p>
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Internal reference</label>
+                  <p className="text-sm font-mono mt-2 text-gray-900 dark:text-white bg-gray-100 dark:bg-black p-2 rounded">{selectedEscrow.internalReference ?? selectedEscrow.id}</p>
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current Status</label>
@@ -1307,7 +953,7 @@ export default function EscrowDisputesAnalyticsPage() {
               </div>
 
               {(selectedEscrow.disputeResolvedAt || selectedEscrow.status === 'RELEASED' || selectedEscrow.status === 'REFUNDED') && (
-                <div className="space-y-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div className="space-y-4 bg-green-50 dark:bg-black border border-green-200 dark:border-green-800 rounded-lg p-4">
                   <h4 className="font-semibold text-gray-900 dark:text-white">Resolution Information</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -1324,7 +970,7 @@ export default function EscrowDisputesAnalyticsPage() {
                   {selectedEscrow.disputeResolution && (
                     <div>
                       <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Resolution Notes</label>
-                      <p className="text-sm mt-2 p-3 bg-white dark:bg-gray-900 rounded border border-green-200 dark:border-green-700 text-gray-900 dark:text-white">
+                      <p className="text-sm mt-2 p-3 bg-white dark:bg-black rounded border border-green-200 dark:border-green-700 text-gray-900 dark:text-white">
                         {selectedEscrow.disputeResolution}
                       </p>
                     </div>
@@ -1441,21 +1087,11 @@ export default function EscrowDisputesAnalyticsPage() {
               <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 block">Resolution Decision *</label>
               <Select value={disputeAction} onValueChange={(value: any) => setDisputeAction(value)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue placeholder="Select ACTION" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="RELEASE">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <span>Release to Vendor (Vendor Wins)</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="REFUND">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-blue-600" />
-                      <span>Refund to Client (Client Wins)</span>
-                    </div>
-                  </SelectItem>
+                  <SelectItem value="RELEASE">RELEASE</SelectItem>
+                  <SelectItem value="REFUND">REFUND</SelectItem>
                 </SelectContent>
               </Select>
             </div>

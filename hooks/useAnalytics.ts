@@ -12,12 +12,16 @@ export interface AnalyticsFilters {
   customEndDate?: string
   transactionType: 'all' | TransactionType
   status: 'all' | TransactionStatus
+  minAmount?: string
+  maxAmount?: string
 }
 
 const DEFAULT_FILTERS: AnalyticsFilters = {
   dateRange: '30d',
   transactionType: 'all',
   status: 'all',
+  minAmount: '',
+  maxAmount: '',
 }
 
 export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
@@ -50,6 +54,12 @@ export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
     return { startDate, endDate }
   }
 
+  const parseAmount = (value?: string) => {
+    if (!value) return undefined
+    const n = Number(value.replace(/,/g, ''))
+    return Number.isFinite(n) && n >= 0 ? n : undefined
+  }
+
   const fetchAnalyticsData = async () => {
     setLoading(true)
     try {
@@ -71,6 +81,15 @@ export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
 
       if (filters.status !== 'all') {
         transactionFilters.status = filters.status
+      }
+
+      const minAmount = parseAmount(filters.minAmount)
+      const maxAmount = parseAmount(filters.maxAmount)
+      if (minAmount !== undefined) {
+        transactionFilters.minAmount = minAmount
+      }
+      if (maxAmount !== undefined) {
+        transactionFilters.maxAmount = maxAmount
       }
 
       const [transactionsData, walletsData] = await Promise.all([

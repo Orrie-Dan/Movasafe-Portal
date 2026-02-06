@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
@@ -20,6 +21,7 @@ import {
   formatCurrency,
 } from '@/lib/utils/transactions'
 import { Transaction, TransactionStatus } from '@/lib/api'
+import { apiGetUsers } from '@/lib/api/users'
 import { format, parseISO } from 'date-fns'
 import {
   ChevronUp,
@@ -30,6 +32,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import type { SortingState, PaginationState } from '@/hooks/useTransactions'
+import type { User } from '@/lib/types/user'
 
 interface TransactionsTableProps {
   transactions: Transaction[]
@@ -60,6 +63,43 @@ export function TransactionsTable({
   onStandardReversal,
   onForceReversal,
 }: TransactionsTableProps) {
+  const [users, setUsers] = useState<Map<string, User>>(new Map())
+  const [usersLoading, setUsersLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await apiGetUsers({ limit: 1000 })
+        const userMap = new Map<string, User>()
+        if (response.data && Array.isArray(response.data)) {
+          response.data.forEach((user: User) => {
+            userMap.set(user.id, user)
+          })
+        }
+        setUsers(userMap)
+      } catch (err) {
+        console.error('Failed to load users:', err)
+      } finally {
+        setUsersLoading(false)
+      }
+    }
+
+    fetchUsers()
+  }, [])
+
+  const getUserNames = (userId: string) => {
+    const user = users.get(userId)
+    if (!user) {
+      return { firstName: '-', lastName: '-' }
+    }
+    
+    const fullName = user.fullName || ''
+    const parts = fullName.split(' ')
+    const firstName = parts[0] || '-'
+    const lastName = parts.slice(1).join(' ') || '-'
+    
+    return { firstName, lastName }
+  }
   const getSortIcon = (column: string) => {
     if (sorting.column !== column) {
       return <ArrowUpDown className="h-3 w-3 opacity-50" />
@@ -125,11 +165,20 @@ export function TransactionsTable({
               <TableRow className="border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                 <TableHead
                   className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
-                  onClick={() => onSort('userId')}
+                  onClick={() => onSort('firstName')}
                 >
                   <div className="flex items-center gap-1">
-                    User ID
-                    {getSortIcon('userId')}
+                    First Name
+                    {getSortIcon('firstName')}
+                  </div>
+                </TableHead>
+                <TableHead
+                  className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-white"
+                  onClick={() => onSort('lastName')}
+                >
+                  <div className="flex items-center gap-1">
+                    Last Name
+                    {getSortIcon('lastName')}
                   </div>
                 </TableHead>
                 <TableHead
@@ -187,7 +236,7 @@ export function TransactionsTable({
                   To
                 </TableHead>
                 <TableHead className="text-sm font-medium text-slate-600 dark:text-slate-400 w-20">
-                  Actions
+                  Action
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -207,14 +256,17 @@ export function TransactionsTable({
                     className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer"
                     onClick={() => onRowClick(transaction)}
                   >
-                    <TableCell className="font-mono text-sm text-slate-900 dark:text-white">
-                      {transaction.userId}
+                    <TableCell className="text-sm font-medium text-slate-900 dark:text-white">
+                      {getUserNames(transaction.userId).firstName}
+                    </TableCell>
+                    <TableCell className="text-sm font-medium text-slate-900 dark:text-white">
+                      {getUserNames(transaction.userId).lastName}
                     </TableCell>
                     <TableCell className="text-sm text-slate-700 dark:text-slate-300">
                       {format(parseISO(transaction.createdAt), 'dd MMM yyyy, HH:mm')}
                     </TableCell>
                     <TableCell className="font-mono text-sm text-slate-700 dark:text-slate-300">
-                      {formatNullable(transaction.id)}
+                      {formatNullable(transaction.internalReference)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">

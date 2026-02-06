@@ -28,26 +28,7 @@ export function TransactionAnalyticsSection({
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Breakdown by Transaction Type */}
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-            <CardTitle size="md" className="z-10 relative text-slate-900 dark:text-white">Breakdown by Transaction Type</CardTitle>
-            <CardDescription className="z-10 relative">Transaction count by type</CardDescription>
-          </div>
-          <CardContent>
-            <EnhancedBarChart
-              data={transactionData.byType}
-              dataKey="count"
-              xAxisKey="type"
-              height={300}
-              gradientColors={{ start: '#3b82f6', end: '#2563eb', startOpacity: 1, endOpacity: 0.8 }}
-              name="Count"
-            />
-          </CardContent>
-        </Card>
-
+      <div className="grid gap-6 lg:grid-cols-1">
         {/* Success vs Failure by Type */}
         <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">

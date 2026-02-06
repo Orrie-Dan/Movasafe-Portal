@@ -143,3 +143,24 @@ export async function apiCreateWalletAccount(data: CreateWalletAccountDTO): Prom
     body: JSON.stringify(data),
   })
 }
+
+/**
+ * Freeze wallet
+ */
+export async function apiFreezWallet(walletId: string, reason: string = 'Frozen by admin', durationHours: number = 0): Promise<Wallet> {
+  return apiRequest<Wallet>(`/api/admin/wallets/${walletId}/freeze`, {
+    method: 'POST',
+    body: JSON.stringify({ reason, durationHours }),
+  })
+}
+
+/**
+ * Unfreeze wallet
+ */
+export async function apiUnfreezeWallet(walletId: string, reason: string = 'Unfrozen by admin'): Promise<Wallet> {
+  return apiRequest<Wallet>(`/api/admin/wallets/${walletId}/unfreeze`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  })
+}
+

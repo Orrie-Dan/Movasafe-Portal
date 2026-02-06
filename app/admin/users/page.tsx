@@ -40,6 +40,7 @@ import {
   Unlock,
   KeyRound,
   Copy,
+  Eye,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -352,9 +353,11 @@ export default function UsersPage() {
   const columns: Column<EnrichedUser>[] = [
     {
       key: 'id',
-      header: 'User ID',
+      header: 'National ID',
       accessor: (user) => (
-        <span className="font-mono text-xs text-foreground">{user.id}</span>
+        <span className="font-mono text-xs text-foreground">
+          {user.nationalId || 'N/A'}
+        </span>
       ),
       sortable: true,
     },
@@ -443,6 +446,24 @@ export default function UsersPage() {
         )
       },
       sortable: true,
+    },
+    {
+      key: 'actions',
+      header: 'Action',
+      accessor: (user) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 px-2 flex items-center gap-1"
+          onClick={(e) => {
+            e.stopPropagation()
+            openUserDetails(user)
+          }}
+        >
+          <Eye className="h-4 w-4" />
+          <span className="sr-only">View</span>
+        </Button>
+      ),
     },
   ]
 
@@ -704,26 +725,28 @@ export default function UsersPage() {
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                           <Label className="text-xs text-muted-foreground">
-                            User ID
+                            National ID
                           </Label>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="font-mono text-xs text-foreground">
-                              {selectedUser.id}
+                              {selectedUser.nationalId || 'N/A'}
                             </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => {
-                                navigator.clipboard.writeText(selectedUser.id)
-                                toast({
-                                  title: 'Copied',
-                                  description: 'User ID copied to clipboard',
-                                })
-                              }}
-                            >
-                              <Copy className="h-3 w-3" />
-                            </Button>
+                            {selectedUser.nationalId && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(selectedUser.nationalId as string)
+                                  toast({
+                                    title: 'Copied',
+                                    description: 'National ID copied to clipboard',
+                                  })
+                                }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         </div>
                         <div>
@@ -768,6 +791,22 @@ export default function UsersPage() {
                             {selectedUser.mfaEnabled ? 'Yes' : 'No'}
                           </div>
                         </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">
+                            User Type
+                          </Label>
+                          <div className="mt-1 text-sm text-foreground">
+                            {selectedUser.userType || 'N/A'}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">
+                            Primary Role
+                          </Label>
+                          <div className="mt-1 text-sm text-foreground">
+                            {selectedUser.role || 'N/A'}
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -799,25 +838,9 @@ export default function UsersPage() {
                       </div>
                     </CardContent>
                   </Card>
-
-                  {/* Internal notes */}
-                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4 space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">
-                        Internal Notes
-                      </h3>
-                      <Textarea
-                        value={internalNote}
-                        onChange={(e) => setInternalNote(e.target.value)}
-                        placeholder="Add internal notes about this user..."
-                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground"
-                        rows={3}
-                      />
-                    </CardContent>
-                  </Card>
                 </div>
 
-                {/* Right column: verification, activity, actions */}
+                {/* Right column: verification, activity */}
                 <div className="space-y-4">
                   {/* Verification */}
                   <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
@@ -877,82 +900,6 @@ export default function UsersPage() {
                           No recent activity records.
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Actions */}
-                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4 space-y-2">
-                      <h3 className="text-sm font-semibold text-foreground">
-                        Admin Controls
-                      </h3>
-                      <div className="space-y-2">
-                        {selectedUser.status === 'suspended' ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full justify-start"
-                            onClick={() =>
-                              setActionModal({ type: 'activate', user: selectedUser })
-                            }
-                          >
-                            <Unlock className="h-4 w-4 mr-2" />
-                            Activate User
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full justify-start"
-                            onClick={() =>
-                              setActionModal({ type: 'suspend', user: selectedUser })
-                            }
-                          >
-                            <UserX className="h-4 w-4 mr-2" />
-                            Suspend User
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => setActionModal({ type: 'block', user: selectedUser })}
-                        >
-                          <Lock className="h-4 w-4 mr-2" />
-                          Block User
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() =>
-                            setActionModal({ type: 'resetPassword', user: selectedUser })
-                          }
-                        >
-                          <KeyRound className="h-4 w-4 mr-2" />
-                          Reset Password
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => setActionModal({ type: 'flag', user: selectedUser })}
-                        >
-                          <Flag className="h-4 w-4 mr-2" />
-                          Flag for Review
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="w-full justify-start text-red-500 border-red-500/40 hover:bg-red-500/10"
-                          onClick={() =>
-                            setDeleteDialog({ open: true, user: selectedUser })
-                          }
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete User
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
                 </div>

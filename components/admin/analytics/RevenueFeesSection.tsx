@@ -24,7 +24,7 @@ export function RevenueFeesSection({ revenueData, revenueByTypeData }: RevenueFe
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-1">
         {/* Fees Collected Over Time */}
         <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
@@ -49,31 +49,6 @@ export function RevenueFeesSection({ revenueData, revenueByTypeData }: RevenueFe
           </CardContent>
         </Card>
 
-        {/* Revenue by Transaction Type */}
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-            <CardTitle size="md" className="z-10 relative text-slate-900 dark:text-white">Revenue by Transaction Type</CardTitle>
-            <CardDescription className="z-10 relative">Total revenue breakdown by transaction type</CardDescription>
-          </div>
-          <CardContent>
-            <EnhancedBarChart
-              data={revenueByTypeData}
-              dataKey="revenue"
-              xAxisKey="type"
-              height={300}
-              gradientColors={{ start: '#10b981', end: '#059669', startOpacity: 1, endOpacity: 0.8 }}
-              name="Revenue (RWF)"
-              tooltipFormatter={(value: any) => [
-                `${(value as number).toLocaleString('en-US', {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })} RWF`,
-                'Revenue',
-              ]}
-            />
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

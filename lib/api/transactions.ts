@@ -561,8 +561,98 @@ export async function apiForceReversal(
   }
 }
 
+/**
+ * Get all disputed transactions
+ * Endpoint: GET /api/admin/transactions/disputed
+ */
+export async function apiGetDisputedTransactions(): Promise<Transaction[]> {
+  const token = getToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
 
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
 
+  try {
+    const response = await fetch(`${TRANSACTION_BASE}/api/admin/transactions/disputed`, {
+      method: 'GET',
+      headers,
+    })
 
+    if (!response.ok) {
+      const errorText = await response.text()
+      let errorMessage = `Failed to fetch disputed transactions: ${response.status}`
+      try {
+        const errorData = JSON.parse(errorText)
+        errorMessage = errorData.message || errorMessage
+      } catch {
+        errorMessage = errorText || errorMessage
+      }
+      throw new Error(errorMessage)
+    }
 
+    const result = await response.json()
+    
+    // Handle response structure: { success: true, data: [...] }
+    if (result?.data && Array.isArray(result.data)) {
+      return result.data as Transaction[]
+    }
 
+    return []
+  } catch (error) {
+    console.error('Failed to fetch disputed transactions:', error)
+    throw error
+  }
+}
+
+/**
+ * Resolve a disputed transaction
+ * Endpoint: POST /api/admin/transactions/resolve-dispute/{id}
+ */
+export async function apiResolveDispute(
+  transactionId: string,
+  action: 'UPHOLD' | 'COMPENSATE',
+  notes: string
+): Promise<Transaction> {
+  const token = getToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  try {
+    const response = await fetch(`${TRANSACTION_BASE}/api/admin/transactions/resolve-dispute/${transactionId}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        action,
+        notes,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      let errorMessage = `Failed to resolve dispute: ${response.status}`
+      try {
+        const errorData = JSON.parse(errorText)
+        errorMessage = errorData.message || errorMessage
+      } catch {
+        errorMessage = errorText || errorMessage
+      }
+      throw new Error(errorMessage)
+    }
+
+    const result = await response.json()
+    return result?.data || result
+  } catch (error) {
+    console.error('Failed to resolve dispute:', error)
+    throw error
+  }
+}

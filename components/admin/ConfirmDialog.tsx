@@ -39,7 +39,7 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-900 border-slate-800 text-white">
+      <DialogContent className="bg-black border-slate-800 text-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {variant === 'destructive' && (
@@ -55,7 +55,7 @@ export function ConfirmDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-slate-700 text-white hover:bg-slate-800"
+            className="border-slate-700 text-white hover:bg-neutral-900"
           >
             {cancelLabel}
           </Button>

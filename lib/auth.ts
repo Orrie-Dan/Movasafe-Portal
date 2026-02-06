@@ -111,7 +111,7 @@ export async function adminLogin(credentials: LoginRequest): Promise<LoginRespon
   
   // CRITICAL: Check if user has ADMIN role
   const hasAdminRole = roles.some(
-    (role) => role.name?.toUpperCase() === 'ADMIN'
+    (role) => role.name?.toUpperCase() === 'TRUST_ADMIN'
   )
 
   if (!hasAdminRole) {

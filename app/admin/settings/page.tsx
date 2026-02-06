@@ -1,12 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
@@ -34,8 +33,19 @@ import {
   CreditCard,
   MessageSquare,
   Bell,
-  Zap
+  Zap,
+  Trash2,
+  Pencil,
 } from 'lucide-react'
+import {
+  apiListSystemSettings,
+  apiCreateSystemSetting,
+  apiUpdateSystemSetting,
+  apiDeleteSystemSetting,
+  type SystemSettingResponse,
+  type SystemSettingDTO,
+} from '@/lib/api/system-settings'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 
 // Types
 interface SecuritySettings {
@@ -80,12 +90,39 @@ interface FeatureFlag {
   category: 'core' | 'beta' | 'experimental'
 }
 
+interface GeneralSystemSettings {
+  escrowCommission: string
+  centralAccountId: string
+  revenueAccountId: string
+  reserveAccountId: string
+  escrowAccountId: string
+  reversalWindowMinutes: string
+  debtAutoCollectionRate: string
+}
+
+const SYSTEM_SETTING_KEYS = {
+  ESCROW_COMMISSION: 'escrow_commission_percentage',
+  CENTRAL_ACCOUNT: 'movasafe_central_account',
+  REVENUE_ACCOUNT: 'movasafe_revenue_account',
+  RESERVE_ACCOUNT: 'movasafe_reserve_account',
+  ESCROW_ACCOUNT: 'movasafe_escrow_account',
+  REVERSAL_WINDOW: 'transfer_reversal_window_minutes',
+  DEBT_AUTO_RATE: 'debt_auto_collection_rate',
+} as const
+
 export default function SettingsPage() {
-  // General Settings State
-  const [generalSettings, setGeneralSettings] = useState({
+  // General Settings State (backed by system-settings API)
+  const [generalSettings, setGeneralSettings] = useState<GeneralSystemSettings>({
     escrowCommission: '5.0',
     centralAccountId: '',
+    revenueAccountId: '',
+    reserveAccountId: '',
+    escrowAccountId: '',
+    reversalWindowMinutes: '30',
+    debtAutoCollectionRate: '0.50',
   })
+  const [systemSettings, setSystemSettings] = useState<SystemSettingResponse[]>([])
+  const [systemLoading, setSystemLoading] = useState(false)
 
   // Security Settings State
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
@@ -228,16 +265,177 @@ export default function SettingsPage() {
   ])
 
   const [saving, setSaving] = useState(false)
+  const [editingSystemSetting, setEditingSystemSetting] = useState<SystemSettingDTO>({
+    settingKey: '',
+    settingValue: '',
+    description: '',
+  })
+  /** When set, we're editing this existing setting (key used for PUT URL). */
+  const [editingOriginalKey, setEditingOriginalKey] = useState<string | null>(null)
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean
+    key: string | null
+  }>({ open: false, key: null })
+
+  // Load system settings from backend on mount
+  useEffect(() => {
+    const loadSystemSettings = async () => {
+      try {
+        setSystemLoading(true)
+        const data = await apiListSystemSettings()
+        setSystemSettings(data)
+
+        const findValue = (key: string, fallback: string): string => {
+          const found = data.find((s) => s.settingKey === key)
+          return (found?.settingValue ?? fallback) || fallback
+        }
+
+        setGeneralSettings((prev) => ({
+          ...prev,
+          escrowCommission: findValue(SYSTEM_SETTING_KEYS.ESCROW_COMMISSION, prev.escrowCommission),
+          centralAccountId: findValue(SYSTEM_SETTING_KEYS.CENTRAL_ACCOUNT, prev.centralAccountId),
+          revenueAccountId: findValue(SYSTEM_SETTING_KEYS.REVENUE_ACCOUNT, prev.revenueAccountId),
+          reserveAccountId: findValue(SYSTEM_SETTING_KEYS.RESERVE_ACCOUNT, prev.reserveAccountId),
+          escrowAccountId: findValue(SYSTEM_SETTING_KEYS.ESCROW_ACCOUNT, prev.escrowAccountId),
+          reversalWindowMinutes: findValue(SYSTEM_SETTING_KEYS.REVERSAL_WINDOW, prev.reversalWindowMinutes),
+          debtAutoCollectionRate: findValue(SYSTEM_SETTING_KEYS.DEBT_AUTO_RATE, prev.debtAutoCollectionRate),
+        }))
+      } catch (error) {
+        console.error('Failed to load system settings:', error)
+        toast({
+          title: 'Error loading system settings',
+          description: error instanceof Error ? error.message : 'Unable to fetch system settings.',
+          variant: 'destructive',
+        })
+      } finally {
+        setSystemLoading(false)
+      }
+    }
+
+    loadSystemSettings()
+  }, [])
 
   // Handlers
+  const upsertSystemSetting = async (settingKey: string, settingValue: string, description?: string) => {
+    const existing = systemSettings.find((s) => s.settingKey === settingKey)
+    const payload = { settingKey, settingValue, description }
+
+    if (existing) {
+      const updated = await apiUpdateSystemSetting(settingKey, payload)
+      setSystemSettings((prev) =>
+        prev.map((s) => (s.settingKey === settingKey ? updated : s))
+      )
+    } else {
+      const created = await apiCreateSystemSetting(payload)
+      setSystemSettings((prev) => [...prev, created])
+    }
+  }
+
   const handleSaveGeneral = async () => {
-    setSaving(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    toast({
-      title: 'Settings Saved',
-      description: 'General settings have been updated successfully.',
+    try {
+      setSaving(true)
+
+      await Promise.all([
+        upsertSystemSetting(
+          SYSTEM_SETTING_KEYS.ESCROW_COMMISSION,
+          generalSettings.escrowCommission,
+          'Default escrow commission percentage'
+        ),
+        upsertSystemSetting(
+          SYSTEM_SETTING_KEYS.CENTRAL_ACCOUNT,
+          generalSettings.centralAccountId,
+          'Movasafe central account UUID'
+        ),
+        upsertSystemSetting(
+          SYSTEM_SETTING_KEYS.REVENUE_ACCOUNT,
+          generalSettings.revenueAccountId,
+          'Movasafe revenue account UUID'
+        ),
+        upsertSystemSetting(
+          SYSTEM_SETTING_KEYS.RESERVE_ACCOUNT,
+          generalSettings.reserveAccountId,
+          'Movasafe reserve account UUID'
+        ),
+        upsertSystemSetting(
+          SYSTEM_SETTING_KEYS.ESCROW_ACCOUNT,
+          generalSettings.escrowAccountId,
+          'Movasafe escrow holding account UUID'
+        ),
+        upsertSystemSetting(
+          SYSTEM_SETTING_KEYS.REVERSAL_WINDOW,
+          generalSettings.reversalWindowMinutes,
+          'Time window for reversible transfers (minutes)'
+        ),
+        upsertSystemSetting(
+          SYSTEM_SETTING_KEYS.DEBT_AUTO_RATE,
+          generalSettings.debtAutoCollectionRate,
+          'Debt auto-collection rate (0.50 = 50%)'
+        ),
+      ])
+
+      toast({
+        title: 'System settings saved',
+        description: 'Escrow and reversal settings have been updated successfully.',
+      })
+    } catch (error) {
+      console.error('Failed to save system settings:', error)
+      toast({
+        title: 'Error saving system settings',
+        description: error instanceof Error ? error.message : 'Unable to update system settings.',
+        variant: 'destructive',
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEditSetting = (setting: SystemSettingResponse) => {
+    setEditingSystemSetting({
+      settingKey: setting.settingKey,
+      settingValue: setting.settingValue,
+      description: setting.description ?? '',
     })
-    setSaving(false)
+    setEditingOriginalKey(setting.settingKey)
+  }
+
+  const handleUpdateSetting = async () => {
+    if (!editingOriginalKey) return
+    if (!editingSystemSetting.settingKey.trim() || !editingSystemSetting.settingValue.trim()) {
+      toast({
+        title: 'Missing fields',
+        description: 'Both key and value are required.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      setSaving(true)
+      const dto: SystemSettingDTO = {
+        settingKey: editingSystemSetting.settingKey.trim(),
+        settingValue: editingSystemSetting.settingValue.trim(),
+        description: editingSystemSetting.description?.trim() || undefined,
+      }
+      const updated = await apiUpdateSystemSetting(editingOriginalKey, dto)
+      setSystemSettings((prev) =>
+        prev.map((s) => (s.settingKey === editingOriginalKey ? updated : s))
+      )
+      toast({
+        title: 'Setting updated',
+        description: `System setting "${dto.settingKey}" has been updated.`,
+      })
+      setEditingSystemSetting({ settingKey: '', settingValue: '', description: '' })
+      setEditingOriginalKey(null)
+    } catch (error) {
+      console.error('Failed to update system setting:', error)
+      toast({
+        title: 'Error updating setting',
+        description: error instanceof Error ? error.message : 'Unable to update system setting.',
+        variant: 'destructive',
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleSaveSecurity = async () => {
@@ -320,7 +518,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-background min-h-screen">
+    <div className="p-6 lg:p-8 space-y-6 bg-white dark:bg-black min-h-screen">
       <PageHeader
         title="System Settings"
         description="Configure system-wide settings, security policies, and integrations"
@@ -328,588 +526,211 @@ export default function SettingsPage() {
 
       <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardContent className="p-6">
-          <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-slate-100 dark:bg-slate-900">
-              <TabsTrigger value="general" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-                <Settings className="h-4 w-4 mr-2" />
-                General
-              </TabsTrigger>
-              <TabsTrigger value="security" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-                <Shield className="h-4 w-4 mr-2" />
-                Security
-              </TabsTrigger>
-              <TabsTrigger value="email" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-                <Mail className="h-4 w-4 mr-2" />
-                Email
-              </TabsTrigger>
-              <TabsTrigger value="integrations" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-                <Plug className="h-4 w-4 mr-2" />
-                Integrations
-              </TabsTrigger>
-              <TabsTrigger value="features" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-                <Flag className="h-4 w-4 mr-2" />
-                Features
-              </TabsTrigger>
-            </TabsList>
-
-            {/* General Settings Tab */}
-            <TabsContent value="general" className="mt-6">
+            {/* System Settings only */}
+            <div className="mt-6 space-y-6">
               <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
                 <CardHeader>
-                  <CardTitle>General Settings</CardTitle>
-                  <CardDescription>Configure basic system settings and defaults</CardDescription>
+                  <CardTitle>System Settings (API-backed)</CardTitle>
+                  <CardDescription>
+                    Select a row in the table and use Edit to load it, then change value or description and click Update Setting to save via /api/admin/system-settings.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="escrowCommission">Escrow Commission Percentage</Label>
-                        <p className="text-xs text-muted-foreground">Default commission rate charged on escrow transactions</p>
-                        <Input
-                          id="escrowCommission"
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="100"
-                          value={generalSettings.escrowCommission}
-                          onChange={(e) => setGeneralSettings({ ...generalSettings, escrowCommission: e.target.value })}
-                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                          placeholder="5.0"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="centralAccountId">Central Account ID</Label>
-                        <p className="text-xs text-muted-foreground">Wallet ID where commission payments are deposited</p>
-                        <Input
-                          id="centralAccountId"
-                          type="text"
-                          value={generalSettings.centralAccountId}
-                          onChange={(e) => setGeneralSettings({ ...generalSettings, centralAccountId: e.target.value })}
-                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono text-sm"
-                          placeholder="Enter wallet ID"
-                        />
-                      </div>
-                    </div>
-                    <Button 
-                      onClick={handleSaveGeneral} 
-                      disabled={saving}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
-                      Save Settings
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Security Settings Tab */}
-            <TabsContent value="security" className="mt-6 space-y-6">
-              {/* Password Policy */}
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Key className="h-5 w-5 text-blue-400" />
-                    Password Policy
-                  </CardTitle>
-                  <CardDescription>Configure password requirements for user accounts</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="minLength">Minimum Password Length</Label>
-                        <Input
-                          id="minLength"
-                          type="number"
-                          min="6"
-                          max="32"
-                          value={securitySettings.passwordMinLength}
-                          onChange={(e) => setSecuritySettings({ ...securitySettings, passwordMinLength: parseInt(e.target.value) })}
-                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="expiryDays">Password Expiry (Days)</Label>
-                        <Input
-                          id="expiryDays"
-                          type="number"
-                          min="0"
-                          max="365"
-                          value={securitySettings.passwordExpiryDays}
-                          onChange={(e) => setSecuritySettings({ ...securitySettings, passwordExpiryDays: parseInt(e.target.value) })}
-                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                        />
-                        <p className="text-xs text-muted-foreground">Set to 0 for no expiry</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                        <div>
-                          <Label>Require Uppercase</Label>
-                          <p className="text-xs text-muted-foreground">At least one uppercase letter</p>
-                        </div>
-                        <Switch
-                          checked={securitySettings.passwordRequireUppercase}
-                          onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, passwordRequireUppercase: checked })}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                        <div>
-                          <Label>Require Numbers</Label>
-                          <p className="text-xs text-muted-foreground">At least one numeric digit</p>
-                        </div>
-                        <Switch
-                          checked={securitySettings.passwordRequireNumbers}
-                          onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, passwordRequireNumbers: checked })}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                        <div>
-                          <Label>Require Special</Label>
-                          <p className="text-xs text-muted-foreground">At least one special character</p>
-                        </div>
-                        <Switch
-                          checked={securitySettings.passwordRequireSpecial}
-                          onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, passwordRequireSpecial: checked })}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Two-Factor Authentication */}
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Smartphone className="h-5 w-5 text-blue-400" />
-                    Two-Factor Authentication
-                  </CardTitle>
-                  <CardDescription>Configure MFA requirements for admin and user accounts</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                      <div>
-                        <Label>Enable 2FA</Label>
-                        <p className="text-xs text-muted-foreground">Allow users to enable two-factor authentication</p>
-                      </div>
-                      <Switch
-                        checked={securitySettings.mfaEnabled}
-                        onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, mfaEnabled: checked })}
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="space-y-1">
+                      <Label>Setting Key</Label>
+                      <Input
+                        placeholder="e.g. escrow_commission_percentage"
+                        value={editingSystemSetting.settingKey}
+                        onChange={(e) =>
+                          setEditingSystemSetting((prev) => ({
+                            ...prev,
+                            settingKey: e.target.value,
+                          }))
+                        }
+                        className="font-mono text-xs bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                        disabled={systemLoading || saving || !!editingOriginalKey}
+                        title={editingOriginalKey ? 'Key cannot be changed when editing' : undefined}
                       />
                     </div>
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                      <div>
-                        <Label>Require 2FA for Admins</Label>
-                        <p className="text-xs text-muted-foreground">Enforce 2FA for all admin accounts</p>
-                      </div>
-                      <Switch
-                        checked={securitySettings.mfaRequired}
-                        onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, mfaRequired: checked })}
+                    <div className="space-y-1">
+                      <Label>Value</Label>
+                      <Input
+                        placeholder="Setting value"
+                        value={editingSystemSetting.settingValue}
+                        onChange={(e) =>
+                          setEditingSystemSetting((prev) => ({
+                            ...prev,
+                            settingValue: e.target.value,
+                          }))
+                        }
+                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                        disabled={systemLoading || saving}
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-1">
+                      <Label>Description (optional)</Label>
+                      <Input
+                        placeholder="What this setting controls"
+                        value={editingSystemSetting.description ?? ''}
+                        onChange={(e) =>
+                          setEditingSystemSetting((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
+                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                        disabled={systemLoading || saving}
                       />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Session & Lockout Settings */}
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-blue-400" />
-                    Session & Lockout Settings
-                  </CardTitle>
-                  <CardDescription>Configure session timeout and account lockout policies</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="sessionTimeout">Session Timeout (Minutes)</Label>
-                      <Input
-                        id="sessionTimeout"
-                        type="number"
-                        min="5"
-                        max="1440"
-                        value={securitySettings.sessionTimeoutMinutes}
-                        onChange={(e) => setSecuritySettings({ ...securitySettings, sessionTimeoutMinutes: parseInt(e.target.value) })}
-                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="maxAttempts">Max Login Attempts</Label>
-                      <Input
-                        id="maxAttempts"
-                        type="number"
-                        min="3"
-                        max="10"
-                        value={securitySettings.maxLoginAttempts}
-                        onChange={(e) => setSecuritySettings({ ...securitySettings, maxLoginAttempts: parseInt(e.target.value) })}
-                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lockoutDuration">Lockout Duration (Minutes)</Label>
-                      <Input
-                        id="lockoutDuration"
-                        type="number"
-                        min="5"
-                        max="60"
-                        value={securitySettings.lockoutDurationMinutes}
-                        onChange={(e) => setSecuritySettings({ ...securitySettings, lockoutDurationMinutes: parseInt(e.target.value) })}
-                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                      />
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={handleSaveSecurity} 
-                    disabled={saving}
-                    className="mt-6 bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Lock className="h-4 w-4 mr-2" />}
-                    Save Security Settings
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Email Settings Tab */}
-            <TabsContent value="email" className="mt-6 space-y-6">
-              {/* SMTP Configuration */}
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5 text-blue-400" />
-                    SMTP Configuration
-                  </CardTitle>
-                  <CardDescription>Configure your email server for sending notifications</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="smtpHost">SMTP Host</Label>
-                        <Input
-                          id="smtpHost"
-                          type="text"
-                          value={emailSettings.smtpHost}
-                          onChange={(e) => setEmailSettings({ ...emailSettings, smtpHost: e.target.value })}
-                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                          placeholder="smtp.example.com"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="smtpPort">SMTP Port</Label>
-                        <Input
-                          id="smtpPort"
-                          type="number"
-                          value={emailSettings.smtpPort}
-                          onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: parseInt(e.target.value) })}
-                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                          placeholder="587"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="smtpUsername">SMTP Username</Label>
-                        <Input
-                          id="smtpUsername"
-                          type="text"
-                          value={emailSettings.smtpUsername}
-                          onChange={(e) => setEmailSettings({ ...emailSettings, smtpUsername: e.target.value })}
-                          className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                          placeholder="your-username"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="smtpPassword">SMTP Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="smtpPassword"
-                            type={showSmtpPassword ? 'text' : 'password'}
-                            value={emailSettings.smtpPassword}
-                            onChange={(e) => setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })}
-                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 pr-10"
-                            placeholder="••••••••"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full"
-                            onClick={() => setShowSmtpPassword(!showSmtpPassword)}
-                          >
-                            {showSmtpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800">
-                      <div>
-                        <Label>Use TLS/SSL</Label>
-                        <p className="text-xs text-muted-foreground">Enable secure connection to SMTP server</p>
-                      </div>
-                      <Switch
-                        checked={emailSettings.smtpSecure}
-                        onCheckedChange={(checked) => setEmailSettings({ ...emailSettings, smtpSecure: checked })}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Email Identity */}
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Send className="h-5 w-5 text-blue-400" />
-                    Email Identity
-                  </CardTitle>
-                  <CardDescription>Configure the sender information for outgoing emails</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="fromEmail">From Email Address</Label>
-                      <Input
-                        id="fromEmail"
-                        type="email"
-                        value={emailSettings.fromEmail}
-                        onChange={(e) => setEmailSettings({ ...emailSettings, fromEmail: e.target.value })}
-                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                        placeholder="noreply@movasafe.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="fromName">From Name</Label>
-                      <Input
-                        id="fromName"
-                        type="text"
-                        value={emailSettings.fromName}
-                        onChange={(e) => setEmailSettings({ ...emailSettings, fromName: e.target.value })}
-                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                        placeholder="Movasafe"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="replyToEmail">Reply-To Email</Label>
-                      <Input
-                        id="replyToEmail"
-                        type="email"
-                        value={emailSettings.replyToEmail}
-                        onChange={(e) => setEmailSettings({ ...emailSettings, replyToEmail: e.target.value })}
-                        className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
-                        placeholder="support@movasafe.com"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-3 mt-6">
-                    <Button 
-                      onClick={handleSaveEmail} 
-                      disabled={saving}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
-                      Save Email Settings
-                    </Button>
+                  <div className="flex gap-2">
                     <Button
-                      variant="outline"
-                      onClick={handleTestEmail}
-                      disabled={testingEmail}
+                      onClick={handleUpdateSetting}
+                      disabled={saving || systemLoading || !editingOriginalKey}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      {testingEmail ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                      Send Test Email
+                      {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Pencil className="h-4 w-4 mr-2" />}
+                      Update Setting
                     </Button>
+                    {editingOriginalKey && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingSystemSetting({ settingKey: '', settingValue: '', description: '' })
+                          setEditingOriginalKey(null)
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
-            {/* Integrations Tab */}
-            <TabsContent value="integrations" className="mt-6">
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Plug className="h-5 w-5 text-blue-400" />
-                    Third-party Integrations
-                  </CardTitle>
-                  <CardDescription>Manage connections to external services and APIs</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {integrations.map((integration) => {
-                      const Icon = integration.icon
-                      return (
-                        <div
-                          key={integration.id}
-                          className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 transition-colors"
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                                <Icon className="h-5 w-5 text-blue-400" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-foreground">{integration.name}</h4>
-                                <p className="text-xs text-muted-foreground">{integration.description}</p>
-                              </div>
-                            </div>
-                            {getStatusBadge(integration.status)}
-                          </div>
-                          {integration.apiKey && (
-                            <div className="mb-3 p-2 rounded bg-slate-100 dark:bg-slate-900 flex items-center justify-between">
-                              <span className="text-xs font-mono text-muted-foreground">{integration.apiKey}</span>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => {
-                                  toast({ title: 'Copied', description: 'API key copied to clipboard' })
-                                }}
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                    <div className="bg-slate-50 dark:bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between">
+                      <span>Existing Settings</span>
+                      <span className="text-[11px] text-slate-400">
+                        Total: {systemSettings.length}
+                      </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-100 dark:bg-slate-900">
+                          <tr className="text-left text-xs text-slate-500 dark:text-slate-400">
+                            <th className="px-4 py-2 font-medium">Key</th>
+                            <th className="px-4 py-2 font-medium">Value</th>
+                            <th className="px-4 py-2 font-medium hidden md:table-cell">
+                              Description
+                            </th>
+                            <th className="px-4 py-2 font-medium hidden lg:table-cell">
+                              Updated
+                            </th>
+                            <th className="px-4 py-2 font-medium text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {systemSettings.map((setting) => (
+                            <tr
+                              key={setting.id}
+                              className="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/60"
+                            >
+                              <td className="px-4 py-2 align-top">
+                                <code className="text-xs font-mono text-slate-800 dark:text-slate-100">
+                                  {setting.settingKey}
+                                </code>
+                              </td>
+                              <td className="px-4 py-2 align-top">
+                                <span className="text-sm text-foreground">
+                                  {setting.settingValue}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2 align-top hidden md:table-cell">
+                                <span className="text-xs text-muted-foreground">
+                                  {setting.description || '—'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2 align-top hidden lg:table-cell">
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(setting.updatedAt).toLocaleString()}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2 align-top">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => handleEditSetting(setting)}
+                                    title="Edit setting"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8 border-red-500/40 text-red-500 hover:bg-red-500/10"
+                                    onClick={() =>
+                                      setDeleteDialog({ open: true, key: setting.settingKey })
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                          {systemSettings.length === 0 && (
+                            <tr>
+                              <td
+                                colSpan={5}
+                                className="px-4 py-6 text-center text-sm text-muted-foreground"
                               >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
+                                No system settings found.
+                              </td>
+                            </tr>
                           )}
-                          {integration.lastSync && (
-                            <p className="text-xs text-muted-foreground mb-3">
-                              Last sync: {new Date(integration.lastSync).toLocaleString()}
-                            </p>
-                          )}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleToggleIntegration(integration.id)}
-                              className="flex-1"
-                            >
-                              {integration.status === 'connected' ? 'Disconnect' : 'Connect'}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Feature Flags Tab */}
-            <TabsContent value="features" className="mt-6">
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Flag className="h-5 w-5 text-blue-400" />
-                    Feature Flags
-                  </CardTitle>
-                  <CardDescription>Enable or disable system features across the platform</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {/* Core Features */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-blue-400" />
-                        Core Features
-                      </h3>
-                      <div className="space-y-3">
-                        {featureFlags.filter(f => f.category === 'core').map((flag) => (
-                          <div
-                            key={flag.id}
-                            className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-medium text-foreground">{flag.name}</h4>
-                                  {getCategoryBadge(flag.category)}
-                                </div>
-                                <p className="text-sm text-muted-foreground">{flag.description}</p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={flag.enabled}
-                              onCheckedChange={() => handleToggleFeature(flag.id)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Beta Features */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-purple-400" />
-                        Beta Features
-                      </h3>
-                      <div className="space-y-3">
-                        {featureFlags.filter(f => f.category === 'beta').map((flag) => (
-                          <div
-                            key={flag.id}
-                            className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800 border-l-4 border-l-purple-500"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-medium text-foreground">{flag.name}</h4>
-                                  {getCategoryBadge(flag.category)}
-                                </div>
-                                <p className="text-sm text-muted-foreground">{flag.description}</p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={flag.enabled}
-                              onCheckedChange={() => handleToggleFeature(flag.id)}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Experimental Features */}
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-orange-400" />
-                        Experimental Features
-                        <Badge variant="outline" className="text-orange-400 border-orange-500/30">Use with caution</Badge>
-                      </h3>
-                      <div className="space-y-3">
-                        {featureFlags.filter(f => f.category === 'experimental').map((flag) => (
-                          <div
-                            key={flag.id}
-                            className="flex items-center justify-between p-4 rounded-lg border border-slate-200 dark:border-slate-800 border-l-4 border-l-orange-500"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-medium text-foreground">{flag.name}</h4>
-                                  {getCategoryBadge(flag.category)}
-                                </div>
-                                <p className="text-sm text-muted-foreground">{flag.description}</p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={flag.enabled}
-                              onCheckedChange={() => handleToggleFeature(flag.id)}
-                            />
-                          </div>
-                        ))}
-                      </div>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, key: deleteDialog.key })}
+        title="Delete system setting"
+        description={`Are you sure you want to delete "${deleteDialog.key}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={async () => {
+          if (!deleteDialog.key) return
+          try {
+            await apiDeleteSystemSetting(deleteDialog.key)
+            setSystemSettings((prev) =>
+              prev.filter((s) => s.settingKey !== deleteDialog.key)
+            )
+            toast({
+              title: 'Setting deleted',
+              description: `System setting "${deleteDialog.key}" has been deleted.`,
+            })
+          } catch (error) {
+            console.error('Failed to delete system setting:', error)
+            toast({
+              title: 'Error deleting setting',
+              description:
+                error instanceof Error ? error.message : 'Unable to delete system setting.',
+              variant: 'destructive',
+            })
+          } finally {
+            setDeleteDialog({ open: false, key: null })
+          }
+        }}
+      />
     </div>
   )
 }

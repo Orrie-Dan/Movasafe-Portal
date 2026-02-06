@@ -33,14 +33,16 @@ import {
   CheckCircle2,
   XCircle,
 } from 'lucide-react'
-import { apiGetAllWallets } from '@/lib/api/wallets'
+import { apiGetAllWallets, apiFreezWallet, apiUnfreezeWallet } from '@/lib/api/wallets'
 import { apiGetAllTransactions } from '@/lib/api/transactions'
 import { apiGetAuditLogs } from '@/lib/api/audit'
 import { apiGetEscrows } from '@/lib/api/escrows'
+import { apiGetUsers } from '@/lib/api/users'
 import type { Wallet as ApiWallet } from '@/lib/types/wallets'
 import type { Transaction } from '@/lib/api/transactions'
 import type { AuditLog } from '@/lib/types/audit'
 import type { EscrowTransaction } from '@/lib/types/escrows'
+import type { User } from '@/lib/types/user'
 import { format, subDays, subHours, parseISO } from 'date-fns'
 
 // ============================================================================
@@ -53,6 +55,7 @@ type TransactionStatus = 'pending' | 'completed' | 'failed' | 'cancelled'
 
 interface WalletData {
   id: string
+  walletNumber: string
   userId: string
   userName: string
   currency: string
@@ -60,6 +63,7 @@ interface WalletData {
   reservedBalance: number
   totalBalance: number
   status: WalletStatus
+  restrictionTier: string
   lastActivity: string
   createdAt: string
 }
@@ -113,9 +117,11 @@ const generateMockWallets = (): WalletData[] => {
     const availableBalance = totalBalance - reservedBalance
     const createdDate = subDays(new Date(), Math.floor(Math.random() * 180))
     const lastActivity = subHours(new Date(), Math.floor(Math.random() * 48))
+    const walletId = `wallet_${String(i + 1).padStart(3, '0')}`
 
     return {
-      id: `wallet_${String(i + 1).padStart(3, '0')}`,
+      id: walletId,
+      walletNumber: walletId,
       userId: `user_${String(i + 1).padStart(4, '0')}`,
       userName: userNames[i % userNames.length],
       currency,
@@ -197,6 +203,7 @@ const generateMockActivityLog = (): ActivityLog[] => {
 export default function WalletsPage() {
   const [loading, setLoading] = useState(true)
   const [wallets, setWallets] = useState<WalletData[]>([])
+  const [users, setUsers] = useState<Map<string, User>>(new Map())
   const [selectedWallet, setSelectedWallet] = useState<WalletData | null>(null)
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([])
   const [recentApiTransactions, setRecentApiTransactions] = useState<WalletTransaction[]>([])
@@ -216,11 +223,31 @@ export default function WalletsPage() {
     onConfirm: () => {},
   })
 
+  // Freeze wallet dialog state
+  const [freezeDialog, setFreezeDialog] = useState<{
+    open: boolean
+    walletId: string | null
+    reason: string
+    durationHours: number
+    isLoading: boolean
+    message: string
+    messageType: 'success' | 'error' | null
+  }>({
+    open: false,
+    walletId: null,
+    reason: '',
+    durationHours: 0,
+    isLoading: false,
+    message: '',
+    messageType: null,
+  })
+
   // Filters and search
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [currencyFilter, setCurrencyFilter] = useState<string>('all')
   const [balanceRangeFilter, setBalanceRangeFilter] = useState<string>('all')
+  const [restrictionTierFilter, setRestrictionTierFilter] = useState<string>('all')
 
   // Helper to normalize date strings from API (e.g. '2026-01-07 13:32:50')
   const normalizeDate = (value: string): string => {
@@ -245,6 +272,7 @@ export default function WalletsPage() {
 
     return {
       id: wallet.id,
+      walletNumber: wallet.id,
       userId: wallet.userId,
       userName: wallet.userId, // API does not include a separate user name
       currency: 'RWF',
@@ -252,6 +280,7 @@ export default function WalletsPage() {
       reservedBalance,
       totalBalance,
       status,
+      restrictionTier: (wallet as any).restrictionTier || 'NONE',
       lastActivity: normalizeDate(wallet.updatedAt),
       createdAt: normalizeDate(wallet.createdAt),
     }
@@ -343,6 +372,25 @@ export default function WalletsPage() {
     loadData()
   }, [])
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await apiGetUsers({ limit: 1000 })
+        const userMap = new Map<string, User>()
+        if (response.data && Array.isArray(response.data)) {
+          response.data.forEach((user: User) => {
+            userMap.set(user.id, user)
+          })
+        }
+        setUsers(userMap)
+      } catch (err) {
+        console.error('Failed to load users:', err)
+      }
+    }
+
+    fetchUsers()
+  }, [])
+
   // Calculate metrics
   const metrics = useMemo(() => {
     const totalWallets = wallets.length
@@ -402,6 +450,11 @@ export default function WalletsPage() {
         return false
       }
 
+      // Restriction tier filter
+      if (restrictionTierFilter !== 'all' && wallet.restrictionTier !== restrictionTierFilter) {
+        return false
+      }
+
       // Balance range filter
       if (balanceRangeFilter !== 'all') {
         const total = wallet.totalBalance
@@ -412,7 +465,7 @@ export default function WalletsPage() {
 
       return true
     })
-  }, [wallets, searchQuery, statusFilter, currencyFilter, balanceRangeFilter])
+  }, [wallets, searchQuery, statusFilter, currencyFilter, balanceRangeFilter, restrictionTierFilter])
 
   // Get recent transactions (from API)
   const recentTransactions = useMemo(() => {
@@ -429,41 +482,81 @@ export default function WalletsPage() {
     setWalletTransactions(walletTxns.length > 0 ? walletTxns : [])
   }
 
-  // Handle freeze wallet
+  // Handle freeze wallet - open dialog to collect reason and duration
   const handleFreezeWallet = (wallet: WalletData) => {
-    setConfirmDialog({
+    setFreezeDialog({
       open: true,
-      title: 'Freeze Wallet',
-      description: `Are you sure you want to freeze wallet ${wallet.id}? This will prevent all transactions.`,
-      variant: 'destructive',
-      onConfirm: () => {
-        setWallets((prev) =>
-          prev.map((w) => (w.id === wallet.id ? { ...w, status: 'frozen' as WalletStatus } : w))
-        )
-        setActivityLog((prev) => [
-          {
-            id: `log_${Date.now()}`,
-            action: 'Wallet frozen',
-            walletId: wallet.id,
-            userId: wallet.userId,
-            details: `Wallet ${wallet.id} frozen by admin`,
-            timestamp: new Date().toISOString(),
-            performedBy: 'current_admin',
-          },
-          ...prev,
-        ])
-        toast({
-          title: 'Success',
-          description: `Wallet ${wallet.id} has been frozen`,
-        })
-        setConfirmDialog({ ...confirmDialog, open: false })
-        if (selectedWallet?.id === wallet.id) {
-          setSelectedWallet({ ...wallet, status: 'frozen' })
-        }
-      },
+      walletId: wallet.id,
+      reason: '',
+      durationHours: 0,
     })
   }
 
+  // Handle confirm freeze with reason and duration
+  const handleConfirmFreeze = async () => {
+    if (!freezeDialog.walletId) return
+    
+    if (!freezeDialog.reason.trim()) {
+      setFreezeDialog({
+        ...freezeDialog,
+        message: 'Please provide a reason for freezing the wallet',
+        messageType: 'error',
+      })
+      return
+    }
+
+    const wallet = wallets.find((w) => w.id === freezeDialog.walletId)
+    if (!wallet) return
+
+    setFreezeDialog({ ...freezeDialog, isLoading: true, message: '', messageType: null })
+
+    try {
+      await apiFreezWallet(wallet.id, freezeDialog.reason, freezeDialog.durationHours)
+      setWallets((prev) =>
+        prev.map((w) => (w.id === wallet.id ? { ...w, status: 'frozen' as WalletStatus } : w))
+      )
+      setActivityLog((prev) => [
+        {
+          id: `log_${Date.now()}`,
+          action: 'Wallet frozen',
+          walletId: wallet.id,
+          userId: wallet.userId,
+          details: `Wallet ${wallet.id} frozen - Reason: ${freezeDialog.reason}`,
+          timestamp: new Date().toISOString(),
+          performedBy: 'current_admin',
+        },
+        ...prev,
+      ])
+      
+      setFreezeDialog({
+        open: true,
+        walletId: null,
+        reason: '',
+        durationHours: 0,
+        isLoading: false,
+        message: `Wallet ${wallet.id} has been successfully frozen`,
+        messageType: 'success',
+      })
+      
+      if (selectedWallet?.id === wallet.id) {
+        setSelectedWallet({ ...wallet, status: 'frozen' })
+      }
+
+      // Auto-close after 2 seconds
+      setTimeout(() => {
+        setFreezeDialog({ open: false, walletId: null, reason: '', durationHours: 0, isLoading: false, message: '', messageType: null })
+      }, 2000)
+    } catch (error) {
+      setFreezeDialog({
+        ...freezeDialog,
+        isLoading: false,
+        message: error instanceof Error ? error.message : 'Failed to freeze wallet',
+        messageType: 'error',
+      })
+    }
+  }
+
+  // Handle unfreeze wallet
   // Handle unfreeze wallet
   const handleUnfreezeWallet = (wallet: WalletData) => {
     setConfirmDialog({
@@ -471,29 +564,38 @@ export default function WalletsPage() {
       title: 'Unfreeze Wallet',
       description: `Are you sure you want to unfreeze wallet ${wallet.id}?`,
       variant: 'default',
-      onConfirm: () => {
-        setWallets((prev) =>
-          prev.map((w) => (w.id === wallet.id ? { ...w, status: 'active' as WalletStatus } : w))
-        )
-        setActivityLog((prev) => [
-          {
-            id: `log_${Date.now()}`,
-            action: 'Wallet unfrozen',
-            walletId: wallet.id,
-            userId: wallet.userId,
-            details: `Wallet ${wallet.id} unfrozen by admin`,
-            timestamp: new Date().toISOString(),
-            performedBy: 'current_admin',
-          },
-          ...prev,
-        ])
-        toast({
-          title: 'Success',
-          description: `Wallet ${wallet.id} has been unfrozen`,
-        })
-        setConfirmDialog({ ...confirmDialog, open: false })
-        if (selectedWallet?.id === wallet.id) {
-          setSelectedWallet({ ...wallet, status: 'active' })
+      onConfirm: async () => {
+        try {
+          await apiUnfreezeWallet(wallet.id, 'Unfrozen by admin')
+          setWallets((prev) =>
+            prev.map((w) => (w.id === wallet.id ? { ...w, status: 'active' as WalletStatus } : w))
+          )
+          setActivityLog((prev) => [
+            {
+              id: `log_${Date.now()}`,
+              action: 'Wallet unfrozen',
+              walletId: wallet.id,
+              userId: wallet.userId,
+              details: `Wallet ${wallet.id} unfrozen by admin`,
+              timestamp: new Date().toISOString(),
+              performedBy: 'current_admin',
+            },
+            ...prev,
+          ])
+          toast({
+            title: 'Success',
+            description: `Wallet ${wallet.id} has been unfrozen`,
+          })
+          setConfirmDialog({ ...confirmDialog, open: false })
+          if (selectedWallet?.id === wallet.id) {
+            setSelectedWallet({ ...wallet, status: 'active' })
+          }
+        } catch (error) {
+          toast({
+            title: 'Error',
+            description: error instanceof Error ? error.message : 'Failed to unfreeze wallet',
+            variant: 'destructive',
+          })
         }
       },
     })
@@ -542,22 +644,46 @@ export default function WalletsPage() {
     })} ${currency}`
   }
 
+  // Get user names from userId
+  const getUserNames = (userId: string) => {
+    const user = users.get(userId)
+    if (!user) {
+      return { firstName: '-', lastName: '-' }
+    }
+    
+    const fullName = user.fullName || ''
+    const parts = fullName.split(' ')
+    const firstName = parts[0] || '-'
+    const lastName = parts.slice(1).join(' ') || '-'
+    
+    return { firstName, lastName }
+  }
+
   // Table columns
   const walletColumns: Column<WalletData>[] = [
+    {
+      key: 'firstName',
+      header: 'First Name',
+      accessor: (wallet) => (
+        <span className="text-sm font-medium text-foreground">
+          {getUserNames(wallet.userId).firstName}
+        </span>
+      ),
+    },
+    {
+      key: 'lastName',
+      header: 'Last Name',
+      accessor: (wallet) => (
+        <span className="text-sm font-medium text-foreground">
+          {getUserNames(wallet.userId).lastName}
+        </span>
+      ),
+    },
     {
       key: 'id',
       header: 'Wallet ID',
       accessor: (wallet) => (
-        <span className="font-mono text-sm text-foreground">{wallet.id}</span>
-      ),
-    },
-    {
-      key: 'userName',
-      header: 'User ID',
-      accessor: (wallet) => (
-        <div>
-          <div className="font-mono text-sm text-foreground">{wallet.userId}</div>
-        </div>
+        <span className="font-mono text-sm text-foreground">{wallet.walletNumber}</span>
       ),
     },
     {
@@ -609,6 +735,24 @@ export default function WalletsPage() {
           <Badge className={statusColors[wallet.status]}>
             {wallet.status === 'frozen' && <Lock className="h-3 w-3 mr-1" />}
             {wallet.status.charAt(0).toUpperCase() + wallet.status.slice(1)}
+          </Badge>
+        )
+      },
+    },
+    {
+      key: 'restrictionTier',
+      header: 'Restriction Tier',
+      accessor: (wallet) => {
+        const tierColors = {
+          'NONE': 'bg-green-500/20 text-green-400 border-green-500/30',
+          'FROZEN': 'bg-red-500/20 text-red-400 border-red-500/30',
+          'SUSPENDED': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+          'LIMITED': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+        }
+        const tierColor = tierColors[wallet.restrictionTier as keyof typeof tierColors] || tierColors['NONE']
+        return (
+          <Badge className={tierColor}>
+            {wallet.restrictionTier || 'NONE'}
           </Badge>
         )
       },
@@ -684,80 +828,7 @@ export default function WalletsPage() {
         </p>
       </div>
 
-      {/* Wallet Overview Metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Wallets</p>
-                <div className="text-2xl font-bold text-foreground mt-1">
-                  {loading ? <Skeleton className="h-8 w-16" /> : metrics.totalWallets}
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <Wallet className="h-6 w-6 text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Available</p>
-                <div className="text-2xl font-bold text-green-400 mt-1">
-                  {loading ? (
-                    <Skeleton className="h-8 w-20" />
-                  ) : (
-                    formatCurrency(metrics.totalAvailable)
-                  )}
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Reserved</p>
-                <div className="text-2xl font-bold text-yellow-400 mt-1">
-                  {loading ? (
-                    <Skeleton className="h-8 w-20" />
-                  ) : (
-                    formatCurrency(metrics.totalReserved)
-                  )}
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                <CreditCard className="h-6 w-6 text-yellow-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Frozen Wallets</p>
-                <div className="text-2xl font-bold text-red-400 mt-1">
-                  {loading ? <Skeleton className="h-8 w-16" /> : metrics.frozenWallets}
-                </div>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center">
-                <Lock className="h-6 w-6 text-red-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Wallet Overview Metrics moved to Analytics page */}
 
       {/* Reserved Funds / Escrow Section */}
       <div className="space-y-4">
@@ -820,6 +891,90 @@ export default function WalletsPage() {
             Complete wallet registry with advanced filtering, sorting, and search capabilities for comprehensive wallet monitoring
           </p>
         </div>
+
+        {/* Wallet Filters */}
+        <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+          <CardContent className="p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-blue-400" />
+                <span className="text-sm font-medium text-foreground">Wallet Filters</span>
+              </div>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Search (ID / User / Wallet)</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search wallets..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Status</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="frozen">Frozen</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Currency</Label>
+                <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="RWF">RWF</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Restriction Tier</Label>
+                <Select value={restrictionTierFilter} onValueChange={setRestrictionTierFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Restriction Tier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Tiers</SelectItem>
+                    <SelectItem value="NONE">None</SelectItem>
+                    <SelectItem value="LIMITED">Limited</SelectItem>
+                    <SelectItem value="FROZEN">Frozen</SelectItem>
+                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Balance Range</Label>
+                <Select value={balanceRangeFilter} onValueChange={setBalanceRangeFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Balance" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Ranges</SelectItem>
+                    <SelectItem value="low">Low (&lt;100K)</SelectItem>
+                    <SelectItem value="medium">Medium (100K-1M)</SelectItem>
+                    <SelectItem value="high">High (&gt;1M)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -862,6 +1017,18 @@ export default function WalletsPage() {
                   <SelectItem value="RWF">RWF</SelectItem>
                   <SelectItem value="USD">USD</SelectItem>
                   <SelectItem value="EUR">EUR</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={restrictionTierFilter} onValueChange={setRestrictionTierFilter}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Restriction Tier" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tiers</SelectItem>
+                  <SelectItem value="NONE">None</SelectItem>
+                  <SelectItem value="LIMITED">Limited</SelectItem>
+                  <SelectItem value="FROZEN">Frozen</SelectItem>
+                  <SelectItem value="SUSPENDED">Suspended</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={balanceRangeFilter} onValueChange={setBalanceRangeFilter}>
@@ -1055,11 +1222,18 @@ export default function WalletsPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">User Name</Label>
-                  <div className="text-foreground font-medium">{selectedWallet.userName}</div>
+                  <div className="text-foreground font-medium">
+                    {getUserNames(selectedWallet.userId).firstName}{' '}
+                    {getUserNames(selectedWallet.userId).lastName}
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground">User ID</Label>
-                  <div className="text-foreground font-mono text-sm">{selectedWallet.userId}</div>
+                  <Label className="text-muted-foreground">Latest Activity</Label>
+                  <div className="text-foreground font-mono text-sm">
+                    {selectedWallet.lastActivity
+                      ? format(parseISO(selectedWallet.lastActivity), 'MMM d, HH:mm')
+                      : 'None'}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Currency</Label>
@@ -1116,49 +1290,53 @@ export default function WalletsPage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {walletTransactions.map((txn) => {
-                    const isPositive = txn.type === 'deposit' || txn.type === 'escrow_release'
-                    return (
-                      <div
-                        key={txn.id}
-                        className="flex items-center justify-between p-3 border rounded-lg border-slate-200 dark:border-slate-800"
-                      >
-                        <div className="flex items-center gap-3">
-                          {isPositive ? (
-                            <ArrowDownRight className="h-4 w-4 text-green-400" />
-                          ) : (
-                            <ArrowUpRight className="h-4 w-4 text-red-400" />
-                          )}
-                          <div>
-                            <div className="font-medium text-foreground text-sm">{txn.description}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {txn.type.replace('_', ' ')} • {format(parseISO(txn.timestamp), 'MMM d, HH:mm')}
+                  {walletTransactions.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No recent transactions</div>
+                  ) : (
+                    walletTransactions.map((txn) => {
+                      const isPositive = txn.type === 'deposit' || txn.type === 'escrow_release'
+                      return (
+                        <div
+                          key={txn.id}
+                          className="flex items-center justify-between p-3 border rounded-lg border-slate-200 dark:border-slate-800"
+                        >
+                          <div className="flex items-center gap-3">
+                            {isPositive ? (
+                              <ArrowDownRight className="h-4 w-4 text-green-400" />
+                            ) : (
+                              <ArrowUpRight className="h-4 w-4 text-red-400" />
+                            )}
+                            <div>
+                              <div className="font-medium text-foreground text-sm">{txn.description}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {txn.type.replace('_', ' ')} • {format(parseISO(txn.timestamp), 'MMM d, HH:mm')}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div
-                            className={`font-semibold text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}
-                          >
-                            {isPositive ? '+' : '-'}
-                            {formatCurrency(txn.amount, selectedWallet.currency)}
+                          <div className="text-right">
+                            <div
+                              className={`font-semibold text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}
+                            >
+                              {isPositive ? '+' : '-'}
+                              {formatCurrency(txn.amount, selectedWallet.currency)}
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${
+                                txn.status === 'completed'
+                                  ? 'text-green-400'
+                                  : txn.status === 'pending'
+                                  ? 'text-yellow-400'
+                                  : 'text-red-400'
+                              }`}
+                            >
+                              {txn.status}
+                            </Badge>
                           </div>
-                          <Badge
-                            variant="outline"
-                            className={`text-xs ${
-                              txn.status === 'completed'
-                                ? 'text-green-400'
-                                : txn.status === 'pending'
-                                ? 'text-yellow-400'
-                                : 'text-red-400'
-                            }`}
-                          >
-                            {txn.status}
-                          </Badge>
                         </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })
+                  )}
                 </div>
               </div>
 
@@ -1205,6 +1383,122 @@ export default function WalletsPage() {
         variant={confirmDialog.variant}
         onConfirm={confirmDialog.onConfirm}
       />
+
+      {/* Freeze Wallet Dialog */}
+      <Dialog open={freezeDialog.open} onOpenChange={(open) => !freezeDialog.isLoading && setFreezeDialog({ ...freezeDialog, open })}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Freeze Wallet</DialogTitle>
+            <DialogDescription>
+              Provide a reason and duration for freezing wallet {freezeDialog.walletId?.slice(0, 8)}...
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Success/Error Message */}
+          {freezeDialog.messageType && (
+            <div className={`p-4 rounded-lg border ${
+              freezeDialog.messageType === 'success'
+                ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                : 'bg-red-500/10 border-red-500/30 text-red-400'
+            }`}>
+              <div className="flex items-center gap-2">
+                {freezeDialog.messageType === 'success' ? (
+                  <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                )}
+                <span className="text-sm font-medium">{freezeDialog.message}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Form Fields - only show when not showing success message */}
+          {!freezeDialog.messageType && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="freeze-reason" className="text-sm font-medium">
+                  Reason for Freezing
+                </Label>
+                <Textarea
+                  id="freeze-reason"
+                  placeholder="e.g., SUSPICIOUS ACTIVITIES"
+                  value={freezeDialog.reason}
+                  onChange={(e) => setFreezeDialog({ ...freezeDialog, reason: e.target.value })}
+                  disabled={freezeDialog.isLoading}
+                  className="mt-2 min-h-[100px] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-foreground disabled:opacity-50"
+                />
+              </div>
+              <div>
+                <Label htmlFor="freeze-duration" className="text-sm font-medium">
+                  Duration (Hours)
+                </Label>
+                <Input
+                  id="freeze-duration"
+                  type="number"
+                  min="0"
+                  placeholder="0 (permanent)"
+                  value={freezeDialog.durationHours}
+                  onChange={(e) => setFreezeDialog({ ...freezeDialog, durationHours: parseInt(e.target.value) || 0 })}
+                  disabled={freezeDialog.isLoading}
+                  className="mt-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-foreground disabled:opacity-50"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Enter 0 for permanent freeze</p>
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          {!freezeDialog.messageType && (
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setFreezeDialog({ open: false, walletId: null, reason: '', durationHours: 0, isLoading: false, message: '', messageType: null })}
+                disabled={freezeDialog.isLoading}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmFreeze} disabled={freezeDialog.isLoading}>
+                {freezeDialog.isLoading ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-4 w-4 mr-2" />
+                    Freeze Wallet
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          )}
+
+          {/* Success Message Action */}
+          {freezeDialog.messageType === 'success' && (
+            <DialogFooter>
+              <Button
+                onClick={() => setFreezeDialog({ open: false, walletId: null, reason: '', durationHours: 0, isLoading: false, message: '', messageType: null })}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Done
+              </Button>
+            </DialogFooter>
+          )}
+
+          {/* Error Message Action */}
+          {freezeDialog.messageType === 'error' && (
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setFreezeDialog({ ...freezeDialog, message: '', messageType: null })}
+              >
+                Try Again
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

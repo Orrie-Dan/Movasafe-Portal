@@ -61,17 +61,21 @@ export function TransactionDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200/60 bg-white shadow-xl dark:border-neutral-800/60 dark:bg-black">
+        <DialogHeader className="border-b border-slate-200/70 pb-4 mb-4 dark:border-neutral-800/70">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-lg">Transaction Details</DialogTitle>
-              <DialogDescription className="mt-1 flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-xs truncate">{transaction.id}</span>
+              <DialogTitle className="text-lg font-semibold tracking-tight">
+                Transaction Details
+              </DialogTitle>
+              <DialogDescription className="mt-2 flex items-center gap-2 flex-wrap text-xs">
+                <span className="font-mono truncate px-2 py-1 rounded-md bg-slate-100 text-slate-700 dark:bg-neutral-900 dark:text-neutral-200">
+                  {transaction.id}
+                </span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0"
+                  className="h-7 w-7 p-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
                   onClick={() => copyToClipboard(transaction.id)}
                   title="Copy ID"
                 >
@@ -79,73 +83,121 @@ export function TransactionDetailsDialog({
                 </Button>
               </DialogDescription>
             </div>
-            <Badge className={getTransactionStatusBadge(transaction.status)}>
+            <Badge className={getTransactionStatusBadge(transaction.status) + ' text-xs px-3 py-1 rounded-full shadow-sm'}>
               {transaction.status}
             </Badge>
           </div>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Basic Info */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold">Transaction</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <Label className="text-xs text-muted-foreground">Type</Label>
-                <div className="flex items-center gap-1 mt-1">
-                  {getTransactionTypeIcon(transaction.transactionType)}
-                  <span className="font-medium">{transaction.transactionType}</span>
+          <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm dark:border-neutral-800/70 dark:bg-black">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-neutral-400 mb-3">
+              Transaction
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  Type
+                </Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-100">
+                    {getTransactionTypeIcon(transaction.transactionType)}
+                  </span>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {transaction.transactionType}
+                  </span>
                 </div>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Amount</Label>
-                <div className="font-semibold mt-1">{formatCurrency(transaction.amount, transaction.currency || 'RWF')}</div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  Amount
+                </Label>
+                <div className="mt-1 text-base font-semibold text-slate-900 dark:text-white">
+                  {formatCurrency(transaction.amount, transaction.currency || 'RWF')}
+                </div>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Reference</Label>
-                <div className="font-mono text-xs mt-1">{transaction.internalReference}</div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  Reference
+                </Label>
+                <div className="mt-1 inline-flex items-center rounded-md bg-slate-100 px-2 py-1 font-mono text-[11px] text-slate-700 dark:bg-neutral-900 dark:text-neutral-200">
+                  {transaction.internalReference}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Description */}
           {transaction.description && (
-            <div className="space-y-2 border-t pt-3">
-              <Label className="text-xs text-muted-foreground">Description</Label>
-              <div className="text-sm bg-slate-100 dark:bg-slate-900 p-2 rounded">{transaction.description}</div>
+            <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm dark:border-neutral-800/70 dark:bg-black">
+              <Label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                Description
+              </Label>
+              <div className="mt-2 text-sm leading-relaxed rounded-lg bg-slate-50 p-3 text-slate-800 dark:bg-neutral-900 dark:text-neutral-100">
+                {transaction.description}
+              </div>
             </div>
           )}
 
           {/* Users */}
-          <div className="space-y-2 border-t pt-3">
-            <h3 className="text-sm font-semibold">Users</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <Label className="text-xs text-muted-foreground">From User ID</Label>
-                <div className="font-mono text-xs mt-1 truncate">{transaction.userId}</div>
+          <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm dark:border-neutral-800/70 dark:bg-black">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-neutral-400 mb-3">
+              Users
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  From User ID
+                </Label>
+                <div className="mt-1 inline-flex items-center rounded-md bg-slate-100 px-2 py-1 font-mono text-[11px] text-slate-700 dark:bg-neutral-900 dark:text-neutral-200 truncate">
+                  {transaction.userId}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Accounts */}
           {(transaction.fromDetails || transaction.toDetails) && (
-            <div className="space-y-2 border-t pt-3">
-              <h3 className="text-sm font-semibold">Accounts</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm dark:border-neutral-800/70 dark:bg-black">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-neutral-400 mb-3">
+                Accounts
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 {transaction.fromDetails && (
-                  <div className="bg-slate-100 dark:bg-slate-900 p-2 rounded">
-                    <p className="text-xs font-semibold mb-1">From</p>
-                    {transaction.fromDetails.accountName && <p className="text-xs">{transaction.fromDetails.accountName}</p>}
-                    <p className="text-xs text-muted-foreground font-mono truncate">{transaction.fromDetails.accountNumber}</p>
-                    <p className="text-xs text-muted-foreground">{transaction.fromDetails.accountSource}</p>
+                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-neutral-900">
+                    <p className="text-[11px] font-semibold mb-1 uppercase tracking-wide text-slate-500 dark:text-neutral-400">
+                      From
+                    </p>
+                    {transaction.fromDetails.accountName && (
+                      <p className="text-xs text-slate-900 dark:text-white">
+                        {transaction.fromDetails.accountName}
+                      </p>
+                    )}
+                    <p className="mt-1 text-[11px] font-mono text-slate-600 dark:text-neutral-300 truncate">
+                      {transaction.fromDetails.accountNumber}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-neutral-400">
+                      {transaction.fromDetails.accountSource}
+                    </p>
                   </div>
                 )}
                 {transaction.toDetails && (
-                  <div className="bg-slate-100 dark:bg-slate-900 p-2 rounded">
-                    <p className="text-xs font-semibold mb-1">To</p>
-                    {transaction.toDetails.accountName && <p className="text-xs">{transaction.toDetails.accountName}</p>}
-                    <p className="text-xs text-muted-foreground font-mono truncate">{transaction.toDetails.accountNumber}</p>
-                    <p className="text-xs text-muted-foreground">{transaction.toDetails.accountSource}</p>
+                  <div className="rounded-lg bg-slate-50 p-3 dark:bg-neutral-900">
+                    <p className="text-[11px] font-semibold mb-1 uppercase tracking-wide text-slate-500 dark:text-neutral-400">
+                      To
+                    </p>
+                    {transaction.toDetails.accountName && (
+                      <p className="text-xs text-slate-900 dark:text-white">
+                        {transaction.toDetails.accountName}
+                      </p>
+                    )}
+                    <p className="mt-1 text-[11px] font-mono text-slate-600 dark:text-neutral-300 truncate">
+                      {transaction.toDetails.accountNumber}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-neutral-400">
+                      {transaction.toDetails.accountSource}
+                    </p>
                   </div>
                 )}
               </div>
@@ -153,47 +205,69 @@ export function TransactionDetailsDialog({
           )}
 
           {/* Status & Dates */}
-          <div className="space-y-2 border-t pt-3">
-            <h3 className="text-sm font-semibold">Status</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <Label className="text-xs text-muted-foreground">Created</Label>
-                <div className="text-xs mt-1">{format(parseISO(transaction.createdAt), 'PPp')}</div>
+          <div className="rounded-xl border border-slate-200/70 bg-white p-4 shadow-sm dark:border-neutral-800/70 dark:bg-black">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-neutral-400 mb-3">
+              Status
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  Created
+                </Label>
+                <div className="mt-1 text-xs text-slate-800 dark:text-neutral-100">
+                  {format(parseISO(transaction.createdAt), 'PPp')}
+                </div>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Updated</Label>
-                <div className="text-xs mt-1">{format(parseISO(transaction.updatedAt), 'PPp')}</div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  Updated
+                </Label>
+                <div className="mt-1 text-xs text-slate-800 dark:text-neutral-100">
+                  {format(parseISO(transaction.updatedAt), 'PPp')}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Failure Information */}
           {transaction.status === TransactionStatus.FAILED && failureInfo && (
-            <div className="space-y-2 border-t pt-3">
-              <h3 className="text-sm font-semibold text-red-600">Failure Information</h3>
-              <div className="space-y-1 text-sm">
+            <div className="rounded-xl border border-red-200/70 bg-red-50/80 p-4 shadow-sm dark:border-red-900/70 dark:bg-red-950/40">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-300 mb-3">
+                Failure Information
+              </h3>
+              <div className="space-y-2 text-sm">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Category</Label>
-                  <div className="mt-1">{failureInfo.category}</div>
+                  <Label className="text-[11px] text-red-700/80 dark:text-red-200/90 uppercase tracking-wide">
+                    Category
+                  </Label>
+                  <div className="mt-1 text-slate-900 dark:text-slate-50">
+                    {failureInfo.category}
+                  </div>
                 </div>
                 {transaction.description && (
                   <div>
-                    <Label className="text-xs text-muted-foreground">Error Description</Label>
-                    <div className="mt-1 bg-slate-100 dark:bg-slate-900 p-2 rounded text-xs">{transaction.description}</div>
+                    <Label className="text-[11px] text-red-700/80 dark:text-red-200/90 uppercase tracking-wide">
+                      Error Description
+                    </Label>
+                    <div className="mt-1 rounded-lg bg-red-100/80 p-3 text-xs text-red-900 dark:bg-red-950/60 dark:text-red-100">
+                      {transaction.description}
+                    </div>
                   </div>
                 )}
                 <div>
-                  <Label className="text-xs text-muted-foreground">Can Retry</Label>
-                  <div className="mt-1 flex items-center gap-1">
+                  <Label className="text-[11px] text-red-700/80 dark:text-red-200/90 uppercase tracking-wide">
+                    Can Retry
+                  </Label>
+                  <div className="mt-1 flex items-center gap-1.5">
                     {failureInfo.retryEligible ? (
                       <>
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        <span>Yes</span>
+                        <span className="text-sm text-slate-900 dark:text-slate-50">Yes</span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-4 w-4 text-red-500" />
-                        <span>No</span>
+                        <span className="text-sm text-slate-900 dark:text-slate-50">No</span>
                       </>
                     )}
                   </div>
@@ -203,7 +277,7 @@ export function TransactionDetailsDialog({
           )}
         </div>
 
-        <DialogFooter className="mt-6 border-t pt-4 flex flex-col gap-3">
+        <DialogFooter className="mt-6 border-t border-slate-200/70 pt-4 flex flex-col gap-3 dark:border-slate-800/70">
           <div className="flex items-center gap-2">
             {transaction.status === TransactionStatus.FAILED && (
               <Button
