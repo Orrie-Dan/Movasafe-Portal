@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ViewDetailsDialog } from '@/components/admin/ViewDetailsDialog'
 import { EmptyState } from '@/components/ui/empty-state'
 import { RefreshCw, Eye, Shield, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
@@ -19,13 +19,13 @@ import { toast } from '@/hooks/use-toast'
 function getEscrowStatusBadge(status: EscrowStatus | string) {
   switch (status) {
     case EscrowStatus.ACTIVE:
-      return 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+      return 'bg-blue-100 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20'
     case EscrowStatus.RELEASED:
-      return 'bg-green-500/10 text-green-400 border-green-500/20'
+      return 'bg-green-100 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20'
     case EscrowStatus.REFUNDED:
-      return 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+      return 'bg-orange-100 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/20'
     default:
-      return 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+      return 'bg-slate-100 dark:bg-slate-500/10 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-500/20'
   }
 }
 
@@ -148,11 +148,11 @@ export default function EscrowsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 bg-slate-900/50">
+    <div className="p-6 lg:p-8 space-y-6 bg-slate-50 dark:bg-slate-900/50">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Escrow Payments</h1>
-              <p className="text-slate-400 mt-1">Manage escrow transactions and approvals</p>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Escrow Payments</h1>
+              <p className="text-slate-600 dark:text-slate-400 mt-1">Manage escrow transactions and approvals</p>
             </div>
             <Button onClick={fetchEscrows} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -164,7 +164,7 @@ export default function EscrowsPage() {
             <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
               <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                <CardTitle size="xs" className="z-10 relative">Total Escrows</CardTitle>
+                <CardTitle size="xs" className="z-10 relative text-slate-900 dark:text-white">Total Escrows</CardTitle>
               </div>
               <CardContent>
                 <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</div>
@@ -173,10 +173,10 @@ export default function EscrowsPage() {
             <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
               <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                <CardTitle size="xs" className="z-10 relative">Active</CardTitle>
+                <CardTitle size="xs" className="z-10 relative text-slate-900 dark:text-white">Active</CardTitle>
               </div>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-400">{stats.active}</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.active}</div>
               </CardContent>
             </Card>
             <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
@@ -191,10 +191,10 @@ export default function EscrowsPage() {
             <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
               <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                <CardTitle size="xs" className="z-10 relative">Total Commission</CardTitle>
+                <CardTitle size="xs" className="z-10 relative text-slate-900 dark:text-white">Total Commission</CardTitle>
               </div>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-400">{formatCurrency(stats.totalCommission)}</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(stats.totalCommission)}</div>
               </CardContent>
             </Card>
           </div>
@@ -203,7 +203,7 @@ export default function EscrowsPage() {
             <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
               <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
               <div className="flex items-center justify-between relative z-10">
-                <CardTitle className="relative z-10">Filters</CardTitle>
+                <CardTitle className="relative z-10 text-slate-900 dark:text-white">Filters</CardTitle>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-48 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue placeholder="All Statuses" />
@@ -237,7 +237,7 @@ export default function EscrowsPage() {
             <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
               <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                <CardTitle className="relative z-10">Escrows ({escrows.length})</CardTitle>
+                <CardTitle className="relative z-10 text-slate-900 dark:text-white">Escrows ({escrows.length})</CardTitle>
               </div>
               <CardContent>
                 <Table>
@@ -255,11 +255,11 @@ export default function EscrowsPage() {
                   </TableHeader>
                   <TableBody>
                     {escrows.map((escrow) => (
-                      <TableRow key={escrow.id} className="border-slate-700 hover:bg-slate-700/50">
-                        <TableCell className="font-mono text-sm">{escrow.clientId.slice(0, 8)}...</TableCell>
-                        <TableCell className="font-mono text-sm">{escrow.vendorId.slice(0, 8)}...</TableCell>
-                        <TableCell className="font-medium">{formatCurrency(escrow.amount)}</TableCell>
-                        <TableCell className="text-blue-400">{formatCurrency(escrow.commissionAmount)}</TableCell>
+                      <TableRow key={escrow.id} className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50">
+                        <TableCell className="font-mono text-sm text-slate-900 dark:text-white">{escrow.clientId.slice(0, 8)}...</TableCell>
+                        <TableCell className="font-mono text-sm text-slate-900 dark:text-white">{escrow.vendorId.slice(0, 8)}...</TableCell>
+                        <TableCell className="font-medium text-slate-900 dark:text-white">{formatCurrency(escrow.amount)}</TableCell>
+                        <TableCell className="text-blue-600 dark:text-blue-400">{formatCurrency(escrow.commissionAmount)}</TableCell>
                         <TableCell>
                           <Badge className={getEscrowStatusBadge(escrow.status)}>
                             {escrow.status}
@@ -271,7 +271,7 @@ export default function EscrowsPage() {
                             {escrow.vendorApproved && <CheckCircle2 className="h-4 w-4 text-blue-400" />}
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-400 text-sm">
+                        <TableCell className="text-slate-600 dark:text-slate-400 text-sm">
                           {format(parseISO(escrow.createdAt), 'MMM d, yyyy')}
                         </TableCell>
                         <TableCell>
@@ -287,82 +287,57 @@ export default function EscrowsPage() {
             </Card>
           )}
 
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-2xl bg-slate-900 border-slate-800 text-white">
-          {selectedEscrow && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Escrow Details</DialogTitle>
-                <DialogDescription className="text-slate-400">
-                  Escrow ID: {selectedEscrow.id}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-slate-400">Client ID</label>
-                    <div className="text-sm font-mono mt-1">{selectedEscrow.clientId}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-400">Vendor ID</label>
-                    <div className="text-sm font-mono mt-1">{selectedEscrow.vendorId}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-400">Amount</label>
-                    <div className="text-lg font-bold mt-1">{formatCurrency(selectedEscrow.amount)}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-400">Commission</label>
-                    <div className="text-lg font-bold text-blue-400 mt-1">
-                      {formatCurrency(selectedEscrow.commissionAmount)} ({selectedEscrow.commissionPercentage}%)
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-400">Vendor Amount</label>
-                    <div className="text-lg font-bold mt-1">{formatCurrency(selectedEscrow.vendorAmount)}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-slate-400">Status</label>
-                    <div className="mt-1">
-                      <Badge className={getEscrowStatusBadge(selectedEscrow.status)}>
-                        {selectedEscrow.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-                {selectedEscrow.status === EscrowStatus.ACTIVE && (
-                  <div className="flex gap-2 pt-4 border-t border-slate-700">
-                    <Button
-                      onClick={() => handleRelease(selectedEscrow.id)}
-                      disabled={actionLoading === selectedEscrow.id}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {actionLoading === selectedEscrow.id ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                      )}
-                      Release Escrow
-                    </Button>
-                    <Button
-                      onClick={() => handleRefund(selectedEscrow.id)}
-                      disabled={actionLoading === selectedEscrow.id}
-                      variant="destructive"
-                    >
-                      {actionLoading === selectedEscrow.id ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <XCircle className="h-4 w-4 mr-2" />
-                      )}
-                      Refund Escrow
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedEscrow && (
+        <ViewDetailsDialog
+          open={isDetailOpen}
+          onOpenChange={setIsDetailOpen}
+          title="Escrow Details"
+          subtitle={selectedEscrow.id}
+          onCopySubtitle={() => {
+            navigator.clipboard.writeText(selectedEscrow.id)
+            toast({ title: 'Copied', description: 'Copied to clipboard' })
+          }}
+          badge={
+            <Badge className={getEscrowStatusBadge(selectedEscrow.status)}>
+              {selectedEscrow.status}
+            </Badge>
+          }
+          maxWidth="3xl"
+          sections={[
+            {
+              title: 'Escrow',
+              gridCols: 2,
+              fields: [
+                { label: 'Client ID', value: <span className="font-mono text-sm">{selectedEscrow.clientId}</span> },
+                { label: 'Vendor ID', value: <span className="font-mono text-sm">{selectedEscrow.vendorId}</span> },
+                { label: 'Amount', value: <span className="font-bold">{formatCurrency(selectedEscrow.amount)}</span> },
+                { label: 'Commission', value: <span className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(selectedEscrow.commissionAmount)} ({selectedEscrow.commissionPercentage}%)</span> },
+                { label: 'Vendor Amount', value: <span className="font-bold">{formatCurrency(selectedEscrow.vendorAmount)}</span> },
+                { label: 'Status', value: <Badge className={getEscrowStatusBadge(selectedEscrow.status)}>{selectedEscrow.status}</Badge> },
+              ],
+            },
+          ]}
+          actions={
+            selectedEscrow.status === EscrowStatus.ACTIVE
+              ? [
+                  {
+                    label: actionLoading === selectedEscrow.id ? 'Releasing...' : 'Release Escrow',
+                    onClick: () => handleRelease(selectedEscrow.id),
+                    icon: actionLoading === selectedEscrow.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />,
+                    disabled: actionLoading === selectedEscrow.id,
+                  },
+                  {
+                    label: actionLoading === selectedEscrow.id ? 'Refunding...' : 'Refund Escrow',
+                    onClick: () => handleRefund(selectedEscrow.id),
+                    variant: 'destructive',
+                    icon: actionLoading === selectedEscrow.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />,
+                    disabled: actionLoading === selectedEscrow.id,
+                  },
+                ]
+              : undefined
+          }
+        />
+      )}
     </div>
   )
 }

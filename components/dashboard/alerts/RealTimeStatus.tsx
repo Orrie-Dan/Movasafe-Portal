@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { RefreshCw, Clock, MapPin, Truck } from 'lucide-react'
 import { format } from 'date-fns'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 export interface Collection {
   id: string
@@ -46,7 +46,7 @@ export function RealTimeStatus({
   className,
   lastUpdated = new Date(),
 }: RealTimeStatusProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const visibleCollections = collections.slice(0, maxVisible)
 
   return (
@@ -117,7 +117,7 @@ export function RealTimeStatus({
                     if (onCollectionClick) {
                       onCollectionClick(collection)
                     } else {
-                      router.push(`/admin/waste-collections?id=${collection.id}`)
+                      navigate(`/admin/waste-collections?id=${collection.id}`)
                     }
                   }}
                 >
@@ -144,7 +144,7 @@ export function RealTimeStatus({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => router.push('/admin/waste-collections')}
+                  onClick={() => navigate('/admin/waste-collections')}
                   className="text-slate-400 hover:text-white"
                 >
                   View all {collections.length} active collections

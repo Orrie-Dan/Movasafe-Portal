@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ViewDetailsDialog } from '@/components/admin/ViewDetailsDialog'
 import { RefreshCw, Filter, Eye, RotateCcw, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { apiGetAllTransactions, Transaction, apiStandardReversal, apiForceReversal, apiGetDisputedTransactions, apiResolveDispute } from '@/lib/api/transactions'
 import { apiGetUsers } from '@/lib/api/users'
@@ -587,166 +588,116 @@ export default function TransactionDisputesPage() {
         </Dialog>
       )}
 
-      {/* Detail Dialog */}
       {detailDialogOpen && selectedTransaction && (
-        <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="border-b border-gray-700 pb-4">
-              <DialogTitle className="text-2xl">Transaction Details</DialogTitle>
-              <DialogDescription>Reference: {selectedTransaction?.internalReference}</DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-6 py-6">
-              {/* Status and Key Info */}
-              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                <div className="grid grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</p>
-                    <Badge className="mt-2" variant={
-                      selectedTransaction?.status === 'SUCCESSFUL'
-                        ? 'default'
-                        : selectedTransaction?.status === 'PENDING'
-                        ? 'secondary'
-                        : 'destructive'
-                    }>
-                      {selectedTransaction?.status}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Amount</p>
-                    <p className="text-2xl font-bold text-green-400 mt-2">{new Intl.NumberFormat('en-US').format(selectedTransaction?.amount || 0)} RWF</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</p>
-                    <p className="text-lg font-semibold mt-2">{selectedTransaction?.transactionType}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* User Information */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3 border-b border-gray-700 pb-2">User Information</h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase">Name</p>
-                    <p className="text-sm mt-1 font-medium">{selectedTransaction?.userName || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase">Phone Number</p>
-                    <p className="text-sm mt-1 font-medium">{selectedTransaction?.userPhoneNumber || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase">National ID</p>
-                    <p className="text-sm mt-1 font-mono">{selectedTransaction?.userNationalId || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase">Currency</p>
-                    <p className="text-sm mt-1">{selectedTransaction?.currency || 'RWF'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Transaction Details */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3 border-b border-gray-700 pb-2">Transaction Details</h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase">Reference</p>
-                    <p className="text-sm mt-1 font-mono text-blue-400 break-all">{selectedTransaction?.internalReference}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase">Description</p>
-                    <Badge variant="outline" className="mt-1">{selectedTransaction?.description}</Badge>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase">Created Date</p>
-                    <p className="text-sm mt-1">{format(new Date(selectedTransaction?.createdAt || 0), 'PPp')}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-semibold uppercase">Updated Date</p>
-                    <p className="text-sm mt-1">{format(new Date(selectedTransaction?.updatedAt || 0), 'PPp')}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* From Account */}
-              {selectedTransaction?.fromDetails && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3 border-b border-gray-700 pb-2">From Account</h3>
-                  <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700 grid grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-xs text-gray-400 font-semibold uppercase">Account Name</p>
-                      <p className="text-sm mt-1 font-medium">{selectedTransaction.fromDetails.accountName || '-'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 font-semibold uppercase">Account Source</p>
-                      <p className="text-sm mt-1 font-medium">{selectedTransaction.fromDetails.accountSource || '-'}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-xs text-gray-400 font-semibold uppercase">Account Number</p>
-                      <p className="text-sm mt-1 font-mono text-gray-300">{selectedTransaction.fromDetails.accountNumber || '-'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* To Account */}
-              {selectedTransaction?.toDetails && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-3 border-b border-gray-700 pb-2">To Account</h3>
-                  <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700 grid grid-cols-2 gap-6">
-                    <div>
-                      <p className="text-xs text-gray-400 font-semibold uppercase">Account Name</p>
-                      <p className="text-sm mt-1 font-medium">{selectedTransaction.toDetails.accountName || '-'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 font-semibold uppercase">Account Source</p>
-                      <p className="text-sm mt-1 font-medium">{selectedTransaction.toDetails.accountSource || '-'}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-xs text-gray-400 font-semibold uppercase">Account Number</p>
-                      <p className="text-sm mt-1 font-mono text-gray-300">{selectedTransaction.toDetails.accountNumber || '-'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-gray-700 pt-4 flex justify-end gap-2">
-              {(selectedTransaction?.status === 'SUCCESSFUL' || selectedTransaction?.status === 'DISPUTED') && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
+        <ViewDetailsDialog
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          title="Transaction Details"
+          subtitle={selectedTransaction.internalReference}
+          onCopySubtitle={() => {
+            navigator.clipboard.writeText(selectedTransaction.internalReference || '')
+            toast({ title: 'Copied', description: 'Reference copied to clipboard' })
+          }}
+          badge={
+            <Badge
+              variant={
+                selectedTransaction.status === 'SUCCESSFUL'
+                  ? 'default'
+                  : selectedTransaction.status === 'PENDING'
+                  ? 'secondary'
+                  : 'destructive'
+              }
+            >
+              {selectedTransaction.status}
+            </Badge>
+          }
+          maxWidth="3xl"
+          sections={[
+            {
+              title: 'Transaction',
+              gridCols: 3,
+              fields: [
+                { label: 'Status', value: <Badge variant={selectedTransaction.status === 'SUCCESSFUL' ? 'default' : selectedTransaction.status === 'PENDING' ? 'secondary' : 'destructive'}>{selectedTransaction.status}</Badge> },
+                { label: 'Amount', value: <span className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(selectedTransaction.amount || 0)} RWF</span> },
+                { label: 'Type', value: <span className="font-semibold">{selectedTransaction.transactionType}</span> },
+              ],
+            },
+            {
+              title: 'User Information',
+              gridCols: 2,
+              fields: [
+                { label: 'Name', value: selectedTransaction.userName || '-' },
+                { label: 'Phone Number', value: selectedTransaction.userPhoneNumber || '-' },
+                { label: 'National ID', value: <span className="font-mono text-sm">{selectedTransaction.userNationalId || '-'}</span> },
+                { label: 'Currency', value: selectedTransaction.currency || 'RWF' },
+              ],
+            },
+            {
+              title: 'Transaction Details',
+              gridCols: 2,
+              fields: [
+                { label: 'Reference', value: <span className="font-mono text-sm text-blue-600 dark:text-blue-400 break-all">{selectedTransaction.internalReference}</span> },
+                { label: 'Description', value: selectedTransaction.description ? <Badge variant="outline">{selectedTransaction.description}</Badge> : '-' },
+                { label: 'Created Date', value: format(new Date(selectedTransaction.createdAt || 0), 'PPp') },
+                { label: 'Updated Date', value: format(new Date(selectedTransaction.updatedAt || 0), 'PPp') },
+              ],
+            },
+            ...(selectedTransaction.fromDetails
+              ? [
+                  {
+                    title: 'From Account',
+                    gridCols: 2,
+                    fields: [
+                      { label: 'Account Name', value: selectedTransaction.fromDetails.accountName || '-' },
+                      { label: 'Account Source', value: selectedTransaction.fromDetails.accountSource || '-' },
+                      { label: 'Account Number', value: <span className="font-mono text-sm col-span-2">{selectedTransaction.fromDetails.accountNumber || '-'}</span> },
+                    ],
+                  },
+                ]
+              : []),
+            ...(selectedTransaction.toDetails
+              ? [
+                  {
+                    title: 'To Account',
+                    gridCols: 2,
+                    fields: [
+                      { label: 'Account Name', value: selectedTransaction.toDetails.accountName || '-' },
+                      { label: 'Account Source', value: selectedTransaction.toDetails.accountSource || '-' },
+                      { label: 'Account Number', value: <span className="font-mono text-sm col-span-2">{selectedTransaction.toDetails.accountNumber || '-'}</span> },
+                    ],
+                  },
+                ]
+              : []),
+          ]}
+          actions={
+            (selectedTransaction.status === 'SUCCESSFUL' || selectedTransaction.status === 'DISPUTED')
+              ? [
+                  {
+                    label: 'Reverse',
+                    variant: 'outline',
+                    icon: <RotateCcw className="w-4 h-4" />,
+                    onClick: () => {
                       setDetailDialogOpen(false)
                       setStandardReversalOpen(true)
-                    }}
-                    className="hover:bg-amber-500/20 hover:text-amber-400"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Reverse
-                  </Button>
-                  {hasPermission('FORCE_REVERSE_TRANSACTION') && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setDetailDialogOpen(false)
-                        setForceReversalOpen(true)
-                      }}
-                      className="hover:bg-red-500/20 hover:text-red-400"
-                    >
-                      <AlertCircle className="w-4 h-4 mr-2" />
-                      Force Reverse
-                    </Button>
-                  )}
-                </>
-              )}
-              <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                    },
+                  },
+                  ...(hasPermission('FORCE_REVERSE_TRANSACTION')
+                    ? [
+                        {
+                          label: 'Force Reverse',
+                          variant: 'outline' as const,
+                          icon: <AlertCircle className="w-4 h-4" />,
+                          onClick: () => {
+                            setDetailDialogOpen(false)
+                            setForceReversalOpen(true)
+                          },
+                        },
+                      ]
+                    : []),
+                ]
+              : undefined
+          }
+        />
       )}
 
       {/* Resolve Dispute Dialog */}

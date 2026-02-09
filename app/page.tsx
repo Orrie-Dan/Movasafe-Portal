@@ -1,15 +1,18 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 export default function HomePage() {
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    // Redirect to admin dashboard immediately
-    router.replace('/admin')
-  }, [router])
+    navigate('/login', { replace: true })
+  }, [navigate])
 
-  return null
+  return (
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="text-slate-300">Loading...</div>
+    </div>
+  )
 }

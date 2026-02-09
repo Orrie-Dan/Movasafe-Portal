@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Search, Bell, Settings, ChevronDown, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,8 +24,8 @@ export function DashboardHeader({
   onMenuClick 
 }: DashboardHeaderProps) {
   const { logout } = useAuth()
-  const router = useRouter()
-  const pathname = usePathname()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [searchQuery, setSearchQuery] = useState('')
   const [notifications, setNotifications] = useState(3)
   const [openDropdown, setOpenDropdown] = useState<'notifications' | 'user' | null>(null)
@@ -85,12 +85,12 @@ export function DashboardHeader({
   }
 
   const handleSettingsClick = () => {
-    router.push('/admin/settings')
+    navigate('/admin/settings')
     setOpenDropdown(null)
   }
 
   const handleProfileClick = () => {
-    router.push('/admin/users/me')
+    navigate('/admin/users/me')
     setOpenDropdown(null)
   }
 
@@ -215,7 +215,7 @@ export function DashboardHeader({
                       className="w-full text-xs"
                       onClick={() => {
                         console.log('View all notifications')
-                        router.push('/admin/notifications')
+                        navigate('/admin/notifications')
                         setOpenDropdown(null)
                       }}
                     >

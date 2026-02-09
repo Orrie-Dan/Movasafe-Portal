@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { ChevronRight, Home } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -18,7 +18,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
   return (
     <nav className={cn('flex items-center space-x-2 text-sm', className)}>
       <Link
-        href="/admin"
+        to="/admin"
         className="text-slate-400 hover:text-white transition-colors"
       >
         <Home className="h-4 w-4" />
@@ -28,7 +28,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
           <ChevronRight className="h-4 w-4 text-slate-600" />
           {item.href && index < items.length - 1 ? (
             <Link
-              href={item.href}
+              to={item.href!}
               className="text-slate-400 hover:text-white transition-colors"
             >
               {item.label}

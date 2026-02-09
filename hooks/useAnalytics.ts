@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { apiGetAllTransactions, TransactionType, TransactionStatus, type Transaction } from '@/lib/api'
 import { apiGetAllWallets } from '@/lib/api/wallets'
 import type { Wallet } from '@/lib/types/wallets'
@@ -25,7 +25,7 @@ const DEFAULT_FILTERS: AnalyticsFilters = {
 }
 
 export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [authError, setAuthError] = useState(false)
   const [loading, setLoading] = useState(false)
   const [transactions, setTransactions] = useState<Transaction[]>([])

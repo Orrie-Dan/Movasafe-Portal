@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +10,7 @@ import { adminLogin } from '@/lib/auth'
 import type { LoginRequest } from '@/lib/auth'
 
 export default function LoginPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [emailOrPhone, setEmailOrPhone] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,9 +29,7 @@ export default function LoginPage() {
 
       await adminLogin(loginRequest)
       
-      // Redirect to admin dashboard on success
-      router.push('/admin')
-      router.refresh()
+      navigate('/admin')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
       setError(errorMessage)

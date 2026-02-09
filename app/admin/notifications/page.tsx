@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { DataTable, type Column } from '@/components/admin/DataTable'
 import { StatusBadge } from '@/components/admin/StatusBadge'
@@ -16,7 +16,7 @@ import { toast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 
 export default function NotificationsPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -169,7 +169,7 @@ export default function NotificationsPage() {
         description="Manage and send notifications to users"
         action={{
           label: 'Send Notification',
-          onClick: () => router.push('/admin/notifications/create'),
+          onClick: () => navigate('/admin/notifications/create'),
           icon: <Plus className="h-4 w-4 mr-2" />,
         }}
       />

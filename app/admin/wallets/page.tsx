@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ViewDetailsDialog } from '@/components/admin/ViewDetailsDialog'
 import { DataTable, type Column } from '@/components/admin/DataTable'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -1205,93 +1206,78 @@ export default function WalletsPage() {
       </Card>
       </div>
 
-      {/* Wallet Details Modal */}
       {selectedWallet && (
-        <Dialog open={!!selectedWallet} onOpenChange={() => setSelectedWallet(null)}>
-          <DialogContent className="max-w-4xl bg-white dark:bg-black border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-blue-400" />
-                Wallet Details - {selectedWallet.id}
-              </DialogTitle>
-              <DialogDescription>Complete wallet information and transaction history</DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6 mt-4">
-              {/* Wallet Owner Info */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">User Name</Label>
-                  <div className="text-foreground font-medium">
-                    {getUserNames(selectedWallet.userId).firstName}{' '}
-                    {getUserNames(selectedWallet.userId).lastName}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">Latest Activity</Label>
-                  <div className="text-foreground font-mono text-sm">
-                    {selectedWallet.lastActivity
-                      ? format(parseISO(selectedWallet.lastActivity), 'MMM d, HH:mm')
-                      : 'None'}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">Currency</Label>
-                  <Badge variant="outline">{selectedWallet.currency}</Badge>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground">Status</Label>
-                  <Badge
-                    className={
-                      selectedWallet.status === 'active'
-                        ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                        : selectedWallet.status === 'frozen'
-                        ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                        : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                    }
-                  >
-                    {selectedWallet.status.charAt(0).toUpperCase() + selectedWallet.status.slice(1)}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Balance Breakdown */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Balance Breakdown</h3>
+        <ViewDetailsDialog
+          open={!!selectedWallet}
+          onOpenChange={(open) => !open && setSelectedWallet(null)}
+          title="Wallet Details"
+          subtitle={selectedWallet.id}
+          onCopySubtitle={() => {
+            navigator.clipboard.writeText(selectedWallet.id)
+            toast({ title: 'Copied', description: 'Wallet ID copied to clipboard' })
+          }}
+          badge={
+            <Badge
+              className={
+                selectedWallet.status === 'active'
+                  ? 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30'
+                  : selectedWallet.status === 'frozen'
+                  ? 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30'
+                  : 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30'
+              }
+            >
+              {selectedWallet.status.charAt(0).toUpperCase() + selectedWallet.status.slice(1)}
+            </Badge>
+          }
+          maxWidth="3xl"
+          sections={[
+            {
+              title: 'Wallet',
+              gridCols: 2,
+              fields: [
+                { label: 'User Name', value: `${getUserNames(selectedWallet.userId).firstName} ${getUserNames(selectedWallet.userId).lastName}` },
+                { label: 'Latest Activity', value: selectedWallet.lastActivity ? format(parseISO(selectedWallet.lastActivity), 'MMM d, HH:mm') : 'None' },
+                { label: 'Currency', value: <Badge variant="outline">{selectedWallet.currency}</Badge> },
+                { label: 'Status', value: selectedWallet.status.charAt(0).toUpperCase() + selectedWallet.status.slice(1) },
+              ],
+            },
+            {
+              title: 'Balance Breakdown',
+              children: (
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Card className="bg-black border-slate-200 dark:border-slate-800">
+                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardContent className="p-4">
-                      <p className="text-sm text-muted-foreground mb-2">Available Balance</p>
-                      <div className="text-2xl font-bold text-green-400">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Available Balance</p>
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                         {formatCurrency(selectedWallet.availableBalance, selectedWallet.currency)}
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-black border-slate-200 dark:border-slate-800">
+                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardContent className="p-4">
-                      <p className="text-sm text-muted-foreground mb-2">Reserved Balance</p>
-                      <div className="text-2xl font-bold text-yellow-400">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Reserved Balance</p>
+                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                         {formatCurrency(selectedWallet.reservedBalance, selectedWallet.currency)}
                       </div>
                     </CardContent>
                   </Card>
-                  <Card className="bg-black border-slate-200 dark:border-slate-800">
+                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                     <CardContent className="p-4">
-                      <p className="text-sm text-muted-foreground mb-2">Total Balance</p>
-                      <div className="text-2xl font-bold text-foreground">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Total Balance</p>
+                      <div className="text-2xl font-bold text-slate-900 dark:text-white">
                         {formatCurrency(selectedWallet.totalBalance, selectedWallet.currency)}
                       </div>
                     </CardContent>
                   </Card>
                 </div>
-              </div>
-
-              {/* Recent Transactions */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Recent Transactions</h3>
+              ),
+            },
+            {
+              title: 'Recent Transactions',
+              children: (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {walletTransactions.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">No recent transactions</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">No recent transactions</div>
                   ) : (
                     walletTransactions.map((txn) => {
                       const isPositive = txn.type === 'deposit' || txn.type === 'escrow_release'
@@ -1302,34 +1288,23 @@ export default function WalletsPage() {
                         >
                           <div className="flex items-center gap-3">
                             {isPositive ? (
-                              <ArrowDownRight className="h-4 w-4 text-green-400" />
+                              <ArrowDownRight className="h-4 w-4 text-green-500 dark:text-green-400" />
                             ) : (
-                              <ArrowUpRight className="h-4 w-4 text-red-400" />
+                              <ArrowUpRight className="h-4 w-4 text-red-500 dark:text-red-400" />
                             )}
                             <div>
-                              <div className="font-medium text-foreground text-sm">{txn.description}</div>
-                              <div className="text-xs text-muted-foreground">
+                              <div className="font-medium text-slate-900 dark:text-white text-sm">{txn.description}</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400">
                                 {txn.type.replace('_', ' ')} • {format(parseISO(txn.timestamp), 'MMM d, HH:mm')}
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div
-                              className={`font-semibold text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}
-                            >
+                            <div className={`font-semibold text-sm ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                               {isPositive ? '+' : '-'}
                               {formatCurrency(txn.amount, selectedWallet.currency)}
                             </div>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${
-                                txn.status === 'completed'
-                                  ? 'text-green-400'
-                                  : txn.status === 'pending'
-                                  ? 'text-yellow-400'
-                                  : 'text-red-400'
-                              }`}
-                            >
+                            <Badge variant="outline" className="text-xs">
                               {txn.status}
                             </Badge>
                           </div>
@@ -1338,40 +1313,32 @@ export default function WalletsPage() {
                     })
                   )}
                 </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
-                {selectedWallet.status === 'frozen' ? (
-                  <Button onClick={() => handleUnfreezeWallet(selectedWallet)} className="bg-green-600 hover:bg-green-700">
-                    <Unlock className="h-4 w-4 mr-2" />
-                    Unfreeze Wallet
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      onClick={() => handleFreezeWallet(selectedWallet)}
-                      variant="destructive"
-                    >
-                      <Lock className="h-4 w-4 mr-2" />
-                      Freeze Wallet
-                    </Button>
-                    {selectedWallet.status !== 'suspended' && (
-                      <Button
-                        onClick={() => handleSuspendWallet(selectedWallet)}
-                        variant="outline"
-                        className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10"
-                      >
-                        <Shield className="h-4 w-4 mr-2" />
-                        Suspend Wallet
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+              ),
+            },
+          ]}
+          actions={[
+            ...(selectedWallet.status === 'frozen'
+              ? [{ label: 'Unfreeze Wallet', onClick: () => handleUnfreezeWallet(selectedWallet), icon: <Unlock className="h-4 w-4" /> }]
+              : [
+                  {
+                    label: 'Freeze Wallet',
+                    onClick: () => handleFreezeWallet(selectedWallet),
+                    variant: 'destructive' as const,
+                    icon: <Lock className="h-4 w-4" />,
+                  },
+                  ...(selectedWallet.status !== 'suspended'
+                    ? [
+                        {
+                          label: 'Suspend Wallet',
+                          variant: 'outline' as const,
+                          onClick: () => handleSuspendWallet(selectedWallet),
+                          icon: <Shield className="h-4 w-4" />,
+                        },
+                      ]
+                    : []),
+                ]),
+          ]}
+        />
       )}
 
       {/* Confirm Dialog */}

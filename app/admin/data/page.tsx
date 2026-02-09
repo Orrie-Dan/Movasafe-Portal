@@ -4,10 +4,10 @@ import { PageHeader } from '@/components/admin/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Database, FileText, Image, Download, Upload } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 export default function DataManagementPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
 
   return (
     <div className="p-6 lg:p-8 space-y-6 bg-slate-900/50">
@@ -18,7 +18,7 @@ export default function DataManagementPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-black border-slate-800 hover:border-slate-700 transition-colors cursor-pointer"
-          onClick={() => router.push('/admin/data/transactions')}
+          onClick={() => navigate('/admin/data/transactions')}
         >
           <CardHeader>
             <div className="flex items-center gap-3">
@@ -39,7 +39,7 @@ export default function DataManagementPage() {
         </Card>
 
         <Card className="bg-black border-slate-800 hover:border-slate-700 transition-colors cursor-pointer"
-          onClick={() => router.push('/admin/data/media')}
+          onClick={() => navigate('/admin/data/media')}
         >
           <CardHeader>
             <div className="flex items-center gap-3">

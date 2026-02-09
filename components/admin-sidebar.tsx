@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { Link, useLocation } from 'react-router-dom'
 import { 
   LayoutDashboard, 
   Users, 
@@ -16,16 +15,10 @@ import {
   ChevronLeft,
   X,
   Menu,
-  DollarSign,
-  Shield,
   Bell,
-  FileSearch,
-  Key,
   Database,
   Wallet,
   Store,
-  Activity,
-  MessageSquare,
   CheckCircle2,
   AlertTriangle,
   ChevronDown
@@ -44,7 +37,7 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 'admin', collapsed: externalCollapsed, onCollapseChange }: AdminSidebarProps) {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const [internalCollapsed, setInternalCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sidebarCollapsed')
@@ -103,17 +96,8 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
     { href: '/admin/refund-disputes/transactions', label: 'Transactions Disputes', icon: AlertTriangle, badge: null },
   ]
 
-  const systemSection = [
-    { href: '/admin/system-health', label: 'System Health', icon: Activity, badge: null },
-    { href: '/admin/support', label: 'Support', icon: MessageSquare, badge: null },
-    { href: '/admin/revenue', label: 'Revenue', icon: DollarSign, badge: null },
-  ]
-
   const adminPortalSection = [
-    { href: '/admin/audit', label: 'Audit Logs', icon: FileSearch, badge: null },
-    { href: '/admin/roles', label: 'Roles & Permissions', icon: Shield, badge: null },
     { href: '/admin/settings', label: 'System Settings', icon: Settings, badge: null },
-    { href: '/admin/api-keys', label: 'API Keys', icon: Key, badge: null },
   ]
 
 
@@ -130,7 +114,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
     return (
       <Link
         key={item.href}
-        href={item.href}
+        to={item.href}
         title={collapsed ? item.label : undefined}
         className={cn(
           "flex items-center justify-between gap-3 rounded-lg transition-colors group relative",
@@ -275,18 +259,6 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
           </div>
         </div>
 
-        {/* SYSTEM Section */}
-        <div>
-          {!collapsed && (
-            <div className="px-4 mb-3">
-              <h3 className="text-xs font-semibold text-black dark:text-white uppercase tracking-wider">SYSTEM</h3>
-            </div>
-          )}
-          <div className="space-y-1">
-            {systemSection.map(renderNavItem)}
-          </div>
-        </div>
-
         {/* ADMIN PORTAL Section */}
         <div>
           {!collapsed && (
@@ -301,56 +273,40 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
 
       </nav>
 
-      {/* Bottom Section */}
-      <div className={cn("border-t border-slate-900 dark:border-slate-700 space-y-1", collapsed ? "p-2" : "p-4")}>
+      {/* Bottom Section - flex-shrink-0 keeps it visible at bottom */}
+      <div className={cn(
+        "flex-shrink-0 border-t border-slate-200 dark:border-slate-800 space-y-0.5",
+        collapsed ? "p-2" : "p-4"
+      )}>
         {/* Theme Toggle */}
         <div className={cn(
-          "flex items-center rounded-lg transition-colors",
+          "flex items-center rounded-lg transition-colors min-h-[2.5rem]",
           collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5"
         )}>
           {collapsed ? (
-              <ThemeToggle 
-                variant="ghost" 
-                size="icon"
-                className="text-black dark:text-white hover:bg-slate-800/50 hover:text-white dark:hover:bg-slate-800/50"
-              />
+            <ThemeToggle
+              variant="ghost"
+              size="icon"
+              className="text-black dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-foreground"
+            />
           ) : (
             <div className="flex items-center gap-3 w-full">
-              <ThemeToggle 
-                variant="ghost" 
+              <ThemeToggle
+                variant="ghost"
                 size="default"
-                className="flex-1 justify-start text-black dark:text-white hover:bg-slate-800/50 hover:text-white dark:hover:bg-slate-800/50"
+                className="flex-1 justify-start text-black dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-foreground"
               />
-              <span className="text-sm text-black dark:text-white">Theme</span>
+              <span className="text-sm text-foreground">Theme</span>
             </div>
           )}
         </div>
-        
         <Link
-          href="/admin/settings"
-          title={collapsed ? "Settings" : undefined}
-          className={cn(
-            "flex items-center rounded-lg transition-colors",
-            collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5 gap-3",
-            pathname === '/admin/settings'
-              ? "bg-slate-800 text-white dark:bg-slate-800 dark:text-white"
-              : "text-black dark:text-white hover:bg-slate-800/50 hover:text-white dark:hover:bg-slate-800/50"
-          )}
-        >
-          <Settings className="h-4 w-4 flex-shrink-0" />
-          {!collapsed && <span className="text-sm">Settings</span>}
-          {collapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-sm rounded opacity-0 hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
-              Settings
-            </div>
-          )}
-        </Link>
-        <Link
-          href="#"
+          to="#"
           title={collapsed ? "Help" : undefined}
           className={cn(
-            "flex items-center rounded-lg text-black dark:text-white hover:bg-slate-800/50 hover:text-white transition-colors relative",
-            collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5 gap-3"
+            "flex items-center rounded-lg transition-colors min-h-[2.5rem] relative",
+            collapsed ? "px-3 py-2.5 justify-center" : "px-4 py-2.5 gap-3",
+            "text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-foreground"
           )}
         >
           <HelpCircle className="h-4 w-4 flex-shrink-0" />
@@ -361,18 +317,6 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
             </div>
           )}
         </Link>
-        {/* Issues Button */}
-        <Button
-          variant="destructive"
-          className={cn(
-            "w-full h-auto bg-red-600 hover:bg-red-700 text-white",
-            collapsed ? "px-3 py-2.5 justify-center" : "justify-start gap-3 px-4 py-2.5"
-          )}
-          title={collapsed ? "6 Issues" : undefined}
-        >
-          <X className="h-4 w-4 flex-shrink-0" />
-          {!collapsed && <span className="text-sm">6 Issues</span>}
-        </Button>
       </div>
     </div>
   )

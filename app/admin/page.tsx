@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { useOverviewData } from '@/hooks/useOverviewData'
 import type { Transaction, TransactionStatus, EscrowStatus } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -94,11 +94,8 @@ import {
   Line
 } from 'recharts'
 import { format, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subDays, subWeeks, subMonths, subQuarters, subYears } from 'date-fns'
-import dynamic from 'next/dynamic'
-
-
 export default function AdminDashboard() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isDark, setIsDark] = useState(false)
   
@@ -341,7 +338,7 @@ export default function AdminDashboard() {
         title: 'High Error Rate',
         description: `${overviewData.failedTransactionsPercent.toFixed(1)}% transaction failure rate`,
         count: stats.failed,
-        onAction: () => router.push('/admin/transactions?status=FAILED'),
+        onAction: () => navigate('/admin/transactions?status=FAILED'),
       })
     }
 
@@ -353,12 +350,12 @@ export default function AdminDashboard() {
         title: 'Pending Transactions',
         description: `${overviewData.pendingTransactions} transactions pending`,
         count: overviewData.pendingTransactions,
-        onAction: () => router.push('/admin/transactions?status=PENDING'),
+        onAction: () => navigate('/admin/transactions?status=PENDING'),
       })
     }
 
     return alerts
-  }, [overviewData, stats, router])
+  }, [overviewData, stats, navigate])
 
   // Active escrows requiring attention - removed until escrows API is integrated
   const activeEscrows: any[] = []
@@ -588,69 +585,6 @@ export default function AdminDashboard() {
             )}
           </Card>
 
-          {/* 1. System Health - Top Priority (Above the Fold) - Full Width */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-              System Health
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-                <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-                  <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                  <CardTitle size="xs" className="z-10 relative text-foreground">System Status</CardTitle>
-                  <CheckCircle2 className="h-4 w-4 text-green-500 dark:text-green-400 relative z-10" />
-                </div>
-                <CardContent>
-                  <Badge className="bg-green-500/20 text-green-500 dark:text-green-400 border-green-500/30 mb-2">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    Healthy
-                  </Badge>
-                  <p className="text-xs text-muted-foreground">All systems operational</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-                <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-                  <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                  <CardTitle size="xs" className="z-10 relative text-foreground">API Uptime</CardTitle>
-                  <Server className="h-4 w-4 text-blue-500 dark:text-blue-400 relative z-10" />
-                </div>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground mb-1">99.9%</div>
-                  <p className="text-xs text-muted-foreground">Last 24h / 7d: 99.8%</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-                <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-                  <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                  <CardTitle size="xs" className="z-10 relative text-foreground">Avg Response Time</CardTitle>
-                  <Activity className="h-4 w-4 text-blue-500 dark:text-blue-400 relative z-10" />
-                </div>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground mb-1">125ms</div>
-                  <p className="text-xs text-green-500 dark:text-green-400 flex items-center gap-1">
-                    <TrendingDown className="h-3 w-3" />
-                    -5ms
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
-                <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
-                  <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                  <CardTitle size="xs" className="z-10 relative text-foreground">Active Incidents</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-red-500 dark:text-red-400 relative z-10" />
-                </div>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-500 dark:text-red-400 mb-1">0</div>
-                  <p className="text-xs text-muted-foreground">No critical issues</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
           {/* Active Escrows Alert Section */}
           {!overviewData.loading && activeEscrows.length > 0 && (
             <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden">
@@ -804,7 +738,7 @@ export default function AdminDashboard() {
                   {/* Large KPI Card - Transactions Today */}
                   <Card 
                     className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer"
-                    onClick={() => router.push('/admin/transactions')}
+                    onClick={() => navigate('/admin/transactions')}
                   >
                     <div className="flex flex-col space-y-1.5 p-8 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
                       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
@@ -869,7 +803,7 @@ export default function AdminDashboard() {
 
               <Card 
                 className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer"
-                onClick={() => router.push('/admin/wallets')}
+                onClick={() => navigate('/admin/wallets')}
               >
                 <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                   <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
@@ -884,7 +818,7 @@ export default function AdminDashboard() {
 
               <Card 
                 className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer"
-                onClick={() => router.push('/admin/revenue')}
+                onClick={() => navigate('/admin/revenue')}
               >
                 <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                   <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
@@ -908,7 +842,7 @@ export default function AdminDashboard() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Card 
                 className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer"
-                onClick={() => router.push('/admin/users')}
+                onClick={() => navigate('/admin/users')}
               >
                 <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                   <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
@@ -984,7 +918,7 @@ export default function AdminDashboard() {
                       variant="ghost" 
                       size="sm" 
                       className="text-xs text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10"
-                      onClick={() => router.push('/admin/risk-fraud')}
+                      onClick={() => navigate('/admin/risk-fraud')}
                     >
                       View flagged →
                     </Button>
@@ -1028,7 +962,7 @@ export default function AdminDashboard() {
                       title: 'Failed Transactions',
                       description: 'transactions require attention',
                       count: stats.failed,
-                      onAction: () => router.push('/admin/transactions?status=FAILED'),
+                      onAction: () => navigate('/admin/transactions?status=FAILED'),
                     }]
                   : []),
                 // Escrows alerts removed - can be restored when escrows API is integrated
@@ -1040,7 +974,7 @@ export default function AdminDashboard() {
                       description: 'transactions pending',
                       count: stats.pending,
                       icon: Clock,
-                      onAction: () => router.push('/admin/transactions?status=PENDING'),
+                      onAction: () => navigate('/admin/transactions?status=PENDING'),
                     }]
                   : []),
               ]}
@@ -1191,168 +1125,6 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          {/* MUST-ADD: Pending Transaction Aging */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Clock className="h-5 w-5 text-yellow-500 dark:text-yellow-400" />
-              Operational Risk Indicator
-            </h2>
-            <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-              <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
-                <CardTitle className="relative z-10">Pending Transaction Aging</CardTitle>
-                <CardDescription className="relative z-10">Pending transactions are silent failures. Aging shows where processing breaks</CardDescription>
-              </div>
-              <CardContent className="pt-6">
-                {overviewData.loading ? (
-                  <Skeleton className="h-[400px] w-full" />
-                ) : (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <RechartsBarChart 
-                      data={[
-                        { bucket: '< 1 hour', count: Math.floor(stats.pending * 0.4), pending: Math.floor(stats.pending * 0.4) },
-                        { bucket: '1–6 hours', count: Math.floor(stats.pending * 0.35), pending: Math.floor(stats.pending * 0.35) },
-                        { bucket: '6–24 hours', count: Math.floor(stats.pending * 0.20), pending: Math.floor(stats.pending * 0.20) },
-                        { bucket: '> 24 hours', count: Math.floor(stats.pending * 0.05), pending: Math.floor(stats.pending * 0.05) },
-                      ]}
-                      layout="vertical"
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis type="number" stroke="#94a3b8" />
-                      <YAxis dataKey="bucket" type="category" stroke="#94a3b8" width={100} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1e293b', 
-                          border: '1px solid #475569',
-                          borderRadius: '8px'
-                        }}
-                        labelStyle={{ color: '#fff' }}
-                      />
-                      <Bar dataKey="pending" fill="#eab308" name="Pending Transactions" />
-                    </RechartsBarChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* MUST-ADD: API Latency Distribution */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Server className="h-5 w-5 text-purple-500 dark:text-purple-400" />
-              System Reliability Reality Check
-            </h2>
-            <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-              <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
-                <CardTitle className="relative z-10">API Latency Distribution (P95 / P99)</CardTitle>
-                <CardDescription className="relative z-10">Average hides spikes. Users feel P95/P99. Response times in milliseconds</CardDescription>
-              </div>
-              <CardContent className="pt-6">
-                {overviewData.loading ? (
-                  <Skeleton className="h-[400px] w-full" />
-                ) : (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={overviewData.volumeTrend7d || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" label={{ value: 'Response Time (ms)', angle: -90, position: 'insideLeft' }} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1e293b', 
-                          border: '1px solid #475569',
-                          borderRadius: '8px'
-                        }}
-                        labelStyle={{ color: '#fff' }}
-                        formatter={(value) => `${value}ms`}
-                      />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="avgLatency" 
-                        stroke="#8b5cf6" 
-                        name="Average"
-                        strokeWidth={2}
-                        dot={{ fill: '#8b5cf6', r: 4 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="p95Latency" 
-                        stroke="#f59e0b" 
-                        name="P95 (95th percentile)"
-                        strokeWidth={2}
-                        dot={{ fill: '#f59e0b', r: 4 }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="p99Latency" 
-                        stroke="#ef4444" 
-                        name="P99 (99th percentile)"
-                        strokeWidth={2}
-                        dot={{ fill: '#ef4444', r: 4 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* MUST-ADD: Risk Exposure Over Time */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
-              Money at Risk Analysis
-            </h2>
-            <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-              <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
-                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent" />
-                <CardTitle className="relative z-10">Risk Exposure Over Time</CardTitle>
-                <CardDescription className="relative z-10">Turns risk into measurable financial signal. Helps leadership decide urgency</CardDescription>
-              </div>
-              <CardContent className="pt-6">
-                {overviewData.loading ? (
-                  <Skeleton className="h-[400px] w-full" />
-                ) : (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={overviewData.volumeTrend7d || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" label={{ value: 'Amount at Risk (RWF)', angle: -90, position: 'insideLeft' }} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1e293b', 
-                          border: '1px solid #475569',
-                          borderRadius: '8px'
-                        }}
-                        labelStyle={{ color: '#fff' }}
-                        formatter={(value) => formatCurrency(value as number)}
-                      />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="flaggedAmount" 
-                        stroke="#ef4444" 
-                        name="Flagged Transactions"
-                        strokeWidth={2}
-                        dot={{ fill: '#ef4444', r: 4 }}
-                        fill="url(#colorRisk)"
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="disputedAmount" 
-                        stroke="#f59e0b" 
-                        name="Disputed Escrow Amounts"
-                        strokeWidth={2}
-                        dot={{ fill: '#f59e0b', r: 4 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
           {/* 5. Recent Activity / Context */}
           <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
             <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
@@ -1374,7 +1146,7 @@ export default function AdminDashboard() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => router.push('/admin/transactions')}
+                    onClick={() => navigate('/admin/transactions')}
                     className="mt-4"
                   >
                     View All Transactions
@@ -1391,22 +1163,22 @@ export default function AdminDashboard() {
                 {
                   label: 'View Transactions',
                   icon: FileText,
-                  onClick: () => router.push('/admin/transactions'),
+                  onClick: () => navigate('/admin/transactions'),
                 },
                 {
                   label: 'Manage Escrows',
                   icon: Shield,
-                  onClick: () => router.push('/admin/escrows'),
+                  onClick: () => navigate('/admin/escrows'),
                 },
                 {
                   label: 'View Wallets',
                   icon: Wallet,
-                  onClick: () => router.push('/admin/wallets'),
+                  onClick: () => navigate('/admin/wallets'),
                 },
                 {
                   label: 'View Merchants',
                   icon: Store,
-                  onClick: () => router.push('/admin/merchants'),
+                  onClick: () => navigate('/admin/merchants'),
                 },
               ]}
             />

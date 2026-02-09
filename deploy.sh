@@ -25,12 +25,12 @@ if [ -z "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
     echo -e "${YELLOW}To override, set: export CLOUDFRONT_DISTRIBUTION_ID=your-distribution-id${NC}"
 fi
 
-# Build the static site
-echo -e "${GREEN}Building Next.js static site...${NC}"
+# Build the static site (Vite outputs to dist/)
+echo -e "${GREEN}Building Vite static site...${NC}"
 npm run build
 
-if [ ! -d "out" ]; then
-    echo -e "${RED}Error: Build failed - 'out' directory not found.${NC}"
+if [ ! -d "dist" ]; then
+    echo -e "${RED}Error: Build failed - 'dist' directory not found.${NC}"
     exit 1
 fi
 
@@ -38,7 +38,7 @@ fi
 echo -e "${GREEN}Uploading to S3 bucket: adminportal-demo...${NC}"
 
 # Upload HTML files with no-cache headers
-aws s3 sync out/ s3://adminportal-demo \
+aws s3 sync dist/ s3://adminportal-demo \
     --delete \
     --cache-control "no-cache,no-store,must-revalidate" \
     --exclude "*" \
@@ -46,7 +46,7 @@ aws s3 sync out/ s3://adminportal-demo \
     --exclude "*.html.*"
 
 # Upload static assets with long cache headers
-aws s3 sync out/ s3://adminportal-demo \
+aws s3 sync dist/ s3://adminportal-demo \
     --delete \
     --cache-control "max-age=31536000,public,immutable" \
     --exclude "*.html"

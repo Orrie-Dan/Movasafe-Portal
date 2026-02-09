@@ -3,7 +3,7 @@
 import { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus, ArrowLeft } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 interface PageHeaderProps {
   title: string
@@ -28,7 +28,7 @@ export function PageHeader({
   backButton,
   children 
 }: PageHeaderProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
 
   return (
     <div className="mb-6 space-y-4">
@@ -38,7 +38,7 @@ export function PageHeader({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(backButton.href)}
+              onClick={() => navigate(backButton!.href)}
               className="text-slate-400 hover:text-white mb-2"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />

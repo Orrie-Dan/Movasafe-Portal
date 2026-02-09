@@ -5,11 +5,11 @@ import { AdminSidebar } from '@/components/admin-sidebar'
 import { DashboardHeader } from '@/components/dashboard-header'
 import { useAuth } from '@/lib/auth/hooks'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate, Outlet } from 'react-router-dom'
 
-function AdminLayoutContent({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent() {
   const { user, loading, isAuthenticated, isAdminUser } = useAuth()
-  const router = useRouter()
+  const navigate = useNavigate()
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('sidebarCollapsed')
@@ -22,10 +22,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated || !isAdminUser) {
-        router.push('/login')
+        navigate('/login')
       }
     }
-  }, [loading, isAuthenticated, isAdminUser, router])
+  }, [loading, isAuthenticated, isAdminUser, navigate])
 
   // Show loading state while checking authentication
   if (loading) {
@@ -60,16 +60,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           userName={user?.fullName || 'User'}
           userRole={user?.role || 'Admin'}
         />
-        {children}
+        <Outlet />
       </div>
     </div>
   )
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout() {
   return (
     <AuthProvider>
-      <AdminLayoutContent>{children}</AdminLayoutContent>
+      <AdminLayoutContent />
     </AuthProvider>
   )
 }

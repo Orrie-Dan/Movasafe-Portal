@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { ViewDetailsDialog } from '@/components/admin/ViewDetailsDialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -12,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { RefreshCw, Eye, AlertCircle, CheckCircle2, Loader2, DollarSign, Clock, User, BarChart3, PieChart, TrendingUp, TrendingDown, Scale, Filter, Calendar, Info, Table as TableIcon } from 'lucide-react'
+import { RefreshCw, Eye, AlertCircle, CheckCircle2, Loader2, DollarSign, Clock, BarChart3, PieChart, TrendingUp, TrendingDown, Scale, Filter, Calendar, Info, Table as TableIcon } from 'lucide-react'
 import { format, parseISO, subDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns'
 import { toast } from '@/hooks/use-toast'
 import { apiGetAllEscrows, apiProcessRefund, apiResolveDispute } from '@/lib/api/escrows'
@@ -583,7 +584,7 @@ export default function EscrowDisputesAnalyticsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Date Range Filter */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block">Date Range</Label>
+                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Date Range</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="date"
@@ -594,7 +595,7 @@ export default function EscrowDisputesAnalyticsPage() {
                     }))}
                     className="flex-1"
                   />
-                  <span className="text-gray-500">to</span>
+                  <span className="text-gray-500 dark:text-gray-400">to</span>
                   <Input
                     type="date"
                     value={filters.dateRange.to ? format(filters.dateRange.to, 'yyyy-MM-dd') : ''}
@@ -609,7 +610,7 @@ export default function EscrowDisputesAnalyticsPage() {
 
               {/* Escrow Status Filter */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block">Escrow Status</Label>
+                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Escrow Status</Label>
                 <Select
                   value={filters.escrowStatus}
                   onValueChange={(value: any) => setFilters(prev => ({ ...prev, escrowStatus: value }))}
@@ -629,7 +630,7 @@ export default function EscrowDisputesAnalyticsPage() {
 
               {/* Resolution Action Filter */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block">Resolution Action</Label>
+                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Resolution Action</Label>
                 <Select value={filters.resolutionAction} onValueChange={(value: any) => setFilters(prev => ({ ...prev, resolutionAction: value }))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -644,7 +645,7 @@ export default function EscrowDisputesAnalyticsPage() {
 
               {/* Admin Resolver Filter */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block">Admin Resolver</Label>
+                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Admin Resolver</Label>
                 <Select value={filters.adminResolver} onValueChange={(value: any) => setFilters(prev => ({ ...prev, adminResolver: value }))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -660,7 +661,7 @@ export default function EscrowDisputesAnalyticsPage() {
 
               {/* Search Term */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block">Search</Label>
+                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Search</Label>
                 <Input
                   placeholder="ID, client, vendor..."
                   value={filters.searchTerm}
@@ -901,127 +902,87 @@ export default function EscrowDisputesAnalyticsPage() {
         </div>
       </main>
 
-      {/* Detail Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white">Escrow Transaction Details</DialogTitle>
-            <DialogDescription>
-              {selectedEscrow?.status === 'DISPUTED' ? (
-                <span className="flex items-center gap-2 mt-2">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  <span className="text-red-600 font-medium">Pending Resolution</span>
-                </span>
-              ) : (
-                <span className="flex items-center gap-2 mt-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span className="text-green-600 font-medium">Resolved</span>
-                </span>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedEscrow && (
-            <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-6 border-b border-gray-200 dark:border-gray-700 pb-6">
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Internal reference</label>
-                  <p className="text-sm font-mono mt-2 text-gray-900 dark:text-white bg-gray-100 dark:bg-black p-2 rounded">{selectedEscrow.internalReference ?? selectedEscrow.id}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current Status</label>
-                  <div className="mt-2">{getStatusBadge(selectedEscrow.status)}</div>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Dispute Amount</label>
-                  <p className="text-2xl font-bold mt-2 text-gray-900 dark:text-white">{formatCurrency(selectedEscrow.amount)}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Created Date</label>
-                  <p className="text-sm mt-2 text-gray-900 dark:text-white">{format(parseISO(selectedEscrow.createdAt), 'MMMM dd, yyyy HH:mm')}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6 border-b border-gray-200 dark:border-gray-700 pb-6">
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Client</label>
-                  <p className="text-sm mt-2 text-gray-900 dark:text-white break-words">{getClientName(selectedEscrow)}</p>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Vendor</label>
-                  <p className="text-sm mt-2 text-gray-900 dark:text-white break-words">{getVendorName(selectedEscrow)}</p>
-                </div>
-              </div>
-
-              {(selectedEscrow.disputeResolvedAt || selectedEscrow.status === 'RELEASED' || selectedEscrow.status === 'REFUNDED') && (
-                <div className="space-y-4 bg-green-50 dark:bg-black border border-green-200 dark:border-green-800 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">Resolution Information</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Resolved By</label>
-                      <p className="text-sm mt-1 text-gray-900 dark:text-white">{selectedEscrow.disputeResolvedBy || 'System Administrator'}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Resolution Date</label>
-                      <p className="text-sm mt-1 text-gray-900 dark:text-white">
-                        {selectedEscrow.disputeResolvedAt ? format(parseISO(selectedEscrow.disputeResolvedAt), 'MMMM dd, yyyy HH:mm') : 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  {selectedEscrow.disputeResolution && (
-                    <div>
-                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Resolution Notes</label>
-                      <p className="text-sm mt-2 p-3 bg-white dark:bg-black rounded border border-green-200 dark:border-green-700 text-gray-900 dark:text-white">
-                        {selectedEscrow.disputeResolution}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                {/* Admin Action Rules: Show Refund button only if escrowStatus = ACTIVE AND admin has REFUND_ESCROW permission */}
-                {(() => {
-                  const status = selectedEscrow.escrowStatus || selectedEscrow.status
-                  if (status === 'ACTIVE' && hasRefundPermission) {
-                    return (
-                      <Button 
-                        onClick={() => setIsRefundDialogOpen(true)} 
-                        variant="destructive"
-                        className="flex-1"
-                      >
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        Process Direct Refund
-                      </Button>
-                    )
-                  }
-                  return null
-                })()}
-                
-                {/* Admin Action Rules: Show Resolve Dispute button only if escrowStatus = DISPUTED AND admin has RESOLVE_DISPUTE permission */}
-                {(() => {
-                  const status = selectedEscrow.escrowStatus || selectedEscrow.status
-                  if (status === 'DISPUTED' && hasResolvePermission) {
-                    return (
-                      <Button 
-                        onClick={() => setIsResolveDisputeDialogOpen(true)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Scale className="h-4 w-4 mr-2" />
-                        Resolve Dispute
-                      </Button>
-                    )
-                  }
-                  return null
-                })()}
-                
-                <Button onClick={() => setIsDetailDialogOpen(false)} variant="outline" className="flex-1">
-                  Close
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedEscrow && (
+        <ViewDetailsDialog
+          open={isDetailDialogOpen}
+          onOpenChange={setIsDetailDialogOpen}
+          title="Escrow Transaction Details"
+          subtitle={
+            (selectedEscrow.escrowStatus || selectedEscrow.status) === 'DISPUTED' ? (
+              <span className="flex items-center gap-2 mt-2">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <span className="text-red-600 font-medium">Pending Resolution</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-2 mt-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <span className="text-green-600 font-medium">Resolved</span>
+              </span>
+            )
+          }
+          badge={getStatusBadge(selectedEscrow.escrowStatus || selectedEscrow.status)}
+          maxWidth="3xl"
+          sections={[
+            {
+              title: 'Transaction',
+              gridCols: 2,
+              fields: [
+                { label: 'Internal reference', value: <span className="font-mono text-sm bg-slate-100 dark:bg-black p-2 rounded block">{selectedEscrow.internalReference ?? selectedEscrow.id}</span> },
+                { label: 'Current Status', value: getStatusBadge(selectedEscrow.status) },
+                { label: 'Dispute Amount', value: <span className="text-xl font-bold">{formatCurrency(selectedEscrow.amount)}</span> },
+                { label: 'Created Date', value: format(parseISO(selectedEscrow.createdAt), 'MMMM dd, yyyy HH:mm') },
+              ],
+            },
+            {
+              title: 'Parties',
+              gridCols: 2,
+              fields: [
+                { label: 'Client', value: getClientName(selectedEscrow) },
+                { label: 'Vendor', value: getVendorName(selectedEscrow) },
+              ],
+            },
+            ...((selectedEscrow.disputeResolvedAt || selectedEscrow.status === 'RELEASED' || selectedEscrow.status === 'REFUNDED')
+              ? [
+                  {
+                    title: 'Resolution Information',
+                    children: (
+                      <div className="space-y-4 bg-green-50 dark:bg-black border border-green-200 dark:border-green-800 rounded-lg p-4">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Resolved By</p>
+                            <p className="text-slate-900 dark:text-white">{selectedEscrow.disputeResolvedBy || 'System Administrator'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Resolution Date</p>
+                            <p className="text-slate-900 dark:text-white">
+                              {selectedEscrow.disputeResolvedAt ? format(parseISO(selectedEscrow.disputeResolvedAt), 'MMMM dd, yyyy HH:mm') : 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        {selectedEscrow.disputeResolution && (
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Resolution Notes</p>
+                            <p className="text-sm p-3 bg-white dark:bg-black rounded border border-green-200 dark:border-green-700 text-slate-900 dark:text-white">
+                              {selectedEscrow.disputeResolution}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+          actions={[
+            ...((selectedEscrow.escrowStatus || selectedEscrow.status) === 'ACTIVE' && hasRefundPermission
+              ? [{ label: 'Process Direct Refund', onClick: () => setIsRefundDialogOpen(true), variant: 'destructive' as const, icon: <DollarSign className="h-4 w-4" /> }]
+              : []),
+            ...((selectedEscrow.escrowStatus || selectedEscrow.status) === 'DISPUTED' && hasResolvePermission
+              ? [{ label: 'Resolve Dispute', onClick: () => setIsResolveDisputeDialogOpen(true), icon: <Scale className="h-4 w-4" /> }]
+              : []),
+          ]}
+        />
+      )}
 
       {/* Direct Refund Dialog - POST /api/admin/escrows/refund/{id} */}
       <Dialog open={isRefundDialogOpen} onOpenChange={setIsRefundDialogOpen}>

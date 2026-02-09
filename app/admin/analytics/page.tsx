@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
@@ -43,7 +43,7 @@ import {
 } from 'recharts'
 
 export default function AnalyticsPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [disputedEscrows, setDisputedEscrows] = useState<EscrowTransaction[]>([])
 
   const {

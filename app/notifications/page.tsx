@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useNotifications } from '@/hooks/useNotifications'
 import { formatDistanceToNow } from 'date-fns'
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { AdminSidebar } from '@/components/admin-sidebar'
 
@@ -131,7 +131,7 @@ export default function NotificationsPage() {
                     {notifications.map((notification) => (
                       <Link
                         key={notification.id}
-                        href={
+                        to={
                           notification.data?.reportId
                             ? `/report/${notification.data.reportId}`
                             : '#'

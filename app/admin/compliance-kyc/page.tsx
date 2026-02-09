@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ViewDetailsDialog } from '@/components/admin/ViewDetailsDialog'
 import { DataTable, type Column } from '@/components/admin/DataTable'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Label } from '@/components/ui/label'
@@ -491,149 +492,117 @@ export default function ComplianceKYCPage() {
         </CardContent>
       </Card>
 
-      {/* User KYC Details Modal */}
       {selectedUser && (
-        <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-          <DialogContent className="max-w-3xl bg-white dark:bg-black border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-blue-400" />
-                KYC Details - {selectedUser.fullName}
-              </DialogTitle>
-              <DialogDescription>Persona verification details and compliance status</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-6 mt-4">
-              {/* User Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-muted-foreground">User ID</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <p className="font-mono text-sm">{selectedUser.userId}</p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => {
-                        navigator.clipboard.writeText(selectedUser.userId)
-                        toast({ title: 'Copied', description: 'User ID copied' })
-                      }}
+        <ViewDetailsDialog
+          open={!!selectedUser}
+          onOpenChange={(open) => !open && setSelectedUser(null)}
+          title="KYC Details"
+          subtitle={selectedUser.userId}
+          onCopySubtitle={() => {
+            navigator.clipboard.writeText(selectedUser.userId)
+            toast({ title: 'Copied', description: 'User ID copied' })
+          }}
+          badge={
+            <Badge
+              className={
+                selectedUser.complianceStatus === 'Compliant'
+                  ? 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30'
+                  : selectedUser.complianceStatus === 'Non-Compliant'
+                  ? 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30'
+                  : 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30'
+              }
+            >
+              {selectedUser.complianceStatus}
+            </Badge>
+          }
+          maxWidth="3xl"
+          sections={[
+            {
+              title: 'User Info',
+              gridCols: 2,
+              fields: [
+                {
+                  label: 'User ID',
+                  value: (
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono text-sm">{selectedUser.userId}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedUser.userId)
+                          toast({ title: 'Copied', description: 'User ID copied' })
+                        }}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </span>
+                  ),
+                },
+                { label: 'Full Name', value: selectedUser.fullName },
+                { label: 'Email', value: selectedUser.email || 'N/A' },
+                { label: 'Phone Number', value: selectedUser.phoneNumber || 'N/A' },
+                { label: 'National ID', value: selectedUser.nationalId || 'N/A' },
+                { label: 'Registered', value: format(parseISO(selectedUser.submittedAt), 'MMM d, yyyy HH:mm') },
+              ],
+            },
+            {
+              title: 'KYC Verification Status',
+              gridCols: 2,
+              fields: [
+                {
+                  label: 'KYC Verified',
+                  value: (
+                    <Badge
+                      className={
+                        selectedUser.kycVerified
+                          ? 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30'
+                          : 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border-yellow-500/30'
+                      }
                     >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Full Name</Label>
-                  <p className="font-medium mt-1">{selectedUser.fullName}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Email</Label>
-                  <p className="mt-1">{selectedUser.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Phone Number</Label>
-                  <p className="mt-1">{selectedUser.phoneNumber || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">National ID</Label>
-                  <p className="font-mono mt-1">{selectedUser.nationalId || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Registered</Label>
-                  <p className="mt-1">{format(parseISO(selectedUser.submittedAt), 'MMM d, yyyy HH:mm')}</p>
-                </div>
-              </div>
-
-              {/* KYC Status */}
-              <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                <h3 className="text-sm font-semibold mb-3">KYC Verification Status</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">KYC Verified</Label>
-                    <div className="mt-1">
-                      <Badge
-                        className={
-                          selectedUser.kycVerified
-                            ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                            : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                        }
-                      >
-                        {selectedUser.kycVerified ? 'Verified' : 'Not Verified'}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Compliance Status</Label>
-                    <div className="mt-1">
-                      <Badge
-                        className={
-                          selectedUser.complianceStatus === 'Compliant'
-                            ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                            : selectedUser.complianceStatus === 'Non-Compliant'
-                            ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                            : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                        }
-                      >
-                        {selectedUser.complianceStatus}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Persona Details */}
-              <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                <h3 className="text-sm font-semibold mb-3">Persona Verification Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">Persona Inquiry ID</Label>
-                    <p className="font-mono text-sm mt-1">{selectedUser.personaInquiryId || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Persona Status</Label>
-                    <p className="mt-1">{selectedUser.personaStatus || 'Not Started'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Verified Name</Label>
-                    <p className="mt-1">{selectedUser.personaVerifiedName || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Verified Email</Label>
-                    <p className="mt-1">{selectedUser.personaVerifiedEmail || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Verified Phone</Label>
-                    <p className="mt-1">{selectedUser.personaVerifiedPhone || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Verified DOB</Label>
-                    <p className="mt-1">{selectedUser.personaVerifiedDob || 'N/A'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Identity Mismatch Warning */}
-              {selectedUser.identityMismatchFlag && (
-                <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-5 w-5 text-red-400" />
-                      <h3 className="text-sm font-semibold text-red-400">Identity Mismatch Detected</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedUser.identityMismatchDetails || 'Identity verification data does not match user-provided information.'}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSelectedUser(null)}>
-                Close
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+                      {selectedUser.kycVerified ? 'Verified' : 'Not Verified'}
+                    </Badge>
+                  ),
+                },
+                {
+                  label: 'Compliance Status',
+                  value: selectedUser.complianceStatus,
+                },
+              ],
+            },
+            {
+              title: 'Persona Verification Details',
+              gridCols: 2,
+              fields: [
+                { label: 'Persona Inquiry ID', value: selectedUser.personaInquiryId || 'N/A' },
+                { label: 'Persona Status', value: selectedUser.personaStatus || 'Not Started' },
+                { label: 'Verified Name', value: selectedUser.personaVerifiedName || 'N/A' },
+                { label: 'Verified Email', value: selectedUser.personaVerifiedEmail || 'N/A' },
+                { label: 'Verified Phone', value: selectedUser.personaVerifiedPhone || 'N/A' },
+                { label: 'Verified DOB', value: selectedUser.personaVerifiedDob || 'N/A' },
+              ],
+            },
+            ...(selectedUser.identityMismatchFlag
+              ? [
+                  {
+                    title: 'Identity Mismatch',
+                    children: (
+                      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
+                          <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">Identity Mismatch Detected</h3>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                          {selectedUser.identityMismatchDetails || 'Identity verification data does not match user-provided information.'}
+                        </p>
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+        />
       )}
     </div>
   )

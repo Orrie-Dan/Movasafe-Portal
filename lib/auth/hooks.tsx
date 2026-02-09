@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, createContext, useContext, ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import type { User } from './types'
 import { hasPermission, hasAnyPermission, hasAllPermissions, type Permission } from './permissions'
 import { getToken, logout as authLogout, isAdmin } from '@/lib/auth'
@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     loadUser()
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               authLogout()
               setUser(null)
               setLoading(false)
-              router.push('/login')
+              navigate('/login')
               return
             }
             
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     authLogout()
     setUser(null)
-    router.push('/login')
+    navigate('/login')
   }
 
   // Check permissions based on user role

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,9 +17,9 @@ import { StatusBadge } from '@/components/admin/StatusBadge'
 import { format } from 'date-fns'
 
 export default function UserDetailClient() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const params = useParams()
-  const userId = params.id as string
+  const userId = params.id ?? ''
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -55,7 +55,7 @@ export default function UserDetailClient() {
         description: error instanceof Error ? error.message : 'Failed to load user',
         variant: 'destructive',
       })
-      router.push('/admin/users')
+      navigate('/admin/users')
     } finally {
       setLoading(false)
     }
@@ -241,7 +241,7 @@ export default function UserDetailClient() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => router.push('/admin/users')}
+                    onClick={() => navigate('/admin/users')}
                     className="border-slate-700 text-white"
                   >
                     Cancel

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ import { toast } from '@/hooks/use-toast'
 import { ArrowLeft } from 'lucide-react'
 
 export default function CreateUserPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [roles, setRoles] = useState<Role[]>([])
   const [formData, setFormData] = useState<CreateUserRequest>({
@@ -53,7 +53,7 @@ export default function CreateUserPage() {
         title: 'Success',
         description: 'User created successfully',
       })
-      router.push('/admin/users')
+      navigate('/admin/users')
     } catch (error) {
       toast({
         title: 'Error',
@@ -218,7 +218,7 @@ export default function CreateUserPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push('/admin/users')}
+                onClick={() => navigate('/admin/users')}
                 className="border-slate-700 text-white"
               >
                 Cancel

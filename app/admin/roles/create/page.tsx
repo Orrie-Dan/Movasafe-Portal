@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,7 @@ import type { Permission } from '@/lib/types/auth'
 import { toast } from '@/hooks/use-toast'
 
 export default function CreateRolePage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [permissions, setPermissions] = useState<Permission[]>([])
   const [formData, setFormData] = useState<CreateRoleRequest>({
@@ -47,7 +47,7 @@ export default function CreateRolePage() {
         title: 'Success',
         description: 'Role created successfully',
       })
-      router.push('/admin/roles')
+      navigate('/admin/roles')
     } catch (error) {
       toast({
         title: 'Error',
@@ -157,7 +157,7 @@ export default function CreateRolePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => router.push('/admin/roles')}
+                onClick={() => navigate('/admin/roles')}
                 className="border-slate-700 text-white"
               >
                 Cancel

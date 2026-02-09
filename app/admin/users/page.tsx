@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { DataTable, type Column } from '@/components/admin/DataTable'
 import { StatusBadge } from '@/components/admin/StatusBadge'
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { ViewDetailsDialog } from '@/components/admin/ViewDetailsDialog'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { apiGetUsers, apiDeleteUser, apiSuspendUser, apiActivateUser, apiGetUserActivity } from '@/lib/api/users'
@@ -63,7 +64,7 @@ type EnrichedUser = User & {
 }
 
 export default function UsersPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [users, setUsers] = useState<EnrichedUser[]>([])
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [loading, setLoading] = useState(true)
@@ -694,226 +695,101 @@ export default function UsersPage() {
         onConfirm={handleDeleteConfirmed}
       />
 
-      {/* User details dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-black border-slate-200 dark:border-slate-800">
-          {selectedUser && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <UserIcon className="h-5 w-5 text-blue-400" />
-                      <span>{selectedUser.fullName}</span>
-                    </div>
-                    <DialogDescription className="mt-1">
-                      {selectedUser.email}
-                    </DialogDescription>
-                  </div>
-                  <StatusBadge status={selectedUser.status} />
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Profile and account info */}
-                <div className="lg:col-span-2 space-y-4">
-                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-foreground">
-                        Profile
-                      </h3>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            National ID
-                          </Label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="font-mono text-xs text-foreground">
-                              {selectedUser.nationalId || 'N/A'}
-                            </span>
-                            {selectedUser.nationalId && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(selectedUser.nationalId as string)
-                                  toast({
-                                    title: 'Copied',
-                                    description: 'National ID copied to clipboard',
-                                  })
-                                }}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            Phone
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {selectedUser.phoneNumber || 'N/A'}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            Registration Date
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {format(new Date(selectedUser.createdAt), 'PPpp')}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            Last Login
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {selectedUser.lastLogin
-                              ? format(new Date(selectedUser.lastLogin), 'PPpp')
-                              : 'Never'}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            Email Verified
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {selectedUser.emailVerified ? 'Yes' : 'No'}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            MFA Enabled
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {selectedUser.mfaEnabled ? 'Yes' : 'No'}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            User Type
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {selectedUser.userType || 'N/A'}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            Primary Role
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {selectedUser.role || 'N/A'}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Wallet summary */}
-                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <WalletIcon className="h-4 w-4 text-muted-foreground" />
-                        Wallet Summary
-                      </h3>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            Wallet ID
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {(selectedUser as any).walletId || 'N/A'}
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            Balance
-                          </Label>
-                          <div className="mt-1 text-sm text-foreground">
-                            {((selectedUser as any).walletBalance ?? 0).toLocaleString()} RWF
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Right column: verification, activity */}
-                <div className="space-y-4">
-                  {/* Verification */}
-                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-muted-foreground" />
-                        Verification / KYC
-                      </h3>
-                      <div className="space-y-1 text-sm">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">
-                            Status
-                          </Label>
-                          <div className="mt-1">
-                            {columns[5].accessor?.(selectedUser)}
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Detailed KYC documents are available in the Compliance / KYC
-                          section.
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Activity */}
-                  <Card className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <CardContent className="p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-foreground">
-                        Activity History
-                      </h3>
-                      {activityLoading ? (
-                        <div className="text-xs text-muted-foreground">Loading activity...</div>
-                      ) : activityTimeline && activityTimeline.activities.length > 0 ? (
-                        <div className="space-y-2 max-h-64 overflow-y-auto text-xs">
-                          {activityTimeline.activities.map((act) => (
-                            <div
-                              key={act.id}
-                              className="border border-slate-200 dark:border-slate-800 rounded px-2 py-1.5"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium text-foreground">
-                                  {act.action}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground">
-                                  {format(new Date(act.timestamp), 'MMM d, HH:mm')}
-                                </span>
-                              </div>
-                              <div className="text-[11px] text-muted-foreground">
-                                {act.resource}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-xs text-muted-foreground">
-                          No recent activity records.
-                        </div>
+      {selectedUser && (
+        <ViewDetailsDialog
+          open={isDetailOpen}
+          onOpenChange={(open) => {
+            setIsDetailOpen(!!open)
+            if (!open) setSelectedUser(null)
+          }}
+          title={selectedUser.fullName}
+          subtitle={selectedUser.email}
+          onCopySubtitle={() => {
+            navigator.clipboard.writeText(selectedUser.email)
+            toast({ title: 'Copied', description: 'Email copied to clipboard' })
+          }}
+          badge={<StatusBadge status={selectedUser.status} />}
+          maxWidth="3xl"
+          sections={[
+            {
+              title: 'Profile',
+              gridCols: 2,
+              fields: [
+                {
+                  label: 'National ID',
+                  value: (
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono text-xs">{selectedUser.nationalId || 'N/A'}</span>
+                      {selectedUser.nationalId && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedUser.nationalId as string)
+                            toast({ title: 'Copied', description: 'National ID copied to clipboard' })
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
                       )}
-                    </CardContent>
-                  </Card>
+                    </span>
+                  ),
+                },
+                { label: 'Phone', value: selectedUser.phoneNumber || 'N/A' },
+                { label: 'Registration Date', value: format(new Date(selectedUser.createdAt), 'PPpp') },
+                { label: 'Last Login', value: selectedUser.lastLogin ? format(new Date(selectedUser.lastLogin), 'PPpp') : 'Never' },
+                { label: 'Email Verified', value: selectedUser.emailVerified ? 'Yes' : 'No' },
+                { label: 'MFA Enabled', value: selectedUser.mfaEnabled ? 'Yes' : 'No' },
+                { label: 'User Type', value: selectedUser.userType || 'N/A' },
+                { label: 'Primary Role', value: selectedUser.role || 'N/A' },
+              ],
+            },
+            {
+              title: 'Wallet Summary',
+              gridCols: 2,
+              fields: [
+                { label: 'Wallet ID', value: (selectedUser as EnrichedUser).walletId || 'N/A' },
+                { label: 'Balance', value: `${((selectedUser as EnrichedUser).walletBalance ?? 0).toLocaleString()} RWF` },
+              ],
+            },
+            {
+              title: 'Verification / KYC',
+              children: (
+                <div className="space-y-2">
+                  <div>
+                    <Label className="text-xs text-slate-500 dark:text-slate-400">Status</Label>
+                    <div className="mt-1">{columns[5].accessor?.(selectedUser) ?? 'N/A'}</div>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Detailed KYC documents are available in the Compliance / KYC section.
+                  </p>
                 </div>
-              </div>
-
-              <DialogFooter className="mt-4">
-                <Button variant="ghost" onClick={() => setIsDetailOpen(false)}>
-                  Close
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+              ),
+            },
+            {
+              title: 'Activity History',
+              children: activityLoading ? (
+                <div className="text-xs text-slate-500 dark:text-slate-400">Loading activity...</div>
+              ) : activityTimeline && activityTimeline.activities.length > 0 ? (
+                <div className="space-y-2 max-h-64 overflow-y-auto text-xs">
+                  {activityTimeline.activities.map((act) => (
+                    <div key={act.id} className="border border-slate-200 dark:border-slate-800 rounded px-2 py-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-900 dark:text-white">{act.action}</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">{format(new Date(act.timestamp), 'MMM d, HH:mm')}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{act.resource}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-slate-500 dark:text-slate-400">No recent activity records.</div>
+              ),
+            },
+          ]}
+        />
+      )}
 
       {/* Action confirm dialogs */}
       {actionModal.type && actionModal.user && (
