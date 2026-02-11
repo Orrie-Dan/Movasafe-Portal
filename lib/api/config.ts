@@ -8,12 +8,17 @@
 // This base is still used for diagnostics/logging and any direct server-side calls.
 const getTransactionBase = (): string => {
   const envBase = process.env.NEXT_PUBLIC_TRANSACTION_API_BASE
-  
-  // Default to HTTP, but allow HTTPS if specified in environment
-  // (If you serve the portal over HTTPS and do direct browser calls to HTTP, it will be blocked. Use the proxy.)
-  const defaultBase = "https://transaction.movasafe.com"
-  
-  return envBase ?? defaultBase
+
+  // Canonical production URL for the transactions service
+  const defaultBase = 'https://transaction.movasafe.com'
+
+  // If the env var is missing or an empty string, always fall back to the production URL.
+  // This prevents accidental use of a blank base that would resolve to localhost.
+  if (envBase && envBase.trim().length > 0) {
+    return envBase.trim()
+  }
+
+  return defaultBase
 }
 
 export const TRANSACTION_BASE = getTransactionBase()

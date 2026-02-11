@@ -611,6 +611,7 @@ export async function apiGetDisputedTransactions(): Promise<Transaction[]> {
 /**
  * Resolve a disputed transaction
  * Endpoint: POST /api/admin/transactions/resolve-dispute/{id}
+ * Backend expects action: "RELEASE_FUNDS" | "COMPENSATE" and notes: string
  */
 export async function apiResolveDispute(
   transactionId: string,
@@ -619,22 +620,27 @@ export async function apiResolveDispute(
 ): Promise<Transaction> {
   const token = getToken()
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'Content-Type': 'application/json',
   }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
+  // Map UI action to backend enum (backend uses RELEASE_FUNDS, not UPHOLD)
+  const backendAction = action === 'UPHOLD' ? 'RELEASE_FUNDS' : 'COMPENSATE'
+  const payload = {
+    action: backendAction,
+    notes: String(notes ?? '').trim() || 'Resolution notes',
+  }
+  const bodyString = JSON.stringify(payload)
+
   try {
-    const response = await fetch(`${TRANSACTION_BASE}/api/admin/transactions/resolve-dispute/${transactionId}`, {
+    const response = await fetch(`${TRANSACTION_BASE}/api/admin/transactions/resolve-dispute/${encodeURIComponent(transactionId)}`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        action,
-        notes,
-      }),
+      body: bodyString,
     })
 
     if (!response.ok) {

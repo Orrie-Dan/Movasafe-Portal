@@ -22,6 +22,8 @@ export default function TransactionDisputesPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [users, setUsers] = useState<Map<string, User>>(new Map())
   const [loading, setLoading] = useState(false)
+  const [resolvedTransactions, setResolvedTransactions] = useState<Transaction[]>([])
+  const [resolvedLoading, setResolvedLoading] = useState(false)
 
   // Filters
   const [dateRange, setDateRange] = useState<'all' | '7' | '30' | '90'>('30')
@@ -265,6 +267,27 @@ export default function TransactionDisputesPage() {
     fetchUsers()
   }, [])
 
+  // Load resolved transaction disputes from /api/admin/transactions/all with status=RESOLVED_DISPUTE
+  useEffect(() => {
+    const loadResolved = async () => {
+      try {
+        setResolvedLoading(true)
+        const response = await apiGetAllTransactions({ status: 'RESOLVED_DISPUTE', limit: 100 })
+        const content = response.success && response.data?.content ? response.data.content : []
+        // Extra safety: only keep rows with status exactly RESOLVED_DISPUTE
+        setResolvedTransactions(
+          (content || []).filter((tx) => tx.status === 'RESOLVED_DISPUTE')
+        )
+      } catch (err) {
+        console.error('Failed to fetch resolved dispute transactions:', err)
+      } finally {
+        setResolvedLoading(false)
+      }
+    }
+
+    loadResolved()
+  }, [])
+
   const getUserNames = (userId: string) => {
     const user = users.get(userId)
     if (!user) {
@@ -370,13 +393,19 @@ export default function TransactionDisputesPage() {
         </CardContent>
       </Card>
 
-      {/* Transactions Table */}
+      {/* Open Transaction Disputes Table */}
       <Card className="dark:bg-black dark:border-slate-800">
         <CardHeader className="dark:border-b dark:border-slate-700">
-          <CardTitle className="text-base dark:text-white">Transactions</CardTitle>
-          <CardDescription className="dark:text-slate-400">{transactions.length} transactions</CardDescription>
+          <CardTitle className="text-base dark:text-white">Open Transaction Disputes</CardTitle>
+          <CardDescription className="dark:text-slate-400">
+            {transactions.length} disputed transactions
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="px-4 py-3 border-b border-slate-700 bg-slate-900/30">
+            <h2 className="text-base font-semibold text-white">Open Transaction Disputes</h2>
+            <p className="text-xs text-slate-400 mt-0.5">{transactions.length} disputed transactions</p>
+          </div>
           {loading ? (
             <div className="text-center py-8 dark:text-slate-400">Loading transactions...</div>
           ) : transactions.length === 0 ? (
@@ -461,6 +490,120 @@ export default function TransactionDisputesPage() {
                             title="Resolve dispute"
                           >
                             <CheckCircle2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Resolved Transaction Disputes Table */}
+      <Card className="dark:bg-black dark:border-slate-800">
+        <CardHeader className="dark:border-b dark:border-slate-700">
+          <CardTitle className="text-base dark:text-white">Resolved Transaction Disputes</CardTitle>
+          <CardDescription className="dark:text-slate-400">
+            {resolvedTransactions.length} resolved transactions
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="px-4 py-3 border-b border-slate-700 bg-slate-900/30">
+            <h2 className="text-base font-semibold text-white">Resolved Transaction Disputes</h2>
+            <p className="text-xs text-slate-400 mt-0.5">{resolvedTransactions.length} resolved transactions</p>
+          </div>
+          {resolvedLoading ? (
+            <div className="text-center py-8 dark:text-slate-400">Loading resolved disputes...</div>
+          ) : resolvedTransactions.length === 0 ? (
+            <div className="text-center py-8 dark:text-slate-400">No resolved disputes found</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="dark:border-b dark:border-slate-700 dark:bg-slate-900/50">
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">First Name</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Last Name</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Reference</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Date</th>
+                    <th className="text-right py-3 px-2 text-sm font-medium dark:text-slate-400">Amount</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Type</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Description</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Status</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">From</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">To</th>
+                    <th className="text-left py-3 px-2 text-sm font-medium dark:text-slate-400">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resolvedTransactions.map((transaction) => (
+                    <tr
+                      key={transaction.id}
+                      className="dark:border-b dark:border-slate-700 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td className="py-3 px-2 text-sm font-medium dark:text-white">
+                        {getUserNames(transaction.userId).firstName}
+                      </td>
+                      <td className="py-3 px-2 text-sm font-medium dark:text-white">
+                        {getUserNames(transaction.userId).lastName}
+                      </td>
+                      <td className="py-3 px-2 font-mono text-sm dark:text-white">
+                        {transaction.internalReference}
+                      </td>
+                      <td className="py-3 px-2 dark:text-slate-300 text-sm">
+                        {format(new Date(transaction.createdAt || 0), 'MMM dd, HH:mm')}
+                      </td>
+                      <td className="py-3 px-2 text-right font-mono font-bold dark:text-white">
+                        {new Intl.NumberFormat('en-US').format(transaction.amount || 0)} RWF
+                      </td>
+                      <td className="py-3 px-2 text-sm dark:text-slate-300">
+                        {transaction.transactionType}
+                      </td>
+                      <td className="py-3 px-2">
+                        <Badge variant="outline" className="text-sm">
+                          {transaction.description}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-2">
+                        <Badge className="text-sm bg-green-500 text-white hover:bg-green-600">
+                          {transaction.status}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-2 text-sm">
+                        <div className="space-y-1">
+                          <div className="dark:text-slate-400 text-sm">
+                            {transaction.fromDetails?.accountSource || '-'}
+                          </div>
+                          <div className="font-mono text-sm dark:text-slate-500">
+                            {transaction.fromDetails?.accountNumber?.substring(0, 8) || '-'}...
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-2 text-sm">
+                        <div className="space-y-1">
+                          <div className="dark:text-slate-400 text-sm">
+                            {transaction.toDetails?.accountSource || '-'}
+                          </div>
+                          <div className="font-mono text-sm dark:text-slate-500">
+                            {transaction.toDetails?.accountNumber?.substring(0, 8) || '-'}...
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="hover:bg-blue-500/20 hover:text-blue-400"
+                            onClick={() => {
+                              setSelectedTransaction(transaction)
+                              setDetailDialogOpen(true)
+                            }}
+                            title="View details"
+                          >
+                            <Eye className="w-4 h-4" />
                           </Button>
                         </div>
                       </td>

@@ -1035,14 +1035,6 @@ export default function EscrowDisputesAnalyticsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-              <p className="text-sm text-amber-900 dark:text-amber-100">
-                <span className="font-semibold">Endpoint:</span> POST /api/admin/escrows/resolve-dispute/{selectedEscrow?.id?.substring(0, 12)}
-              </p>
-              <p className="text-xs text-amber-800 dark:text-amber-200 mt-2">
-                This endpoint adjudicates disputed escrows with comprehensive audit trail and automatic notifications to both parties.
-              </p>
-            </div>
 
             <div>
               <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 block">Resolution Decision *</label>

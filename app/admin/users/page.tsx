@@ -353,16 +353,6 @@ export default function UsersPage() {
 
   const columns: Column<EnrichedUser>[] = [
     {
-      key: 'id',
-      header: 'National ID',
-      accessor: (user) => (
-        <span className="font-mono text-xs text-foreground">
-          {user.nationalId || 'N/A'}
-        </span>
-      ),
-      sortable: true,
-    },
-    {
       key: 'firstName',
       header: 'First Name',
       accessor: (user) => {
@@ -401,12 +391,7 @@ export default function UsersPage() {
           <div className="flex items-center gap-2">
             <WalletIcon className="h-3 w-3 text-muted-foreground" />
             <span className="text-sm font-medium text-foreground">
-              {balance >= 1_000_000
-                ? `${(balance / 1_000_000).toFixed(2)}M`
-                : balance >= 1_000
-                ? `${(balance / 1_000).toFixed(2)}K`
-                : balance.toFixed(0)}{' '}
-              RWF
+              {Math.round(balance).toString()} RWF
             </span>
           </div>
         )
@@ -415,16 +400,12 @@ export default function UsersPage() {
     },
     {
       key: 'registration',
-      header: 'Registered / Last Login',
+      header: 'Registered',
       accessor: (user) => (
         <div className="space-y-0.5 text-xs">
           <div className="flex items-center gap-1 text-foreground">
             <Calendar className="h-3 w-3 text-muted-foreground" />
             <span>{format(new Date(user.createdAt), 'MMM d, yyyy')}</span>
-          </div>
-          <div className="text-[11px] text-muted-foreground">
-            Last login:{' '}
-            {user.lastLogin ? format(new Date(user.lastLogin), 'MMM d, yyyy') : 'Never'}
           </div>
         </div>
       ),

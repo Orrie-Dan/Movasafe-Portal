@@ -41,6 +41,8 @@ type ComplianceStatus = 'Compliant' | 'Under Review' | 'Non-Compliant'
 
 interface KYCUser {
   userId: string
+  firstName: string
+  lastName: string
   fullName: string
   email: string
   phoneNumber: string
@@ -130,9 +132,20 @@ export default function ComplianceKYCPage() {
           [user.firstname, user.lastname].filter(Boolean).join(' ').trim() || 
           user.username || 
           'Unknown'
+
+        const firstName =
+          user.firstname ||
+          (fullName ? fullName.split(' ')[0] : '') ||
+          ''
+        const lastName =
+          user.lastname ||
+          (fullName ? fullName.split(' ').slice(1).join(' ') : '') ||
+          ''
         
         return {
           userId: user.id,
+          firstName,
+          lastName,
           fullName,
           email: user.email || '',
           phoneNumber: user.phoneNumber || '',
@@ -204,13 +217,18 @@ export default function ComplianceKYCPage() {
   // Table columns
   const kycColumns: Column<KYCUser>[] = [
     {
-      key: 'user',
-      header: 'User',
+      key: 'firstName',
+      header: 'First Name',
       accessor: (user) => (
-        <div>
-          <div className="font-medium text-foreground">{user.fullName}</div>
-          <div className="text-xs text-muted-foreground font-mono mt-1">{user.userId}</div>
-        </div>
+        <span className="font-medium text-foreground">{user.firstName || 'N/A'}</span>
+      ),
+      sortable: true,
+    },
+    {
+      key: 'lastName',
+      header: 'Last Name',
+      accessor: (user) => (
+        <span className="font-medium text-foreground">{user.lastName || 'N/A'}</span>
       ),
       sortable: true,
     },
@@ -227,16 +245,6 @@ export default function ComplianceKYCPage() {
             <Phone className="h-3 w-3 text-muted-foreground" />
             <span className="text-muted-foreground">{user.phoneNumber || 'N/A'}</span>
           </div>
-        </div>
-      ),
-    },
-    {
-      key: 'nationalId',
-      header: 'National ID',
-      accessor: (user) => (
-        <div className="flex items-center gap-1">
-          <CreditCard className="h-3 w-3 text-muted-foreground" />
-          <span className="text-sm font-mono text-muted-foreground">{user.nationalId || 'N/A'}</span>
         </div>
       ),
     },
@@ -497,10 +505,11 @@ export default function ComplianceKYCPage() {
           open={!!selectedUser}
           onOpenChange={(open) => !open && setSelectedUser(null)}
           title="KYC Details"
-          subtitle={selectedUser.userId}
+          subtitle={selectedUser.email || selectedUser.phoneNumber || selectedUser.fullName}
           onCopySubtitle={() => {
-            navigator.clipboard.writeText(selectedUser.userId)
-            toast({ title: 'Copied', description: 'User ID copied' })
+            const valueToCopy = selectedUser.email || selectedUser.phoneNumber || selectedUser.fullName
+            navigator.clipboard.writeText(valueToCopy)
+            toast({ title: 'Copied', description: 'Copied' })
           }}
           badge={
             <Badge
@@ -521,29 +530,9 @@ export default function ComplianceKYCPage() {
               title: 'User Info',
               gridCols: 2,
               fields: [
-                {
-                  label: 'User ID',
-                  value: (
-                    <span className="flex items-center gap-2">
-                      <span className="font-mono text-sm">{selectedUser.userId}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => {
-                          navigator.clipboard.writeText(selectedUser.userId)
-                          toast({ title: 'Copied', description: 'User ID copied' })
-                        }}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
-                    </span>
-                  ),
-                },
                 { label: 'Full Name', value: selectedUser.fullName },
                 { label: 'Email', value: selectedUser.email || 'N/A' },
                 { label: 'Phone Number', value: selectedUser.phoneNumber || 'N/A' },
-                { label: 'National ID', value: selectedUser.nationalId || 'N/A' },
                 { label: 'Registered', value: format(parseISO(selectedUser.submittedAt), 'MMM d, yyyy HH:mm') },
               ],
             },
