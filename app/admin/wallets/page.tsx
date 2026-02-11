@@ -273,7 +273,7 @@ export default function WalletsPage() {
 
     return {
       id: wallet.id,
-      walletNumber: wallet.id,
+      walletNumber: (wallet as any).walletNumber ?? wallet.id,
       userId: wallet.userId,
       userName: wallet.userId, // API does not include a separate user name
       currency: 'RWF',
@@ -682,7 +682,7 @@ export default function WalletsPage() {
     },
     {
       key: 'id',
-      header: 'Wallet ID',
+      header: 'Wallet Number',
       accessor: (wallet) => (
         <span className="font-mono text-sm text-foreground">{wallet.walletNumber}</span>
       ),
