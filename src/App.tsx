@@ -10,6 +10,7 @@ const AdminDashboard = lazy(() => import('@/app/admin/page'))
 const AdminAnalytics = lazy(() => import('@/app/admin/analytics/page'))
 const AdminApiKeys = lazy(() => import('@/app/admin/api-keys/page'))
 const AdminAudit = lazy(() => import('@/app/admin/audit/page'))
+const AdminAuditLogs = lazy(() => import('@/app/admin/audit-logs/page'))
 const AdminClients = lazy(() => import('@/app/admin/clients/page'))
 const AdminComplianceKyc = lazy(() => import('@/app/admin/compliance-kyc/page'))
 const AdminData = lazy(() => import('@/app/admin/data/page'))
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="api-keys" element={<AdminApiKeys />} />
             <Route path="audit" element={<AdminAudit />} />
+            <Route path="audit-logs" element={<AdminAuditLogs />} />
             <Route path="clients" element={<AdminClients />} />
             <Route path="compliance-kyc" element={<AdminComplianceKyc />} />
             <Route path="data" element={<AdminData />} />

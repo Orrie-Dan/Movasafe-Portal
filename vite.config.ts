@@ -23,5 +23,15 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      // Proxy the audit service to avoid browser CORS failures in dev.
+      // In production, configure your web server to proxy the same path.
+      '/audit-proxy': {
+        target: 'https://audit.movasafe.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/audit-proxy/, ''),
+      },
+    },
   },
 })

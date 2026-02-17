@@ -98,6 +98,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
 
   const adminPortalSection = [
     { href: '/admin/settings', label: 'System Settings', icon: Settings, badge: null },
+    { href: '/admin/audit-logs', label: 'Audit Logs', icon: Database, badge: null },
   ]
 
 

@@ -409,7 +409,7 @@ export default function WalletsPage() {
 
   // Calculate escrow summary from real API data
   const escrowSummary: EscrowSummary = useMemo(() => {
-    const totalAmount = escrows.reduce((sum, e) => sum + (e.amount || 0), 0)
+    const totalAmount = wallets.reduce((sum, w) => sum + (w.reservedBalance || 0), 0)
 
     // Count active accounts from wallets (active wallet status)
     const activeEscrows = wallets.filter((w) => w.status === 'active').length
