@@ -195,7 +195,7 @@ export function TransactionsTable({
                   onClick={() => onSort('id')}
                 >
                   <div className="flex items-center gap-1">
-                    Transaction ID
+                    Transaction Reference
                     {getSortIcon('id')}
                   </div>
                 </TableHead>

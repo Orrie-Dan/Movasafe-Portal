@@ -198,6 +198,13 @@ export function computeRevenueData(
 ): RevenueDataPoint[] {
   const days = eachDayOfInterval({ start: startDate, end: endDate })
 
+  const isRevenueWalletTransaction = (t: Transaction): boolean => {
+    const accountName = t.toDetails?.accountName || ''
+    if (!accountName) return false
+    const normalized = accountName.toLowerCase()
+    return normalized.includes('movasafe') && normalized.includes('revenue')
+  }
+
   return days.map((day) => {
     const dayStr = format(day, 'yyyy-MM-dd')
     const dayTransactions = transactions.filter(
@@ -206,11 +213,22 @@ export function computeRevenueData(
         t.status === TransactionStatus.SUCCESSFUL
     )
 
-    // Fees can be returned as chargeFee (preferred) or commissionAmount (legacy)
-    const fees = dayTransactions.reduce(
-      (sum, t) => sum + (t.chargeFee ?? t.commissionAmount ?? 0),
+    const revenueWalletTransactions = dayTransactions.filter(isRevenueWalletTransaction)
+
+    // Primary source: any money credited into the Movasafe Revenue wallet
+    const feesFromRevenueWallet = revenueWalletTransactions.reduce(
+      (sum, t) => sum + (t.amount || 0),
       0
     )
+
+    // Fallback: if no explicit revenue-wallet credits, use existing fee fields
+    const fees =
+      feesFromRevenueWallet > 0
+        ? feesFromRevenueWallet
+        : dayTransactions.reduce(
+            (sum, t) => sum + (t.chargeFee ?? t.commissionAmount ?? 0),
+            0
+          )
     const revenue = dayTransactions.reduce((sum, t) => sum + (t.amount || 0), 0)
 
     return {

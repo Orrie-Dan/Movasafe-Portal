@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { apiGetAllTransactions, type Transaction, TransactionStatus } from '@/lib/api'
 import { apiGetAllWallets } from '@/lib/api/wallets'
+import { apiGetUsers } from '@/lib/api/users'
 import { startOfDay, endOfDay, subDays, format, parseISO, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from 'date-fns'
 import { toast } from '@/hooks/use-toast'
 import type { TransactionFilters } from '@/lib/types/transactions'
@@ -25,6 +26,7 @@ export interface OverviewMetrics {
   activeUsers24h: number
   activeUsers7d: number
   newWalletsToday: number
+totalUsers: number
   verifiedUsers: number
   blockedAccounts: number
   
@@ -135,12 +137,13 @@ export function useOverviewData(
       }
 
       // Fetch all data in parallel
-      const [todayResponse, sevenDaysResponse, monthResponse, periodResponse, walletsResponse] = await Promise.all([
+      const [todayResponse, sevenDaysResponse, monthResponse, periodResponse, walletsResponse, usersResponse] = await Promise.all([
         apiGetAllTransactions(todayFilters),
         apiGetAllTransactions(sevenDaysFilters),
         apiGetAllTransactions(monthFilters),
         apiGetAllTransactions(periodFilters),
         apiGetAllWallets({ limit: 10000 }),
+        apiGetUsers({ page: 0, limit: 1000 }),
       ])
 
       // Extract transactions from responses
@@ -161,7 +164,7 @@ export function useOverviewData(
         setWallets(walletsResponse)
       }
 
-      setUsers([])
+      setUsers(usersResponse?.data || [])
 
     } catch (err) {
       console.error('Failed to fetch overview data:', err)
@@ -268,7 +271,8 @@ export function useOverviewData(
       }
     }).length
 
-    const verifiedUsers = 0
+    const totalUsers = users.length
+    const verifiedUsers = users.filter((u: any) => u?.kycVerified === true).length
     const blockedAccounts = 0
 
     // Charts data - build based on the selected period
@@ -347,6 +351,7 @@ export function useOverviewData(
       activeUsers24h,
       activeUsers7d,
       newWalletsToday,
+      totalUsers,
       verifiedUsers,
       blockedAccounts,
       volumeTrend7d,

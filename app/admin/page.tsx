@@ -887,6 +887,20 @@ export default function AdminDashboard() {
               <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                 <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                   <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+                  <CardTitle size="xs" className="z-10 relative text-foreground">Total Users</CardTitle>
+                  <Users className="h-4 w-4 text-blue-500 dark:text-blue-400 relative z-10" />
+                </div>
+                <CardContent>
+                  <div className="text-2xl font-bold text-foreground mb-1">
+                    {overviewData.totalUsers.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground">All users</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
+                  <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
                   <CardTitle size="xs" className="z-10 relative text-foreground">Blocked Accounts</CardTitle>
                   <XCircle className="h-4 w-4 text-red-500 dark:text-red-400 relative z-10" />
                 </div>

@@ -103,6 +103,21 @@ export const API_CONFIG = {
     endpoints: {
       // Will be updated when audit service endpoints are provided
     }
+  },
+  LENDING: {
+    // Use /lending-proxy to avoid CORS (Vite proxies to https://loan.movasafe.com)
+    baseUrl: (() => {
+      const env = typeof process !== 'undefined' && (process.env as any)?.NEXT_PUBLIC_LENDING_API_URL
+      if (env && String(env).trim() !== '') return String(env).trim()
+      return '/lending-proxy'
+    })(),
+    endpoints: {
+      adminLoans: '/api/lending/admin/loans',
+      adminLoanById: '/api/lending/admin/loans',
+      adminLoanApprove: '/api/lending/admin/loans',
+      adminLoanReject: '/api/lending/admin/loans',
+      adminRepaymentHistory: '/api/lending/admin/loans',
+    }
   }
 } as const
 

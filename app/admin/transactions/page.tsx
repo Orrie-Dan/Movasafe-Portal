@@ -292,11 +292,7 @@ export default function TransactionsPage() {
         ),
       })
     }
-    sections.push({
-      title: 'Users',
-      gridCols: 2,
-      fields: [{ label: 'From User ID', value: <span className="font-mono text-xs truncate block">{t.userId}</span> }],
-    })
+    // User ID intentionally omitted from details view
     if (t.fromDetails || t.toDetails) {
       sections.push({
         title: 'Accounts',

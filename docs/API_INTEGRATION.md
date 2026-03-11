@@ -33,6 +33,14 @@ The Admin Portal has been updated to integrate with your backend APIs based on t
 
 *Endpoints to be integrated when Swagger documentation is provided*
 
+### 4. Lending Service (Loan Approvals)
+**Base URL:** Set via `NEXT_PUBLIC_LENDING_API_URL` or use `/lending-proxy` (Vite dev proxy).
+
+- **GET** `/api/lending/admin/loans` - List all loans (admin)
+- **GET** `/api/lending/admin/loans/{id}` - Get loan by ID
+- **POST** `/api/lending/admin/loans/{id}/approve` - Approve loan
+- **POST** `/api/lending/admin/loans/{id}/reject` - Reject loan
+
 ## Configuration
 
 ### Environment Variables
@@ -43,6 +51,10 @@ Create a `.env.local` file with:
 NEXT_PUBLIC_AUTH_API_URL=http://authentificationv2-env.eba-zxhbu6ur.eu-north-1.elasticbeanstalk.com
 NEXT_PUBLIC_TRANSACTION_API_URL=http://movasafe-transaction-env.eba-ydyugcws.eu-north-1.elasticbeanstalk.com
 NEXT_PUBLIC_AUDIT_API_URL=http://movasafeaudit-env.eba-np6jzj74.eu-north-1.elasticbeanstalk.com/api/audit-logs
+
+# Lending service: https://loan.movasafe.com (default). Override if needed.
+# If CORS blocks direct calls, use: NEXT_PUBLIC_LENDING_API_URL=/lending-proxy
+NEXT_PUBLIC_LENDING_API_URL=https://loan.movasafe.com
 ```
 
 ## API Response Structure

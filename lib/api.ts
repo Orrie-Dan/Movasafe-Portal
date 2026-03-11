@@ -58,6 +58,16 @@ export {
 export type { EscrowTransaction, CreateEscrowDTO, EscrowFilters } from './types/escrows'
 export { EscrowStatus } from './types/escrows'
 
+// Re-export lending (loan) functions
+export {
+  apiGetAdminLoans,
+  apiGetAdminLoanById,
+  apiApproveLoan,
+  apiRejectLoan,
+  apiGetAdminRepaymentHistory,
+} from './api/lending'
+export type { LoanResponse, LoanStatus, SpringPage } from './types/lending'
+
 export async function apiGetAdminReports(params?: any) {
   return { data: [] }
 }

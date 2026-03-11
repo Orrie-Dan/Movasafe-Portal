@@ -123,6 +123,10 @@ export default function SettingsPage() {
   })
   const [systemSettings, setSystemSettings] = useState<SystemSettingResponse[]>([])
   const [systemLoading, setSystemLoading] = useState(false)
+  const visibleSystemSettings = useMemo(
+    () => systemSettings.filter((s) => !s.settingKey?.toLowerCase().startsWith('movasafe')),
+    [systemSettings]
+  )
 
   // Security Settings State
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
@@ -398,6 +402,43 @@ export default function SettingsPage() {
     setEditingOriginalKey(setting.settingKey)
   }
 
+  const handleCreateSetting = async () => {
+    if (!editingSystemSetting.settingKey.trim() || !editingSystemSetting.settingValue.trim()) {
+      toast({
+        title: 'Missing fields',
+        description: 'Both key and value are required.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      setSaving(true)
+      const dto: SystemSettingDTO = {
+        settingKey: editingSystemSetting.settingKey.trim(),
+        settingValue: editingSystemSetting.settingValue.trim(),
+        description: editingSystemSetting.description?.trim() || undefined,
+      }
+      const created = await apiCreateSystemSetting(dto)
+      setSystemSettings((prev) => [...prev, created])
+      toast({
+        title: 'Setting created',
+        description: `System setting "${dto.settingKey}" has been created.`,
+      })
+      setEditingSystemSetting({ settingKey: '', settingValue: '', description: '' })
+      setEditingOriginalKey(null)
+    } catch (error) {
+      console.error('Failed to create system setting:', error)
+      toast({
+        title: 'Error creating setting',
+        description: error instanceof Error ? error.message : 'Unable to create system setting.',
+        variant: 'destructive',
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleUpdateSetting = async () => {
     if (!editingOriginalKey) return
     if (!editingSystemSetting.settingKey.trim() || !editingSystemSetting.settingValue.trim()) {
@@ -586,6 +627,14 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex gap-2">
                     <Button
+                      onClick={handleCreateSetting}
+                      disabled={saving || systemLoading || !!editingOriginalKey}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                      Create Setting
+                    </Button>
+                    <Button
                       onClick={handleUpdateSetting}
                       disabled={saving || systemLoading || !editingOriginalKey}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -611,7 +660,7 @@ export default function SettingsPage() {
                     <div className="bg-slate-50 dark:bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between">
                       <span>Existing Settings</span>
                       <span className="text-[11px] text-slate-400">
-                        Total: {systemSettings.length}
+                        Total: {visibleSystemSettings.length}
                       </span>
                     </div>
                     <div className="overflow-x-auto">
@@ -630,7 +679,7 @@ export default function SettingsPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {systemSettings.map((setting) => (
+                          {visibleSystemSettings.map((setting) => (
                             <tr
                               key={setting.id}
                               className="border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/60"
@@ -680,7 +729,7 @@ export default function SettingsPage() {
                               </td>
                             </tr>
                           ))}
-                          {systemSettings.length === 0 && (
+                          {visibleSystemSettings.length === 0 && (
                             <tr>
                               <td
                                 colSpan={5}

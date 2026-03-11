@@ -635,30 +635,44 @@ export async function apiResolveDispute(
     notes: String(notes ?? '').trim() || 'Resolution notes',
   }
   const bodyString = JSON.stringify(payload)
+  const url = `${TRANSACTION_BASE}/api/admin/transactions/resolve-dispute/${encodeURIComponent(transactionId)}`
 
   try {
-    const response = await fetch(`${TRANSACTION_BASE}/api/admin/transactions/resolve-dispute/${encodeURIComponent(transactionId)}`, {
+    const response = await fetch(url, {
       method: 'POST',
       headers,
       body: bodyString,
+      redirect: 'manual',
     })
 
     if (!response.ok) {
       const errorText = await response.text()
-      let errorMessage = `Failed to resolve dispute: ${response.status}`
+      let errorMessage = `Failed to resolve dispute: ${response.status} ${response.statusText}`
       try {
         const errorData = JSON.parse(errorText)
-        errorMessage = errorData.message || errorMessage
+        errorMessage = errorData.message || errorData.error || errorMessage
       } catch {
         errorMessage = errorText || errorMessage
       }
-      throw new Error(errorMessage)
+      throw new Error(
+        `${errorMessage}\n\nRequest:\nPOST ${url}\nBody: ${bodyString}\n\nResponse:\n${errorText || '(empty body)'}`
+      )
     }
 
     const result = await response.json()
     return result?.data || result
   } catch (error) {
-    console.error('Failed to resolve dispute:', error)
+    console.error('Failed to resolve dispute:', {
+      url,
+      body: payload,
+      error,
+    })
+    // Preserve the original message but make sure it's never the unhelpful "Failed to fetch" alone.
+    if (error instanceof TypeError) {
+      throw new Error(
+        `Failed to reach transactions service.\n\nRequest:\nPOST ${url}\nBody: ${bodyString}\n\nReason:\n${error.message}\n\nHint:\nThis is usually CORS/network/TLS or the server is unreachable.`
+      )
+    }
     throw error
   }
 }

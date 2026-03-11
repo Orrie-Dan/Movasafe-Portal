@@ -170,6 +170,9 @@ export default function TransactionDisputesPage() {
         description: `Dispute resolved with decision: ${resolveResolution}`,
       })
 
+      // Refresh resolved table so newly resolved disputes appear immediately
+      await loadResolved()
+
       // If COMPENSATE is selected, show force reverse dialog
       if (resolveResolution === 'COMPENSATE') {
         setResolveDisputeOpen(false)
@@ -268,25 +271,23 @@ export default function TransactionDisputesPage() {
   }, [])
 
   // Load resolved transaction disputes from /api/admin/transactions/all with status=RESOLVED_DISPUTE
-  useEffect(() => {
-    const loadResolved = async () => {
-      try {
-        setResolvedLoading(true)
-        const response = await apiGetAllTransactions({ status: 'RESOLVED_DISPUTE', limit: 100 })
-        const content = response.success && response.data?.content ? response.data.content : []
-        // Extra safety: only keep rows with status exactly RESOLVED_DISPUTE
-        setResolvedTransactions(
-          (content || []).filter((tx) => tx.status === 'RESOLVED_DISPUTE')
-        )
-      } catch (err) {
-        console.error('Failed to fetch resolved dispute transactions:', err)
-      } finally {
-        setResolvedLoading(false)
-      }
+  const loadResolved = useCallback(async () => {
+    try {
+      setResolvedLoading(true)
+      const response = await apiGetAllTransactions({ status: 'RESOLVED_DISPUTE', limit: 100 })
+      const content = response.success && response.data?.content ? response.data.content : []
+      // Extra safety: only keep rows with status exactly RESOLVED_DISPUTE
+      setResolvedTransactions((content || []).filter((tx) => tx.status === 'RESOLVED_DISPUTE'))
+    } catch (err) {
+      console.error('Failed to fetch resolved dispute transactions:', err)
+    } finally {
+      setResolvedLoading(false)
     }
-
-    loadResolved()
   }, [])
+
+  useEffect(() => {
+    loadResolved()
+  }, [loadResolved])
 
   const getUserNames = (userId: string) => {
     const user = users.get(userId)

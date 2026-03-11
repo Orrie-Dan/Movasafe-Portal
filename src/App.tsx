@@ -32,6 +32,7 @@ const AdminUsers = lazy(() => import('@/app/admin/users/page'))
 const AdminUsersCreate = lazy(() => import('@/app/admin/users/create/page'))
 const AdminUserDetail = lazy(() => import('@/app/admin/users/[id]/UserDetailClient'))
 const AdminWallets = lazy(() => import('@/app/admin/wallets/page'))
+const AdminLoans = lazy(() => import('@/app/admin/loans/page'))
 
 function PageFallback() {
   return (
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="users/create" element={<AdminUsersCreate />} />
             <Route path="users/:id" element={<AdminUserDetail />} />
             <Route path="wallets" element={<AdminWallets />} />
+            <Route path="loans" element={<AdminLoans />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
