@@ -20,6 +20,8 @@ type Filters = {
   entity: string
   actorType: string
   sourceService: string
+  startDate: string
+  endDate: string
 }
 
 function safeStr(v: unknown): string {
@@ -37,6 +39,8 @@ export default function ExternalAuditLogsPage() {
     entity: 'all',
     actorType: 'all',
     sourceService: 'all',
+    startDate: '',
+    endDate: '',
   })
 
   const loadLogs = async () => {
@@ -99,6 +103,8 @@ export default function ExternalAuditLogsPage() {
       if (filters.entity !== 'all' && l.entity !== filters.entity) return false
       if (filters.actorType !== 'all' && String(l.actorType || '') !== filters.actorType) return false
       if (filters.sourceService !== 'all' && String(l.sourceService || '') !== filters.sourceService) return false
+      if (filters.startDate && new Date(l.createdAt) < new Date(filters.startDate)) return false
+      if (filters.endDate && new Date(l.createdAt) > new Date(`${filters.endDate}T23:59:59`)) return false
 
       if (!q) return true
 
@@ -215,6 +221,30 @@ export default function ExternalAuditLogsPage() {
     },
   ]
 
+  const exportCsv = () => {
+    const headers = ['timestamp', 'action', 'entity', 'entityId', 'actor', 'actorType', 'sourceService', 'details']
+    const rows = filtered.map((l) => [
+      l.createdAt,
+      l.action,
+      l.entity,
+      l.entityId || '',
+      l.actorDisplayName || '',
+      l.actorType || '',
+      l.sourceService || '',
+      (l.details || '').replaceAll('"', '""'),
+    ])
+    const csv = [headers.join(','), ...rows.map((r) => r.map((v) => `"${String(v ?? '')}"`).join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="p-6 lg:p-8 space-y-6 bg-black min-h-screen">
       <PageHeader
@@ -295,6 +325,21 @@ export default function ExternalAuditLogsPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => setFilters((p) => ({ ...p, startDate: e.target.value }))}
+              className="w-full lg:w-44 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground"
+            />
+            <Input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => setFilters((p) => ({ ...p, endDate: e.target.value }))}
+              className="w-full lg:w-44 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground"
+            />
+            <Button onClick={exportCsv} variant="outline">
+              Export CSV
+            </Button>
           </div>
 
           <DataTable
@@ -318,7 +363,7 @@ export default function ExternalAuditLogsPage() {
               {selected.entity}
             </Badge>
           }
-          maxWidth="3xl"
+          maxWidth="4xl"
           sections={[
             {
               title: 'Event',

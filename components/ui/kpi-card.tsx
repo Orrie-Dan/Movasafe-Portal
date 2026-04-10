@@ -17,6 +17,7 @@ export interface KpiCardProps {
   subtitle?: string
   className?: string
   size?: 'sm' | 'md' | 'lg'
+  comparisonLabel?: string
 }
 
 export function KpiCard({
@@ -30,6 +31,7 @@ export function KpiCard({
   subtitle,
   className,
   size = 'md',
+  comparisonLabel = 'from last period',
 }: KpiCardProps) {
   const valueSize = size === 'lg' ? 'text-2xl' : size === 'md' ? 'text-2xl' : 'text-xl'
   const titleSize = size === 'lg' ? 'text-sm' : 'text-xs'
@@ -67,7 +69,7 @@ export function KpiCard({
         {change !== undefined && (
           <p className={cn('text-xs flex items-center gap-1 mt-auto', trendColor)}>
             <TrendIcon className="h-3 w-3" />
-            {Math.abs(change).toFixed(1)}% {change > 0 ? 'increase' : change < 0 ? 'decrease' : ''} from last period
+            {Math.abs(change).toFixed(1)}% {change > 0 ? 'increase' : change < 0 ? 'decrease' : ''} {comparisonLabel}
           </p>
         )}
       </CardContent>

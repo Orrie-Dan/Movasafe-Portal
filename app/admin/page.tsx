@@ -86,6 +86,7 @@ import {
   Tooltip, 
   Legend, 
   ResponsiveContainer,
+  ComposedChart,
   PieChart as RechartsPieChart,
   Pie,
   Cell,
@@ -110,9 +111,9 @@ export default function AdminDashboard() {
   }, [])
   const [authLoading, setAuthLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
-  const [timePeriod, setTimePeriod] = useState<'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom'>('month')
+  const [timePeriod, setTimePeriod] = useState<'all' | 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom'>('today')
   const [customDateRange, setCustomDateRange] = useState<{from: Date | null, to: Date | null}>({from: null, to: null})
-  const [filterExpanded, setFilterExpanded] = useState(false)
+  const [filterExpanded, setFilterExpanded] = useState(true)
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -124,6 +125,7 @@ export default function AdminDashboard() {
   const [escrows, setEscrows] = useState<any[]>([])
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [autoRefresh, setAutoRefresh] = useState(true)
+  const isCustomRangeComplete = timePeriod !== 'custom' || (!!customDateRange.from && !!customDateRange.to)
   
   // Log when filters change
   useEffect(() => {
@@ -295,13 +297,13 @@ export default function AdminDashboard() {
 
   // Use metrics from overviewData hook
   const stats = {
-    total: overviewData.totalTransactionsToday,
-    successful: overviewData.transactionsToday,
-    pending: overviewData.pendingTransactions,
-    failed: Math.round((overviewData.failedTransactionsPercent / 100) * overviewData.totalTransactionsToday),
-    totalVolume: overviewData.totalVolumeToday,
-    totalVolumeThisMonth: overviewData.totalVolumeThisMonth,
-    totalCommission: overviewData.revenueToday,
+    total: overviewData.totalTransactionsSelectedPeriod,
+    successful: overviewData.successfulTransactionsSelectedPeriod,
+    pending: overviewData.pendingTransactionsSelectedPeriod,
+    failed: Math.round((overviewData.failedTransactionsPercentSelectedPeriod / 100) * overviewData.totalTransactionsSelectedPeriod),
+    totalVolume: overviewData.totalVolumeSelectedPeriod,
+    totalVolumeSelectedPeriod: overviewData.totalVolumeSelectedPeriod,
+    totalCommission: overviewData.revenueSelectedPeriod,
     activeWallets: overviewData.newWalletsToday,
   }
 
@@ -310,10 +312,71 @@ export default function AdminDashboard() {
     activeUsers: overviewData.activeUsers24h,
     activeUsers7d: overviewData.activeUsers7d,
     walletBalance: overviewData.walletBalance,
-    transactionsToday: overviewData.transactionsToday,
+    transactionsSelectedPeriod: overviewData.successfulTransactionsSelectedPeriod,
     successRate: overviewData.successRate,
-    revenueToday: overviewData.revenueToday,
+    revenueSelectedPeriod: overviewData.revenueSelectedPeriod,
   }
+
+  const selectedPeriodLabel = useMemo(() => {
+    switch (timePeriod) {
+      case 'all':
+        return 'All time'
+      case 'today':
+        return 'Today'
+      case 'week':
+        return 'Last 7 days'
+      case 'month':
+        return 'This month'
+      case 'quarter':
+        return 'This quarter'
+      case 'year':
+        return 'This year'
+      case 'custom':
+        if (customDateRange.from && customDateRange.to) {
+          return `${format(customDateRange.from, 'MMM d, yyyy')} - ${format(customDateRange.to, 'MMM d, yyyy')}`
+        }
+        return 'Custom range'
+      default:
+        return 'Selected period'
+    }
+  }, [timePeriod, customDateRange])
+
+  const trendMeta = (value: number | null) => {
+    if (value === null || Number.isNaN(value)) {
+      return {
+        icon: Activity,
+        className: 'text-muted-foreground',
+        text: 'No prior baseline',
+      }
+    }
+    if (value > 0) {
+      return {
+        icon: TrendingUp,
+        className: 'text-green-500 dark:text-green-400',
+        text: `+${value.toFixed(1)}%`,
+      }
+    }
+    if (value < 0) {
+      return {
+        icon: TrendingDown,
+        className: 'text-red-500 dark:text-red-400',
+        text: `${value.toFixed(1)}%`,
+      }
+    }
+    return {
+      icon: Activity,
+      className: 'text-muted-foreground',
+      text: '0.0%',
+    }
+  }
+
+  const transactionsTrend = trendMeta(overviewData.transactionsChangePercent)
+  const volumeTrend = trendMeta(overviewData.volumeChangePercent)
+  const walletsTrend = trendMeta(overviewData.newWalletsTodayChangePercent)
+  const successRateChange =
+    overviewData.successRateChangePercent === null
+      ? null
+      : `${overviewData.successRateChangePercent >= 0 ? '+' : ''}${overviewData.successRateChangePercent.toFixed(1)}pp`
 
   // Use trend data from overviewData hook
   const transactionTrendData = useMemo(() => {
@@ -331,25 +394,25 @@ export default function AdminDashboard() {
     const alerts = []
     
     // High error rate alert
-    if (overviewData.failedTransactionsPercent > 10) {
+    if (overviewData.failedTransactionsPercentSelectedPeriod > 10) {
       alerts.push({
         id: 'high-error-rate',
         type: 'error' as const,
         title: 'High Error Rate',
-        description: `${overviewData.failedTransactionsPercent.toFixed(1)}% transaction failure rate`,
+        description: `${overviewData.failedTransactionsPercentSelectedPeriod.toFixed(1)}% transaction failure rate`,
         count: stats.failed,
         onAction: () => navigate('/admin/transactions?status=FAILED'),
       })
     }
 
     // Pending transactions alert
-    if (overviewData.pendingTransactions > 0) {
+    if (overviewData.pendingTransactionsSelectedPeriod > 0) {
       alerts.push({
         id: 'pending-transactions',
         type: 'warning' as const,
         title: 'Pending Transactions',
-        description: `${overviewData.pendingTransactions} transactions pending`,
-        count: overviewData.pendingTransactions,
+        description: `${overviewData.pendingTransactionsSelectedPeriod} transactions pending`,
+        count: overviewData.pendingTransactionsSelectedPeriod,
         onAction: () => navigate('/admin/transactions?status=PENDING'),
       })
     }
@@ -507,7 +570,7 @@ export default function AdminDashboard() {
                 <div>
                   <label className="text-sm text-slate-600 dark:text-slate-400 mb-2 block">Time Period</label>
                   <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg p-1">
-                    {(['today', 'week', 'month', 'quarter', 'year', 'custom'] as const).map((period) => (
+                    {(['all', 'today', 'week', 'month', 'quarter', 'year', 'custom'] as const).map((period) => (
                       <Button
                         key={period}
                         variant={timePeriod === period ? 'default' : 'ghost'}
@@ -565,6 +628,11 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
+                {timePeriod === 'custom' && !isCustomRangeComplete && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                    Select both start and end dates to apply the custom filter.
+                  </p>
+                )}
 
                 {/* Reset Button */}
                 <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -572,7 +640,7 @@ export default function AdminDashboard() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setTimePeriod('month')
+                      setTimePeriod('today')
                       setCustomDateRange({ from: null, to: null })
                     }}
                     className="border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -645,14 +713,14 @@ export default function AdminDashboard() {
               <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                 <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                   <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                  <CardTitle size="xs" className="z-10 relative">Total Transactions Today</CardTitle>
+                  <CardTitle size="xs" className="z-10 relative">Total Transactions ({selectedPeriodLabel})</CardTitle>
                   <FileText className="h-4 w-4 text-blue-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{overviewData.totalTransactionsToday.toLocaleString()}</div>
-                  <p className="text-xs text-green-400 flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    +15.3%
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{stats.total.toLocaleString()}</div>
+                  <p className={`text-xs flex items-center gap-1 ${transactionsTrend.className}`}>
+                    <transactionsTrend.icon className="h-3 w-3" />
+                    {transactionsTrend.text} vs previous period
                   </p>
                 </CardContent>
               </Card>
@@ -664,8 +732,10 @@ export default function AdminDashboard() {
                   <DollarSign className="h-4 w-4 text-green-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{formatCurrency(overviewData.totalVolumeToday)}</div>
-                  <p className="text-xs text-muted-foreground">Today / This Month: {formatCurrency(overviewData.totalVolumeThisMonth)}</p>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">{formatCurrency(stats.totalVolume)}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedPeriodLabel}: {formatCurrency(overviewData.totalVolumeSelectedPeriod)}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -677,7 +747,7 @@ export default function AdminDashboard() {
                 </div>
                 <CardContent>
                   <div className="text-2xl font-bold text-red-400 mb-1">
-                    {overviewData.failedTransactionsPercent.toFixed(1)}%
+                    {overviewData.failedTransactionsPercentSelectedPeriod.toFixed(1)}%
                   </div>
                   <p className="text-xs text-muted-foreground">{stats.failed} failed</p>
                 </CardContent>
@@ -723,33 +793,33 @@ export default function AdminDashboard() {
                     <div className="flex flex-col space-y-1.5 p-8 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
                       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
                       <CardTitle className="relative z-10 text-foreground">Total Transaction Volume</CardTitle>
-                      <CardDescription className="relative z-10 text-muted-foreground">Today / This Month</CardDescription>
+                      <CardDescription className="relative z-10 text-muted-foreground">{selectedPeriodLabel}</CardDescription>
                     </div>
                     <CardContent className="p-8">
-                      <div className="text-4xl font-bold text-foreground mb-2">{formatCurrency(overviewData.totalVolumeToday)}</div>
-                      <p className="text-sm text-muted-foreground mb-2">This Month: {formatCurrency(overviewData.totalVolumeThisMonth)}</p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <TrendingUp className="h-4 w-4 text-green-500 dark:text-green-400" />
-                        <span className="text-green-500 dark:text-green-400">+8.3%</span> vs last month
+                      <div className="text-4xl font-bold text-foreground mb-2">{formatCurrency(overviewData.totalVolumeSelectedPeriod)}</div>
+                      <p className="text-sm text-muted-foreground mb-2">{selectedPeriodLabel}: {formatCurrency(overviewData.totalVolumeSelectedPeriod)}</p>
+                      <p className={`text-sm flex items-center gap-1 ${volumeTrend.className}`}>
+                        <volumeTrend.icon className="h-4 w-4" />
+                        <span className={volumeTrend.className}>{volumeTrend.text}</span> vs previous period
                       </p>
                     </CardContent>
                   </Card>
 
-                  {/* Large KPI Card - Transactions Today */}
+                  {/* Large KPI Card - Transactions in Selected Period */}
                   <Card 
                     className="bg-white dark:bg-black border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer"
                     onClick={() => navigate('/admin/transactions')}
                   >
                     <div className="flex flex-col space-y-1.5 p-8 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
                       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                      <CardTitle className="relative z-10 text-foreground">Transactions Today</CardTitle>
-                      <CardDescription className="relative z-10 text-muted-foreground">Successful transactions</CardDescription>
+                      <CardTitle className="relative z-10 text-foreground">Transactions ({selectedPeriodLabel})</CardTitle>
+                      <CardDescription className="relative z-10 text-muted-foreground">Successful transactions in selected period</CardDescription>
                     </div>
                     <CardContent className="p-8">
-                      <div className="text-4xl font-bold text-foreground mb-2">{fintechKPIs.transactionsToday.toLocaleString()}</div>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <TrendingUp className="h-4 w-4 text-green-500 dark:text-green-400" />
-                        <span className="text-green-500 dark:text-green-400">+15.3%</span> vs yesterday
+                      <div className="text-4xl font-bold text-foreground mb-2">{fintechKPIs.transactionsSelectedPeriod.toLocaleString()}</div>
+                      <p className={`text-sm flex items-center gap-1 ${transactionsTrend.className}`}>
+                        <transactionsTrend.icon className="h-4 w-4" />
+                        <span className={transactionsTrend.className}>{transactionsTrend.text}</span> vs previous period
                       </p>
                     </CardContent>
                   </Card>
@@ -765,7 +835,13 @@ export default function AdminDashboard() {
                       <div className="text-4xl font-bold text-foreground mb-2">{fintechKPIs.successRate.toFixed(1)}%</div>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
                         <CheckCircle2 className="h-4 w-4 text-green-500 dark:text-green-400" />
-                        <span className="text-green-500 dark:text-green-400">+2.1%</span> improvement
+                        {successRateChange === null ? (
+                          <span className="text-muted-foreground">No prior baseline</span>
+                        ) : (
+                          <span className={overviewData.successRateChangePercent! >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}>
+                            {successRateChange} vs previous period
+                          </span>
+                        )}
                       </p>
                     </CardContent>
                   </Card>
@@ -822,11 +898,11 @@ export default function AdminDashboard() {
               >
                 <div className="flex flex-row items-center justify-between p-6 pb-2 border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black relative">
                   <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-                  <CardTitle size="xs" className="z-10 relative text-foreground">Revenue Today</CardTitle>
+                  <CardTitle size="xs" className="z-10 relative text-foreground">Revenue ({selectedPeriodLabel})</CardTitle>
                   <DollarSign className="h-4 w-4 text-green-500 dark:text-green-400 relative z-10" />
                 </div>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground mb-1">{formatCurrency(overviewData.revenueToday)}</div>
+                  <div className="text-2xl font-bold text-foreground mb-1">{formatCurrency(overviewData.revenueSelectedPeriod)}</div>
                   <p className="text-xs text-muted-foreground">Commission earned</p>
                 </CardContent>
               </Card>
@@ -863,9 +939,9 @@ export default function AdminDashboard() {
                 </div>
                 <CardContent>
                   <div className="text-2xl font-bold text-foreground mb-1">{overviewData.newWalletsToday.toLocaleString()}</div>
-                  <p className="text-xs text-green-500 dark:text-green-400 flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    +5.2%
+                  <p className={`text-xs flex items-center gap-1 ${walletsTrend.className}`}>
+                    <walletsTrend.icon className="h-3 w-3" />
+                    {walletsTrend.text} vs yesterday
                   </p>
                 </CardContent>
               </Card>
@@ -1005,7 +1081,7 @@ export default function AdminDashboard() {
               <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
                 <CardTitle className="relative z-10">Transaction Volume Trend</CardTitle>
-                <CardDescription className="relative z-10">Last 7 days</CardDescription>
+                <CardDescription className="relative z-10">{overviewData.chartPeriodLabel} - volume and transaction activity</CardDescription>
               </div>
               <CardContent>
                 {overviewData.loading ? (
@@ -1014,8 +1090,15 @@ export default function AdminDashboard() {
                   <EnhancedLineChart
                     data={overviewData.volumeTrend7d}
                     dataKeys={[
-                      { key: 'volume', name: 'Volume', color: '#3b82f6' },
+                      { key: 'volume', name: 'Volume (RWF)', color: '#3b82f6' },
+                      { key: 'transactionCount', name: 'Transactions', color: '#10b981' },
                     ]}
+                    tooltipFormatter={(value, name) => {
+                      if (name === 'Volume (RWF)') {
+                        return [formatCurrency(Number(value) || 0), name]
+                      }
+                      return [String(Math.round(Number(value) || 0)), name]
+                    }}
                     xAxisKey="date"
                     height={300}
                   />
@@ -1027,7 +1110,7 @@ export default function AdminDashboard() {
               <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
                 <CardTitle className="relative z-10">Error Rate Trend</CardTitle>
-                <CardDescription className="relative z-10">Last 7 days</CardDescription>
+                <CardDescription className="relative z-10">{overviewData.chartPeriodLabel}</CardDescription>
               </div>
               <CardContent>
                 {overviewData.loading ? (
@@ -1056,17 +1139,21 @@ export default function AdminDashboard() {
               <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
                 <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
                 <CardTitle className="relative z-10">Disputes vs Transactions Trend</CardTitle>
-                <CardDescription className="relative z-10">Shows whether disputes are growing faster than usage (early warning for vendor quality, fraud, or UX issues)</CardDescription>
+                <CardDescription className="relative z-10">
+                  Transaction activity vs dispute rate (early warning for trust and risk shifts)
+                  {overviewData.disputesDataWarning ? ` - ${overviewData.disputesDataWarning}` : ''}
+                </CardDescription>
               </div>
               <CardContent className="pt-6">
                 {overviewData.loading ? (
                   <Skeleton className="h-[400px] w-full" />
                 ) : (
                   <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={overviewData.volumeTrend7d || []}>
+                    <ComposedChart data={overviewData.volumeTrend7d || []}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="date" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <YAxis yAxisId="left" stroke="#94a3b8" />
+                      <YAxis yAxisId="right" orientation="right" stroke="#f97316" />
                       <Tooltip 
                         contentStyle={{ 
                           backgroundColor: '#1e293b', 
@@ -1074,25 +1161,31 @@ export default function AdminDashboard() {
                           borderRadius: '8px'
                         }}
                         labelStyle={{ color: '#fff' }}
+                        formatter={(value, name) => {
+                          if (name === 'Dispute Rate (%)') {
+                            return [`${(Number(value) || 0).toFixed(2)}%`, name]
+                          }
+                          return [String(Math.round(Number(value) || 0)), name]
+                        }}
                       />
                       <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="volume" 
-                        stroke="#3b82f6" 
-                        name="Total Transactions"
-                        strokeWidth={2}
-                        dot={{ fill: '#3b82f6', r: 4 }}
+                      <Bar
+                        yAxisId="left"
+                        dataKey="transactionCount"
+                        fill="#3b82f6"
+                        name="Transactions"
+                        radius={[4, 4, 0, 0]}
                       />
                       <Line 
+                        yAxisId="right"
                         type="monotone" 
-                        dataKey="disputes" 
-                        stroke="#ef4444" 
-                        name="Disputed Transactions"
+                        dataKey="disputeRate"
+                        stroke="#f97316" 
+                        name="Dispute Rate (%)"
                         strokeWidth={2}
-                        dot={{ fill: '#ef4444', r: 4 }}
+                        dot={{ fill: '#f97316', r: 3 }}
                       />
-                    </LineChart>
+                    </ComposedChart>
                   </ResponsiveContainer>
                 )}
               </CardContent>

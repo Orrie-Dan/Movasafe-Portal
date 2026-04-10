@@ -30,6 +30,8 @@ import {
   Eye,
   RotateCcw,
   AlertCircle,
+  ShieldAlert,
+  CheckCircle2,
 } from 'lucide-react'
 import type { SortingState, PaginationState } from '@/hooks/useTransactions'
 import type { User } from '@/lib/types/user'
@@ -47,6 +49,9 @@ interface TransactionsTableProps {
   onRowClick: (transaction: Transaction) => void
   onStandardReversal?: (transaction: Transaction) => void
   onForceReversal?: (transaction: Transaction) => void
+  onBlock?: (transaction: Transaction) => void
+  onFlag?: (transaction: Transaction) => void
+  onApprove?: (transaction: Transaction) => void
 }
 
 export function TransactionsTable({
@@ -62,6 +67,9 @@ export function TransactionsTable({
   onRowClick,
   onStandardReversal,
   onForceReversal,
+  onBlock,
+  onFlag,
+  onApprove,
 }: TransactionsTableProps) {
   const [users, setUsers] = useState<Map<string, User>>(new Map())
   const [usersLoading, setUsersLoading] = useState(true)
@@ -295,6 +303,33 @@ export function TransactionsTable({
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()} className="whitespace-nowrap">
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onFlag?.(transaction)}
+                          className="h-8 px-2 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10"
+                          title="Flag transaction"
+                        >
+                          <AlertCircle className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onBlock?.(transaction)}
+                          className="h-8 px-2 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                          title="Block transaction"
+                        >
+                          <ShieldAlert className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onApprove?.(transaction)}
+                          className="h-8 px-2 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10"
+                          title="Approve transaction"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

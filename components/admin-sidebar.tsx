@@ -35,9 +35,10 @@ interface AdminSidebarProps {
   userRole?: string
   collapsed?: boolean
   onCollapseChange?: (collapsed: boolean) => void
+  criticalAlertsCount?: number
 }
 
-export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 'admin', collapsed: externalCollapsed, onCollapseChange }: AdminSidebarProps) {
+export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 'admin', collapsed: externalCollapsed, onCollapseChange, criticalAlertsCount = 0 }: AdminSidebarProps) {
   const { pathname } = useLocation()
   const [internalCollapsed, setInternalCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -89,6 +90,8 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
   ]
 
   const riskComplianceSection = [
+    { href: '/admin/alerts', label: 'Live Alerts', icon: Bell, badge: criticalAlertsCount > 0 ? criticalAlertsCount : null },
+    { href: '/admin/review-queue', label: 'Review Queue', icon: AlertTriangle, badge: null },
     { href: '/admin/compliance-kyc', label: 'Compliance & KYC', icon: CheckCircle2, badge: null },
   ]
 

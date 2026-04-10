@@ -30,6 +30,7 @@ import { BarChart3, AlertCircle, DollarSign, Clock, Scale } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { apiGetDisputedEscrows } from '@/lib/api/escrows'
 import type { EscrowTransaction } from '@/lib/types/escrows'
+import { buildTimeBuckets, getPeriodRange, type PeriodKey } from '@/lib/utils/period'
 import { MetricCardEnhanced } from '@/components/dashboard/metrics/MetricCardEnhanced'
 import {
   ResponsiveContainer,
@@ -194,32 +195,50 @@ export default function AnalyticsPage() {
       'Resolved Disputes': number
     }> = []
 
-    const now = new Date()
+    const periodKey: PeriodKey =
+      filters.dateRange === 'today'
+        ? 'today'
+        : filters.dateRange === 'week'
+        ? 'week'
+        : filters.dateRange === 'month'
+        ? 'month'
+        : filters.dateRange === 'quarter'
+        ? 'quarter'
+        : filters.dateRange === 'year'
+        ? 'year'
+        : filters.dateRange === 'all'
+        ? 'all'
+        : 'custom'
+    const periodRange = getPeriodRange({
+      period: periodKey,
+      customFrom: filters.customStartDate ? new Date(filters.customStartDate) : null,
+      customTo: filters.customEndDate ? new Date(filters.customEndDate) : null,
+    })
+    const buckets = buildTimeBuckets(periodRange, periodKey)
+    const useMonthly = periodKey === 'all'
 
-    for (let i = 11; i >= 0; i--) {
-      const monthStart = new Date(now)
-      monthStart.setMonth(now.getMonth() - i, 1)
-      monthStart.setHours(0, 0, 0, 0)
-
-      const monthEnd = new Date(monthStart)
-      monthEnd.setMonth(monthStart.getMonth() + 1)
-
-      const monthLabel = monthStart.toLocaleString('en-US', { month: 'short', year: 'numeric' })
+    for (const bucketStart of buckets) {
+      const bucketEnd = useMonthly
+        ? new Date(bucketStart.getFullYear(), bucketStart.getMonth() + 1, 1)
+        : new Date(bucketStart.getFullYear(), bucketStart.getMonth(), bucketStart.getDate() + 1)
+      const monthLabel = bucketStart.toLocaleString('en-US', { month: 'short', year: 'numeric' })
 
       const newDisputes = disputedEscrows.filter((e) => {
         const created = new Date(e.createdAt)
-        return created >= monthStart && created < monthEnd && (e.status === 'DISPUTED' || (e as any).escrowStatus === 'DISPUTED')
+        return created >= bucketStart && created < bucketEnd && (e.status === 'DISPUTED' || (e as any).escrowStatus === 'DISPUTED')
       }).length
 
       const resolvedDisputes = disputedEscrows.filter((e) => {
         const resolvedAt = (e as any).disputeResolvedAt
         if (!resolvedAt) return false
         const resolvedDate = new Date(resolvedAt as string)
-        return resolvedDate >= monthStart && resolvedDate < monthEnd
+        return resolvedDate >= bucketStart && resolvedDate < bucketEnd
       }).length
 
       monthlyData.push({
-        month: monthStart.toLocaleString('en-US', { month: 'short' }),
+        month: useMonthly
+          ? bucketStart.toLocaleString('en-US', { month: 'short' })
+          : bucketStart.toLocaleString('en-US', { month: 'short', day: 'numeric' }),
         monthYear: monthLabel,
         'New Disputes': newDisputes,
         'Resolved Disputes': resolvedDisputes,
@@ -227,7 +246,7 @@ export default function AnalyticsPage() {
     }
 
     return monthlyData
-  }, [disputedEscrows])
+  }, [disputedEscrows, filters.dateRange, filters.customStartDate, filters.customEndDate])
 
   // Compute all analytics data
   const coreTrendsData = useMemo(

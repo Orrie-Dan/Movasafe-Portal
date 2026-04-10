@@ -911,17 +911,17 @@ export default function WalletsPage() {
                     placeholder="Search wallets..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500"
                   />
                 </div>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Status</Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="frozen">Frozen</SelectItem>
@@ -932,10 +932,10 @@ export default function WalletsPage() {
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Currency</Label>
                 <Select value={currencyFilter} onValueChange={setCurrencyFilter}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue placeholder="Currency" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All</SelectItem>
                     <SelectItem value="RWF">RWF</SelectItem>
                     <SelectItem value="USD">USD</SelectItem>
@@ -946,10 +946,10 @@ export default function WalletsPage() {
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Restriction Tier</Label>
                 <Select value={restrictionTierFilter} onValueChange={setRestrictionTierFilter}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue placeholder="Restriction Tier" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All Tiers</SelectItem>
                     <SelectItem value="NONE">None</SelectItem>
                     <SelectItem value="LIMITED">Limited</SelectItem>
@@ -961,10 +961,10 @@ export default function WalletsPage() {
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Balance Range</Label>
                 <Select value={balanceRangeFilter} onValueChange={setBalanceRangeFilter}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue placeholder="Balance" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All Ranges</SelectItem>
                     <SelectItem value="low">Low (&lt;100K)</SelectItem>
                     <SelectItem value="medium">Medium (100K-1M)</SelectItem>
@@ -1093,7 +1093,7 @@ export default function WalletsPage() {
                   completed: 'text-green-400',
                   pending: 'text-yellow-400',
                   failed: 'text-red-400',
-                  cancelled: 'text-gray-400',
+                  cancelled: 'text-slate-400',
                 }
 
                 return (
@@ -1229,7 +1229,7 @@ export default function WalletsPage() {
               {selectedWallet.status.charAt(0).toUpperCase() + selectedWallet.status.slice(1)}
             </Badge>
           }
-          maxWidth="3xl"
+          maxWidth="4xl"
           sections={[
             {
               title: 'Wallet',

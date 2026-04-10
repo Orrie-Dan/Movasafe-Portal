@@ -524,7 +524,7 @@ export default function ComplianceKYCPage() {
               {selectedUser.complianceStatus}
             </Badge>
           }
-          maxWidth="3xl"
+          maxWidth="4xl"
           sections={[
             {
               title: 'User Info',

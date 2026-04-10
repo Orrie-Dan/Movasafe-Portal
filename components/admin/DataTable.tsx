@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Table,
   TableBody,
@@ -18,6 +18,7 @@ export interface Column<T> {
   key: string
   header: string
   accessor?: (row: T) => React.ReactNode
+  sortValue?: (row: T) => string | number | Date | null | undefined
   sortable?: boolean
   className?: string
 }
@@ -52,14 +53,48 @@ export function DataTable<T extends Record<string, any>>({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [currentPage, setCurrentPage] = useState(1)
 
+  const toSortableValue = (value: unknown): string | number => {
+    if (value == null) return ''
+    if (typeof value === 'number') return Number.isNaN(value) ? 0 : value
+    if (value instanceof Date) return value.getTime()
+    if (typeof value === 'boolean') return value ? 1 : 0
+    if (typeof value === 'string') {
+      // Parse ISO-like date strings so date columns sort chronologically.
+      const parsed = Date.parse(value)
+      if (!Number.isNaN(parsed) && /[-:/T]/.test(value)) return parsed
+      return value.toLowerCase()
+    }
+    return String(value).toLowerCase()
+  }
+
+  const getColumnValue = (row: T, column: Column<T>): unknown => {
+    if (column.sortValue) return column.sortValue(row)
+    const raw = row[column.key]
+    if (raw != null) return raw
+    const rendered = column.accessor?.(row)
+    if (
+      typeof rendered === 'string' ||
+      typeof rendered === 'number' ||
+      rendered instanceof Date ||
+      typeof rendered === 'boolean'
+    ) {
+      return rendered
+    }
+    if (React.isValidElement(rendered)) {
+      const child = (rendered as React.ReactElement<{ children?: React.ReactNode }>).props?.children
+      if (typeof child === 'string' || typeof child === 'number') return child
+    }
+    return ''
+  }
+
   // Filter data
   const filteredData = useMemo(() => {
     if (!searchQuery) return data
     
     return data.filter((row) =>
       columns.some((col) => {
-        const value = col.accessor ? col.accessor(row) : row[col.key]
-        return String(value).toLowerCase().includes(searchQuery.toLowerCase())
+        const value = getColumnValue(row, col)
+        return String(value ?? '').toLowerCase().includes(searchQuery.toLowerCase())
       })
     )
   }, [data, searchQuery, columns])
@@ -72,11 +107,11 @@ export function DataTable<T extends Record<string, any>>({
     if (!column || !column.sortable) return filteredData
     
     return [...filteredData].sort((a, b) => {
-      const aValue = column.accessor ? column.accessor(a) : a[sortColumn]
-      const bValue = column.accessor ? column.accessor(b) : b[sortColumn]
-      
-      const comparison = String(aValue).localeCompare(String(bValue))
-      return sortDirection === 'asc' ? comparison : -comparison
+      const aValue = toSortableValue(getColumnValue(a, column))
+      const bValue = toSortableValue(getColumnValue(b, column))
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
     })
   }, [filteredData, sortColumn, sortDirection, columns])
 

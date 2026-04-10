@@ -302,7 +302,7 @@ export default function EscrowsPage() {
               {selectedEscrow.status}
             </Badge>
           }
-          maxWidth="3xl"
+          maxWidth="4xl"
           sections={[
             {
               title: 'Escrow',

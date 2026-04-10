@@ -1,21 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import { apiGetAllTransactions, type Transaction, TransactionType, TransactionStatus } from '@/lib/api'
-import { format, startOfDay, endOfDay, subDays, parseISO } from 'date-fns'
+import { startOfDay, endOfDay, parseISO } from 'date-fns'
 import { toast } from '@/hooks/use-toast'
 import type { TransactionFilters } from '@/lib/types/transactions'
+import { getPeriodRange, filterByDateRange } from '@/lib/utils/period'
 
 export interface TransactionUIFilters {
-  // Search filters
-  transactionId: string
+  // Search fields
+  firstName: string
+  lastName: string
   transactionReference: string
-  // User filters
   userId: string
-  userName: string
   userPhoneNumber: string
-  userNationalId: string
-  walletId: string
   // Date filters
-  dateRange: 'today' | '7d' | '30d' | 'custom' | 'all'
+  dateRange: 'all' | 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom'
   customStartDate: string
   customEndDate: string
   // Transaction filters
@@ -29,14 +27,12 @@ export interface TransactionUIFilters {
 }
 
 const DEFAULT_FILTERS: TransactionUIFilters = {
-  transactionId: '',
+  firstName: '',
+  lastName: '',
   transactionReference: '',
   userId: '',
-  userName: '',
   userPhoneNumber: '',
-  userNationalId: '',
-  walletId: '',
-  dateRange: '7d',
+  dateRange: 'today',
   customStartDate: '',
   customEndDate: '',
   status: 'all',
@@ -74,24 +70,37 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
     page: 1,
     pageSize: 10, // Default limit per API
   })
+  const [debouncedSearchFields, setDebouncedSearchFields] = useState({
+    firstName: '',
+    lastName: '',
+    transactionReference: '',
+    userPhoneNumber: '',
+  })
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearchFields({
+        firstName: filters.firstName.trim(),
+        lastName: filters.lastName.trim(),
+        transactionReference: filters.transactionReference.trim(),
+        userPhoneNumber: filters.userPhoneNumber.trim(),
+      })
+    }, 300)
+    return () => clearTimeout(t)
+  }, [
+    filters.firstName,
+    filters.lastName,
+    filters.transactionReference,
+    filters.userPhoneNumber,
+  ])
 
   const getDateRange = () => {
-    const now = new Date()
-    let startDate: Date | undefined
-    let endDate = endOfDay(now)
-
-    if (filters.dateRange === 'today') {
-      startDate = startOfDay(now)
-    } else if (filters.dateRange === '7d') {
-      startDate = startOfDay(subDays(now, 7))
-    } else if (filters.dateRange === '30d') {
-      startDate = startOfDay(subDays(now, 30))
-    } else if (filters.dateRange === 'custom' && filters.customStartDate && filters.customEndDate) {
-      startDate = startOfDay(parseISO(filters.customStartDate))
-      endDate = endOfDay(parseISO(filters.customEndDate))
-    }
-
-    return { startDate, endDate }
+    const period = getPeriodRange({
+      period: filters.dateRange,
+      customFrom: filters.customStartDate ? parseISO(filters.customStartDate) : null,
+      customTo: filters.customEndDate ? parseISO(filters.customEndDate) : null,
+    })
+    return { startDate: period.start, endDate: period.end }
   }
 
   const fetchTransactions = async () => {
@@ -107,16 +116,19 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
         sortBy: sorting.column || 'createdAt', // Default: createdAt
         order: (sorting.direction.toUpperCase() as 'ASC' | 'DESC') || 'DESC', // Default: DESC
       }
+      const needsWideFetch =
+        !!debouncedSearchFields.firstName ||
+        !!debouncedSearchFields.lastName ||
+        !!debouncedSearchFields.transactionReference ||
+        !!debouncedSearchFields.userPhoneNumber
+      if (needsWideFetch) {
+        apiFilters.page = 0
+        apiFilters.limit = 10000
+      }
 
       // User filters - only add if not empty (trim whitespace)
-      if (filters.userName?.trim()) {
-        apiFilters.userName = filters.userName.trim()
-      }
       if (filters.userPhoneNumber?.trim()) {
         apiFilters.userPhoneNumber = filters.userPhoneNumber.trim()
-      }
-      if (filters.userNationalId?.trim()) {
-        apiFilters.userNationalId = filters.userNationalId.trim()
       }
       if (filters.userId?.trim()) {
         apiFilters.userId = filters.userId.trim()
@@ -136,12 +148,9 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
         apiFilters.descriptions = filters.descriptions
       }
       
-      // Map Transaction ID filter to transactionReference API param
-      // Priority: transactionReference > transactionId
+      // Transaction reference filter (API-first)
       if (filters.transactionReference?.trim()) {
         apiFilters.transactionReference = filters.transactionReference.trim()
-      } else if (filters.transactionId?.trim()) {
-        apiFilters.transactionReference = filters.transactionId.trim()
       }
 
       // Amount filters - only add if valid number
@@ -158,24 +167,8 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
         }
       }
 
-      // Date filters - apply based on dateRange setting
-      // If dateRange is 'all', don't send date filters
-      // If dateRange is 'custom', use customStartDate and customEndDate
-      // Otherwise use the calculated startDate and endDate
-      if (filters.dateRange === 'custom') {
-        // Use custom dates if both are provided
-        if (filters.customStartDate && filters.customEndDate) {
-          try {
-            const customStart = parseISO(filters.customStartDate)
-            const customEnd = parseISO(filters.customEndDate)
-            apiFilters.startDate = startOfDay(customStart).toISOString()
-            apiFilters.endDate = endOfDay(customEnd).toISOString()
-          } catch (error) {
-            console.error('Invalid custom date format:', error)
-          }
-        }
-      } else if (filters.dateRange !== 'all' && startDate && endDate) {
-        // Use calculated date range (today, 7d, 30d)
+      // Date filters - for all time we intentionally do not send dates.
+      if (filters.dateRange !== 'all' && startDate && endDate) {
         apiFilters.startDate = startDate.toISOString()
         apiFilters.endDate = endDate.toISOString()
       }
@@ -189,7 +182,23 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
       
       // Extract transactions from paginated response
       if (response.success && response.data?.content) {
-        setTransactions(response.data.content)
+        const apiRows = response.data.content
+        // Apply a client-side date fallback when backend ignores date params.
+        const dateSafeRows =
+          filters.dateRange === 'all'
+            ? apiRows
+            : filterByDateRange(
+                apiRows,
+                (tx) => {
+                  try {
+                    return parseISO(tx.createdAt)
+                  } catch {
+                    return null
+                  }
+                },
+                { start: startDate, end: endDate, label: 'Selected range' }
+              )
+        setTransactions(dateSafeRows)
         // Update total elements if available from API
         if (response.data.totalElements !== undefined) {
           setTotalElements(response.data.totalElements)
@@ -248,11 +257,14 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
     // String filters - use JSON.stringify to detect array changes
     JSON.stringify(filters.descriptions),
     // Primitive filters
+    debouncedSearchFields.firstName,
+    debouncedSearchFields.lastName,
+    debouncedSearchFields.transactionReference,
+    debouncedSearchFields.userPhoneNumber,
     filters.userId,
-    filters.userName,
+    filters.firstName,
+    filters.lastName,
     filters.userPhoneNumber,
-    filters.userNationalId,
-    filters.transactionId,
     filters.transactionReference,
     filters.transactionType,
     filters.status,
@@ -262,28 +274,49 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
     filters.dateRange,
     filters.customStartDate,
     filters.customEndDate,
-    filters.walletId, // Client-side filter
     pagination.page,
     pagination.pageSize,
     sorting.column,
     sorting.direction,
   ])
 
-    // Client-side filtering only for wallet ID (not supported by API)
-    // Transaction ID is now handled via API transactionReference param
+    // Client-side filtering fallback for respective search boxes.
     const filteredTransactions = useMemo(() => {
       let filtered = transactions
 
-      // Wallet ID search (client-side only - API doesn't support this filter)
-      if (filters.walletId) {
+      if (debouncedSearchFields.firstName) {
+        const q = debouncedSearchFields.firstName.toLowerCase()
+        filtered = filtered.filter((t) => {
+          const parts = (t.userName || '').trim().split(/\s+/)
+          const first = (parts[0] || '').toLowerCase()
+          return first.includes(q)
+        })
+      }
+
+      if (debouncedSearchFields.lastName) {
+        const q = debouncedSearchFields.lastName.toLowerCase()
+        filtered = filtered.filter((t) => {
+          const parts = (t.userName || '').trim().split(/\s+/)
+          const last = parts.slice(1).join(' ').toLowerCase()
+          return last.includes(q)
+        })
+      }
+
+      if (debouncedSearchFields.userPhoneNumber) {
+        const q = debouncedSearchFields.userPhoneNumber.toLowerCase()
+        filtered = filtered.filter((t) => (t.userPhoneNumber || '').toLowerCase().includes(q))
+      }
+
+      const txRefSearch = debouncedSearchFields.transactionReference.toLowerCase()
+      if (txRefSearch) {
         filtered = filtered.filter((t) =>
-          t.fromDetails?.accountNumber?.toLowerCase().includes(filters.walletId.toLowerCase()) ||
-          t.toDetails?.accountNumber?.toLowerCase().includes(filters.walletId.toLowerCase())
+          t.internalReference?.toLowerCase().includes(txRefSearch) ||
+          t.id?.toLowerCase().includes(txRefSearch)
         )
       }
 
       return filtered
-    }, [transactions, filters])
+    }, [transactions, debouncedSearchFields])
 
   // Sort transactions
   const sortedTransactions = useMemo(() => {
@@ -332,23 +365,33 @@ export function useTransactions(initialFilters?: Partial<TransactionUIFilters>) 
   // But we still need to handle client-side filtering
   const paginatedTransactions = useMemo(() => {
     // If we have client-side filters applied, paginate the filtered results
-    if (filters.walletId) {
+    const hasClientSideSearch =
+      !!debouncedSearchFields.firstName ||
+      !!debouncedSearchFields.lastName ||
+      !!debouncedSearchFields.transactionReference ||
+      !!debouncedSearchFields.userPhoneNumber
+    if (hasClientSideSearch) {
       const startIndex = (pagination.page - 1) * pagination.pageSize
       return sortedTransactions.slice(startIndex, startIndex + pagination.pageSize)
     }
     // Otherwise, API already paginated, just sort
     return sortedTransactions
-  }, [sortedTransactions, pagination, filters.walletId])
+  }, [sortedTransactions, pagination, debouncedSearchFields])
 
   // Calculate total pages based on filtered results
   const totalPages = useMemo(() => {
-    if (filters.walletId) {
-      // Client-side filtering for wallet ID
+    const hasClientSideSearch =
+      !!debouncedSearchFields.firstName ||
+      !!debouncedSearchFields.lastName ||
+      !!debouncedSearchFields.transactionReference ||
+      !!debouncedSearchFields.userPhoneNumber
+    if (hasClientSideSearch) {
+      // Client-side pagination for active search fields
       return Math.ceil(sortedTransactions.length / pagination.pageSize)
     }
     // Use API totalElements for server-side pagination
     return Math.ceil(totalElements / pagination.pageSize) || 1
-  }, [sortedTransactions.length, pagination, filters.walletId, totalElements])
+  }, [sortedTransactions.length, pagination, debouncedSearchFields, totalElements])
 
   const handleSort = (column: string) => {
     if (sorting.column === column) {

@@ -21,8 +21,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { format, parseISO } from 'date-fns'
 import { FileText, RefreshCw, RotateCcw, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+import { RISK_ACTION_REASONS, buildRiskAuditPayload, validateRiskReason } from '@/lib/utils/risk-actions'
+import type { RiskActionType } from '@/lib/types/risk'
 
 export default function TransactionsPage() {
   const {
@@ -56,6 +60,19 @@ export default function TransactionsPage() {
   const [reversalReason, setReversalReason] = useState('')
   const [reversalNotes, setReversalNotes] = useState('')
   const [reversalLoading, setReversalLoading] = useState(false)
+  const [riskActionDialog, setRiskActionDialog] = useState<{
+    open: boolean
+    actionType: RiskActionType | null
+    transaction: Transaction | null
+    reasonCode: string
+    reasonText: string
+  }>({
+    open: false,
+    actionType: null,
+    transaction: null,
+    reasonCode: '',
+    reasonText: '',
+  })
 
   const handleViewTransaction = async (transaction: Transaction) => {
     try {
@@ -151,6 +168,52 @@ export default function TransactionsPage() {
 
   const handlePageChange = (page: number) => {
     setPagination({ ...pagination, page })
+  }
+
+  const openRiskActionDialog = (actionType: RiskActionType, transaction: Transaction) => {
+    setRiskActionDialog({
+      open: true,
+      actionType,
+      transaction,
+      reasonCode: '',
+      reasonText: '',
+    })
+  }
+
+  const submitRiskAction = async () => {
+    if (!riskActionDialog.actionType || !riskActionDialog.transaction) return
+    const validationError = validateRiskReason(
+      riskActionDialog.actionType,
+      riskActionDialog.reasonCode,
+      riskActionDialog.reasonText
+    )
+    if (validationError) {
+      toast({ title: 'Missing reason', description: validationError, variant: 'destructive' })
+      return
+    }
+
+    const payload = buildRiskAuditPayload({
+      actionType: riskActionDialog.actionType,
+      targetType: 'transaction',
+      targetId: riskActionDialog.transaction.id,
+      reasonCode: riskActionDialog.reasonCode,
+      reasonText: riskActionDialog.reasonText,
+      beforeState: { status: riskActionDialog.transaction.status },
+      afterState: { status: riskActionDialog.actionType === 'approve' ? 'APPROVED_MANUALLY' : 'REVIEW_REQUIRED' },
+    })
+
+    console.log('[Risk Audit Payload]', payload)
+    toast({
+      title: 'Action recorded',
+      description: `${riskActionDialog.actionType.toUpperCase()} saved with mandatory reason.`,
+    })
+    setRiskActionDialog({
+      open: false,
+      actionType: null,
+      transaction: null,
+      reasonCode: '',
+      reasonText: '',
+    })
   }
 
   const handleStandardReversal = async () => {
@@ -427,6 +490,9 @@ export default function TransactionsPage() {
           setReversalTransaction(transaction)
           setForceReversalOpen(true)
         }}
+        onBlock={(transaction) => openRiskActionDialog('block', transaction)}
+        onFlag={(transaction) => openRiskActionDialog('flag', transaction)}
+        onApprove={(transaction) => openRiskActionDialog('approve', transaction)}
       />
 
       {selectedTransaction && (
@@ -447,7 +513,7 @@ export default function TransactionsPage() {
               {selectedTransaction.status}
             </Badge>
           }
-          maxWidth="3xl"
+          maxWidth="4xl"
           sections={buildTransactionSections(selectedTransaction)}
           actions={buildTransactionActions(selectedTransaction)}
         />
@@ -619,6 +685,58 @@ export default function TransactionsPage() {
               >
                 {reversalLoading ? 'Processing...' : 'Force Reverse'}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {riskActionDialog.open && riskActionDialog.actionType && riskActionDialog.transaction && (
+        <Dialog
+          open={riskActionDialog.open}
+          onOpenChange={(open) =>
+            setRiskActionDialog((prev) => ({ ...prev, open }))
+          }
+        >
+          <DialogContent className="bg-gray-950 border border-gray-800 text-white max-w-2xl dark:bg-slate-900 dark:border-slate-700">
+            <DialogHeader>
+              <DialogTitle className="capitalize">{riskActionDialog.actionType} transaction</DialogTitle>
+              <DialogDescription>
+                Action for reference {riskActionDialog.transaction.internalReference}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="mb-2 block">Reason code</Label>
+                <Select
+                  value={riskActionDialog.reasonCode}
+                  onValueChange={(value) => setRiskActionDialog((prev) => ({ ...prev, reasonCode: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select reason code" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RISK_ACTION_REASONS[riskActionDialog.actionType].map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {reason}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="mb-2 block">Reason details</Label>
+                <Textarea
+                  value={riskActionDialog.reasonText}
+                  onChange={(e) => setRiskActionDialog((prev) => ({ ...prev, reasonText: e.target.value }))}
+                  placeholder="Provide required action rationale"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setRiskActionDialog((prev) => ({ ...prev, open: false }))}>
+                  Cancel
+                </Button>
+                <Button onClick={submitRiskAction}>Submit Action</Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

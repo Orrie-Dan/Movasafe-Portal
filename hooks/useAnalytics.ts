@@ -4,10 +4,11 @@ import { apiGetAllTransactions, TransactionType, TransactionStatus, type Transac
 import { apiGetAllWallets } from '@/lib/api/wallets'
 import type { Wallet } from '@/lib/types/wallets'
 import type { TransactionFilters } from '@/lib/types/transactions'
-import { parseISO, startOfDay, endOfDay, subDays } from 'date-fns'
+import { parseISO } from 'date-fns'
+import { getPeriodRange, filterByDateRange } from '@/lib/utils/period'
 
 export interface AnalyticsFilters {
-  dateRange: '7d' | '30d' | 'custom'
+  dateRange: 'all' | 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom'
   customStartDate?: string
   customEndDate?: string
   transactionType: 'all' | TransactionType
@@ -17,7 +18,7 @@ export interface AnalyticsFilters {
 }
 
 const DEFAULT_FILTERS: AnalyticsFilters = {
-  dateRange: '30d',
+  dateRange: 'today',
   transactionType: 'all',
   status: 'all',
   minAmount: '',
@@ -36,22 +37,25 @@ export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
   })
 
   const getDateRange = () => {
-    const now = new Date()
-    let startDate: Date
-    let endDate = endOfDay(now)
-
-    if (filters.dateRange === '7d') {
-      startDate = startOfDay(subDays(now, 7))
-    } else if (filters.dateRange === '30d') {
-      startDate = startOfDay(subDays(now, 30))
-    } else if (filters.dateRange === 'custom' && filters.customStartDate && filters.customEndDate) {
-      startDate = startOfDay(parseISO(filters.customStartDate))
-      endDate = endOfDay(parseISO(filters.customEndDate))
-    } else {
-      startDate = startOfDay(subDays(now, 30))
-    }
-
-    return { startDate, endDate }
+    const normalized = getPeriodRange({
+      period:
+        filters.dateRange === 'today'
+          ? 'today'
+          : filters.dateRange === 'week'
+          ? 'week'
+          : filters.dateRange === 'month'
+          ? 'month'
+          : filters.dateRange === 'quarter'
+          ? 'quarter'
+          : filters.dateRange === 'year'
+          ? 'year'
+          : filters.dateRange === 'all'
+          ? 'all'
+          : 'custom',
+      customFrom: filters.customStartDate ? parseISO(filters.customStartDate) : null,
+      customTo: filters.customEndDate ? parseISO(filters.customEndDate) : null,
+    })
+    return { startDate: normalized.start, endDate: normalized.end }
   }
 
   const parseAmount = (value?: string) => {
@@ -71,8 +75,10 @@ export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
         limit: 10000,
         sortBy: 'createdAt',
         order: 'DESC',
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
+      }
+      if (filters.dateRange !== 'all') {
+        transactionFilters.startDate = startDate.toISOString()
+        transactionFilters.endDate = endDate.toISOString()
       }
 
       if (filters.transactionType !== 'all') {
@@ -99,7 +105,22 @@ export function useAnalytics(initialFilters?: Partial<AnalyticsFilters>) {
 
       // apiGetAllTransactions returns a paginated response wrapper
       if (transactionsData.success && transactionsData.data?.content) {
-        setTransactions(transactionsData.data.content)
+        const apiRows = transactionsData.data.content
+        const safeRows =
+          filters.dateRange === 'all'
+            ? apiRows
+            : filterByDateRange(
+                apiRows,
+                (tx) => {
+                  try {
+                    return parseISO(tx.createdAt)
+                  } catch {
+                    return null
+                  }
+                },
+                { start: startDate, end: endDate, label: 'Selected range' }
+              )
+        setTransactions(safeRows)
       } else {
         setTransactions([])
       }

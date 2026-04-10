@@ -143,3 +143,44 @@ export async function apiGetSystemHealth(): Promise<SystemHealthMetrics> {
   return apiRequest<SystemHealthMetrics>('/admin/analytics/system-health')
 }
 
+export interface AdminRiskOverviewWindow {
+  start: string
+  end: string
+  timezone: string
+}
+
+export interface AdminRiskOverviewKpis {
+  fraudRateBps: number
+  falsePositiveRatePct: number
+  avgReviewTimeMinutes: number
+  autoBlockedTransactionCount: number
+  manualBlockedTransactionCount: number
+  accountsFrozenOrRestrictedCount: number
+  openCriticalAlertsCount: number | null
+}
+
+export interface AdminRiskOverviewData {
+  window: AdminRiskOverviewWindow
+  kpis: AdminRiskOverviewKpis
+  definitions: Record<string, string>
+  generatedAt: string
+}
+
+export async function apiGetAdminRiskOverview(params?: {
+  startDate?: string
+  endDate?: string
+  timezone?: string
+  currency?: string
+}): Promise<AdminRiskOverviewData> {
+  const queryParams = new URLSearchParams()
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, String(value))
+      }
+    })
+  }
+  const queryString = queryParams.toString()
+  return apiRequest<AdminRiskOverviewData>(`/admin/risk/overview${queryString ? `?${queryString}` : ''}`)
+}
+
