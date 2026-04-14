@@ -5,9 +5,10 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Wallet } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { adminLogin } from '@/lib/auth'
 import type { LoginRequest } from '@/lib/auth'
+import movasafeLogo from '@/src/brand/movasafe-logo.png'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -50,8 +51,12 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo/Brand Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-900 border border-slate-700 rounded-lg mb-4">
-            <Wallet className="w-8 h-8 text-white" strokeWidth={1.5} />
+          <div className="inline-flex items-center justify-center w-40 h-40 bg-slate-900 border border-slate-700 rounded-2xl mb-4 p-4">
+            <img
+              src={movasafeLogo}
+              alt="MovaSafe"
+              className="h-full w-full object-contain"
+            />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">MovaSafe Admin Portal</h1>
           <p className="text-slate-400 text-sm">Sign in to access the admin dashboard</p>

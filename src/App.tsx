@@ -28,6 +28,8 @@ const AdminSettings = lazy(() => import('@/app/admin/settings/page'))
 const AdminSupport = lazy(() => import('@/app/admin/support/page'))
 const AdminSystemHealth = lazy(() => import('@/app/admin/system-health/page'))
 const AdminTransactions = lazy(() => import('@/app/admin/transactions/page'))
+const AdminFraudManagement = lazy(() => import('@/app/admin/fraud-management/page'))
+const AdminFraudManagementDetail = lazy(() => import('@/app/admin/fraud-management/[transactionId]/page'))
 const AdminUsers = lazy(() => import('@/app/admin/users/page'))
 const AdminUsersCreate = lazy(() => import('@/app/admin/users/create/page'))
 const AdminUserDetail = lazy(() => import('@/app/admin/users/[id]/UserDetailClient'))
@@ -51,6 +53,8 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/fraud-management" element={<Navigate to="/admin/fraud-management" replace />} />
+          <Route path="/fraud-management/:transactionId" element={<Navigate to="/admin/fraud-management/:transactionId" replace />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="analytics" element={<AdminAnalytics />} />
@@ -74,6 +78,8 @@ export default function App() {
             <Route path="support" element={<AdminSupport />} />
             <Route path="system-health" element={<AdminSystemHealth />} />
             <Route path="transactions" element={<AdminTransactions />} />
+            <Route path="fraud-management" element={<AdminFraudManagement />} />
+            <Route path="fraud-management/:transactionId" element={<AdminFraudManagementDetail />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="users/create" element={<AdminUsersCreate />} />
             <Route path="users/:id" element={<AdminUserDetail />} />

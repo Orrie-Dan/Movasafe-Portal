@@ -46,6 +46,7 @@ import {
   type SystemSettingDTO,
 } from '@/lib/api/system-settings'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { apiEvictCache, apiGetFraudConfigEffective, apiUpdateFraudConfig } from '@/lib/api/fraud-config'
 
 // Types
 interface SecuritySettings {
@@ -269,6 +270,9 @@ export default function SettingsPage() {
   ])
 
   const [saving, setSaving] = useState(false)
+  const [fraudConfigLoading, setFraudConfigLoading] = useState(false)
+  const [fraudConfigSaving, setFraudConfigSaving] = useState(false)
+  const [fraudConfig, setFraudConfig] = useState<Record<string, any> | null>(null)
   const [editingSystemSetting, setEditingSystemSetting] = useState<SystemSettingDTO>({
     settingKey: '',
     settingValue: '',
@@ -317,6 +321,28 @@ export default function SettingsPage() {
     }
 
     loadSystemSettings()
+  }, [])
+
+  useEffect(() => {
+    const loadFraudConfig = async () => {
+      try {
+        setFraudConfigLoading(true)
+        const cfg = await apiGetFraudConfigEffective()
+        setFraudConfig(cfg)
+      } catch (error) {
+        console.error('Failed to load fraud config:', error)
+        toast({
+          title: 'Error loading fraud config',
+          description: error instanceof Error ? error.message : 'Unable to fetch fraud configuration.',
+          variant: 'destructive',
+        })
+        setFraudConfig(null)
+      } finally {
+        setFraudConfigLoading(false)
+      }
+    }
+
+    loadFraudConfig()
   }, [])
 
   // Handlers
@@ -569,6 +595,235 @@ export default function SettingsPage() {
         <CardContent className="p-6">
             {/* System Settings only */}
             <div className="mt-6 space-y-6">
+              <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+                <CardHeader>
+                  <CardTitle>Fraud Configuration</CardTitle>
+                  <CardDescription>
+                    Configure fraud thresholds and blocking behavior. Updates are applied via /admin/fraud-config.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {fraudConfigLoading ? (
+                    <div className="space-y-2">
+                      <div className="h-10 w-full bg-slate-100 dark:bg-slate-900 rounded" />
+                      <div className="h-10 w-full bg-slate-100 dark:bg-slate-900 rounded" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <Label>Blocking Enabled</Label>
+                          <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 p-3">
+                            <div className="text-sm text-muted-foreground">Block transfers when signals trigger</div>
+                            <Switch
+                              checked={!!fraudConfig?.blockingEnabled}
+                              onCheckedChange={async (checked) => {
+                                try {
+                                  setFraudConfigSaving(true)
+                                  const updated = await apiUpdateFraudConfig('blockingEnabled', !!checked)
+                                  setFraudConfig(updated)
+                                  toast({ title: 'Saved', description: 'Blocking setting updated.' })
+                                } catch (e) {
+                                  toast({
+                                    title: 'Save failed',
+                                    description: e instanceof Error ? e.message : 'Unable to update blocking setting',
+                                    variant: 'destructive',
+                                  })
+                                } finally {
+                                  setFraudConfigSaving(false)
+                                }
+                              }}
+                              disabled={fraudConfigSaving}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label>First Time Recipient Verification</Label>
+                          <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 p-3">
+                            <div className="text-sm text-muted-foreground">Extra checks for new recipients</div>
+                            <Switch
+                              checked={!!fraudConfig?.firstTimeRecipientVerification}
+                              onCheckedChange={async (checked) => {
+                                try {
+                                  setFraudConfigSaving(true)
+                                  const updated = await apiUpdateFraudConfig('firstTimeRecipientVerification', !!checked)
+                                  setFraudConfig(updated)
+                                  toast({ title: 'Saved', description: 'Recipient verification updated.' })
+                                } catch (e) {
+                                  toast({
+                                    title: 'Save failed',
+                                    description: e instanceof Error ? e.message : 'Unable to update setting',
+                                    variant: 'destructive',
+                                  })
+                                } finally {
+                                  setFraudConfigSaving(false)
+                                }
+                              }}
+                              disabled={fraudConfigSaving}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                          <Label>High value threshold</Label>
+                          <Input
+                            value={String(fraudConfig?.highValueThreshold ?? '')}
+                            onChange={(e) => setFraudConfig((p) => ({ ...(p || {}), highValueThreshold: e.target.value }))}
+                            placeholder="e.g. 1000000"
+                            disabled={fraudConfigSaving}
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={fraudConfigSaving}
+                            onClick={async () => {
+                              try {
+                                setFraudConfigSaving(true)
+                                const updated = await apiUpdateFraudConfig('highValueThreshold', Number(fraudConfig?.highValueThreshold))
+                                setFraudConfig(updated)
+                                toast({ title: 'Saved', description: 'High value threshold updated.' })
+                              } catch (e) {
+                                toast({
+                                  title: 'Save failed',
+                                  description: e instanceof Error ? e.message : 'Unable to update threshold',
+                                  variant: 'destructive',
+                                })
+                              } finally {
+                                setFraudConfigSaving(false)
+                              }
+                            }}
+                          >
+                            Save
+                          </Button>
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label>High frequency window (count)</Label>
+                          <Input
+                            value={String(fraudConfig?.highFrequencyCountThreshold ?? '')}
+                            onChange={(e) => setFraudConfig((p) => ({ ...(p || {}), highFrequencyCountThreshold: e.target.value }))}
+                            placeholder="e.g. 5"
+                            disabled={fraudConfigSaving}
+                            className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={fraudConfigSaving}
+                            onClick={async () => {
+                              try {
+                                setFraudConfigSaving(true)
+                                const updated = await apiUpdateFraudConfig('highFrequencyCountThreshold', Number(fraudConfig?.highFrequencyCountThreshold))
+                                setFraudConfig(updated)
+                                toast({ title: 'Saved', description: 'High frequency threshold updated.' })
+                              } catch (e) {
+                                toast({
+                                  title: 'Save failed',
+                                  description: e instanceof Error ? e.message : 'Unable to update threshold',
+                                  variant: 'destructive',
+                                })
+                              } finally {
+                                setFraudConfigSaving(false)
+                              }
+                            }}
+                          >
+                            Save
+                          </Button>
+                        </div>
+
+                        <div className="space-y-1">
+                          <Label>Balance drop (%)</Label>
+                          <Input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={Number(fraudConfig?.balanceDropPercentage ?? 0)}
+                            onChange={(e) => setFraudConfig((p) => ({ ...(p || {}), balanceDropPercentage: Number(e.target.value) }))}
+                            disabled={fraudConfigSaving}
+                          />
+                          <div className="text-xs text-muted-foreground">
+                            Current: {Number(fraudConfig?.balanceDropPercentage ?? 0)}%
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={fraudConfigSaving}
+                            onClick={async () => {
+                              try {
+                                setFraudConfigSaving(true)
+                                const updated = await apiUpdateFraudConfig('balanceDropPercentage', Number(fraudConfig?.balanceDropPercentage ?? 0))
+                                setFraudConfig(updated)
+                                toast({ title: 'Saved', description: 'Balance drop percentage updated.' })
+                              } catch (e) {
+                                toast({
+                                  title: 'Save failed',
+                                  description: e instanceof Error ? e.message : 'Unable to update percentage',
+                                  variant: 'destructive',
+                                })
+                              } finally {
+                                setFraudConfigSaving(false)
+                              }
+                            }}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          disabled={fraudConfigSaving}
+                          onClick={async () => {
+                            try {
+                              setFraudConfigSaving(true)
+                              const cfg = await apiGetFraudConfigEffective()
+                              setFraudConfig(cfg)
+                              toast({ title: 'Refreshed', description: 'Fraud config reloaded.' })
+                            } catch (e) {
+                              toast({
+                                title: 'Refresh failed',
+                                description: e instanceof Error ? e.message : 'Unable to refresh config',
+                                variant: 'destructive',
+                              })
+                            } finally {
+                              setFraudConfigSaving(false)
+                            }
+                          }}
+                        >
+                          Refresh config
+                        </Button>
+                        <Button
+                          variant="outline"
+                          disabled={fraudConfigSaving}
+                          onClick={async () => {
+                            try {
+                              setFraudConfigSaving(true)
+                              const res = await apiEvictCache()
+                              toast({ title: 'Cache evicted', description: (res as any)?.message || 'Cache eviction requested.' })
+                            } catch (e) {
+                              toast({
+                                title: 'Cache eviction failed',
+                                description: e instanceof Error ? e.message : 'Unable to evict cache',
+                                variant: 'destructive',
+                              })
+                            } finally {
+                              setFraudConfigSaving(false)
+                            }
+                          }}
+                        >
+                          Evict cache
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
                 <CardHeader>
                   <CardTitle>System Settings (API-backed)</CardTitle>

@@ -13,12 +13,16 @@ export function getTransactionStatusBadge(
       return 'bg-green-500/10 text-green-400 border-green-500/20'
     case TransactionStatus.PENDING:
       return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+    case TransactionStatus.PENDING_REVIEW:
+      return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
     case TransactionStatus.FAILED:
       return 'bg-red-500/10 text-red-400 border-red-500/20'
     case TransactionStatus.ROLLED_BACK:
       return 'bg-orange-500/10 text-orange-400 border-orange-500/20'
     case TransactionStatus.CANCELLED:
       return 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+    case TransactionStatus.FRAUD_REJECTED:
+      return 'bg-red-500/10 text-red-400 border-red-500/20'
     default:
       return 'bg-slate-500/10 text-slate-400 border-slate-500/20'
   }

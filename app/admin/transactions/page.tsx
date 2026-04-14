@@ -23,8 +23,10 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { format, parseISO } from 'date-fns'
 import { FileText, RefreshCw, RotateCcw, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function TransactionsPage() {
+  const navigate = useNavigate()
   const {
     transactions,
     sortedTransactions,
@@ -60,10 +62,19 @@ export default function TransactionsPage() {
   const handleViewTransaction = async (transaction: Transaction) => {
     try {
       const fullTransaction = await apiGetTransactionById(transaction.id)
+      // Fraud queue transactions should navigate to Fraud Detail screen
+      if (String(fullTransaction.status).toUpperCase() === String(TransactionStatus.PENDING_REVIEW)) {
+        navigate(`/admin/fraud-management/${fullTransaction.id}`)
+        return
+      }
       setSelectedTransaction(fullTransaction)
       setIsDetailOpen(true)
     } catch (err) {
       console.error('Failed to fetch transaction details:', err)
+      if (String(transaction.status).toUpperCase() === String(TransactionStatus.PENDING_REVIEW)) {
+        navigate(`/admin/fraud-management/${transaction.id}`)
+        return
+      }
       setSelectedTransaction(transaction)
       setIsDetailOpen(true)
     }

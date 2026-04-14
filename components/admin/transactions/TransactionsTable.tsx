@@ -281,11 +281,18 @@ export function TransactionsTable({
                       {formatCurrency(transaction.amount, currency)}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        className={cn('text-sm', getTransactionStatusBadge(transaction.status))}
-                      >
-                        {transaction.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={cn('text-sm', getTransactionStatusBadge(transaction.status))}
+                        >
+                          {transaction.status}
+                        </Badge>
+                        {String(transaction.status).toUpperCase() === String(TransactionStatus.PENDING_REVIEW) && (
+                          <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 text-xs">
+                            Fraud review
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-slate-700 dark:text-slate-300">
                       {fromAccount}

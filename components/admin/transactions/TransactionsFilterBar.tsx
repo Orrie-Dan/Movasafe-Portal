@@ -193,10 +193,12 @@ export function TransactionsFilterBar({
               <SelectValue placeholder="--" />
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value={TransactionStatus.PENDING}>PENDING</SelectItem>
+              <SelectItem value={TransactionStatus.PENDING_REVIEW}>PENDING_REVIEW</SelectItem>
               <SelectItem value={TransactionStatus.SUCCESSFUL}>SUCCESSFUL</SelectItem>
               <SelectItem value={TransactionStatus.FAILED}>FAILED</SelectItem>
               <SelectItem value={TransactionStatus.ROLLED_BACK}>ROLLED_BACK</SelectItem>
               <SelectItem value={TransactionStatus.CANCELLED}>CANCELLED</SelectItem>
+              <SelectItem value={TransactionStatus.FRAUD_REJECTED}>FRAUD_REJECTED</SelectItem>
             </Select>
           </div>
 

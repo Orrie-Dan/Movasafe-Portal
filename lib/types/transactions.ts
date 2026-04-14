@@ -7,10 +7,12 @@ export enum TransactionType {
 
 export enum TransactionStatus {
   PENDING = 'PENDING',
+  PENDING_REVIEW = 'PENDING_REVIEW',
   SUCCESSFUL = 'SUCCESSFUL',
   FAILED = 'FAILED',
   ROLLED_BACK = 'ROLLED_BACK',
   CANCELLED = 'CANCELLED',
+  FRAUD_REJECTED = 'FRAUD_REJECTED',
 }
 
 export enum TransactionDescription {

@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
+import movasafeLogo from '@/src/brand/movasafe-logo.png'
 
 interface AdminSidebarProps {
   variant?: 'admin'
@@ -89,6 +90,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
   ]
 
   const riskComplianceSection = [
+    { href: '/admin/fraud-management', label: 'Fraud Management', icon: AlertTriangle, badge: null },
     { href: '/admin/compliance-kyc', label: 'Compliance & KYC', icon: CheckCircle2, badge: null },
   ]
 
@@ -201,16 +203,20 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
       <div className={cn("border-b border-slate-200 dark:border-slate-900 flex items-center justify-between", collapsed ? "p-4" : "p-6")}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded bg-slate-900 dark:bg-white flex items-center justify-center">
-              <Wallet className="h-5 w-5 text-white dark:text-slate-900" />
-            </div>
+            <img
+              src={movasafeLogo}
+              alt="Movasafe"
+              className="h-14 w-auto max-w-[280px] object-contain flex-shrink-0"
+            />
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Movasafe</h2>
           </div>
         )}
         {collapsed && (
-          <div className="h-8 w-8 rounded bg-slate-900 dark:bg-white flex items-center justify-center mx-auto">
-            <Wallet className="h-5 w-5 text-white dark:text-slate-900" />
-          </div>
+          <img
+            src={movasafeLogo}
+            alt="Movasafe"
+            className="h-14 w-14 object-contain mx-auto"
+          />
         )}
         <Button
           variant="ghost"
