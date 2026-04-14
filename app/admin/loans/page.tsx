@@ -453,7 +453,7 @@ export default function LoansPage() {
             toast({ title: 'Copied', description: 'Loan ID copied to clipboard' })
           }}
           badge={<Badge className={getLoanStatusBadge(selectedLoan.status)}>{selectedLoan.status}</Badge>}
-          maxWidth="3xl"
+          maxWidth="4xl"
           sections={[
             {
               title: 'Loan',

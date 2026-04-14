@@ -308,7 +308,7 @@ export default function TransactionDisputesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Transaction Disputes</h1>
-          <p className="text-gray-400 mt-1">Manage and review wallet transfer disputes</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Manage and review wallet transfer disputes</p>
         </div>
         <Button onClick={fetchTransactions} disabled={loading} variant="outline">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -317,9 +317,9 @@ export default function TransactionDisputesPage() {
       </div>
 
       {/* Filters */}
-      <Card className="dark:bg-black dark:border-slate-800">
-        <CardHeader className="dark:border-b dark:border-slate-700">
-          <CardTitle className="text-base flex items-center gap-2 dark:text-white">
+      <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
+        <CardHeader className="border-b border-slate-200 dark:border-slate-900/50">
+          <CardTitle className="text-base flex items-center gap-2 text-slate-900 dark:text-white">
             <Filter className="w-4 h-4" />
             Filters
           </CardTitle>
@@ -327,15 +327,15 @@ export default function TransactionDisputesPage() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium dark:text-white">Date Range</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Date Range</label>
               <Select value={dateRange} onValueChange={(val) => {
                 setDateRange(val as any)
                 setPage(1)
               }}>
-                <SelectTrigger className="dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+                <SelectTrigger className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                   <SelectItem value="all">All Time</SelectItem>
                   <SelectItem value="7">Last 7 Days</SelectItem>
                   <SelectItem value="30">Last 30 Days</SelectItem>
@@ -345,15 +345,15 @@ export default function TransactionDisputesPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium dark:text-white">Dispute Resolution</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Dispute Resolution</label>
               <Select value={resolutionFilter} onValueChange={(val) => {
                 setResolutionFilter(val)
                 setPage(1)
               }}>
-                <SelectTrigger className="dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+                <SelectTrigger className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                   <SelectItem value="all">All Resolutions</SelectItem>
                   <SelectItem value="UPHOLD">Uphold</SelectItem>
                   <SelectItem value="COMPENSATE">Compensate</SelectItem>
@@ -362,15 +362,15 @@ export default function TransactionDisputesPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium dark:text-white">Type</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Type</label>
               <Select value={typeFilter} onValueChange={(val) => {
                 setTypeFilter(val)
                 setPage(1)
               }}>
-                <SelectTrigger className="dark:bg-slate-900 dark:border-slate-700 dark:text-white">
+                <SelectTrigger className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="CASH_IN">Cash In</SelectItem>
                   <SelectItem value="CASH_OUT">Cash Out</SelectItem>
@@ -379,7 +379,7 @@ export default function TransactionDisputesPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium dark:text-white">Search</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Search</label>
               <Input
                 placeholder="Reference, phone..."
                 value={searchTerm}
@@ -387,7 +387,7 @@ export default function TransactionDisputesPage() {
                   setSearchTerm(e.target.value)
                   setPage(1)
                 }}
-                className="dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500"
+                className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
@@ -620,17 +620,17 @@ export default function TransactionDisputesPage() {
       {/* Standard Reversal Dialog */}
       {standardReversalOpen && selectedTransaction && (
         <Dialog open={standardReversalOpen} onOpenChange={setStandardReversalOpen}>
-          <DialogContent className="bg-gray-950 border border-gray-800 text-white max-w-4xl">
+          <DialogContent className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-w-4xl">
             <DialogHeader>
               <DialogTitle>Reverse Transfer</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="bg-gray-900/50 p-3 rounded border border-gray-800">
-                <p className="text-xs text-gray-400 uppercase">Transaction Reference</p>
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded border border-slate-200 dark:border-slate-800">
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase">Transaction Reference</p>
                 <p className="text-sm font-mono text-blue-400 break-all">{selectedTransaction.internalReference}</p>
               </div>
-              <div className="bg-gray-900/50 p-3 rounded border border-gray-800">
-                <p className="text-xs text-gray-400 uppercase">Amount</p>
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded border border-slate-200 dark:border-slate-800">
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase">Amount</p>
                 <p className="text-lg font-bold text-green-400">{formatCurrency(selectedTransaction.amount || 0)} RWF</p>
               </div>
               <div>
@@ -639,7 +639,7 @@ export default function TransactionDisputesPage() {
                   placeholder="e.g., Duplicate transaction, User request..."
                   value={reversalReason}
                   onChange={(e) => setReversalReason(e.target.value)}
-                  className="bg-gray-900 border-gray-800 text-white"
+                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
@@ -648,11 +648,11 @@ export default function TransactionDisputesPage() {
                   placeholder="Additional notes..."
                   value={reversalNotes}
                   onChange={(e) => setReversalNotes(e.target.value)}
-                  className="bg-gray-900 border-gray-800 text-white"
+                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
             </div>
-            <div className="flex gap-2 justify-end pt-4 border-t border-gray-800">
+            <div className="flex gap-2 justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
               <Button
                 variant="outline"
                 onClick={() => setStandardReversalOpen(false)}
@@ -675,7 +675,7 @@ export default function TransactionDisputesPage() {
       {/* Force Reversal Dialog */}
       {forceReversalOpen && selectedTransaction && (
         <Dialog open={forceReversalOpen} onOpenChange={setForceReversalOpen}>
-          <DialogContent className="bg-gray-950 border border-gray-800 text-white max-w-4xl">
+          <DialogContent className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white max-w-4xl">
             <DialogHeader>
               <DialogTitle>Force Reverse Transfer</DialogTitle>
             </DialogHeader>
@@ -685,12 +685,12 @@ export default function TransactionDisputesPage() {
                   <strong>Warning:</strong> This will create debt if the receiver has insufficient funds to cover the reversal.
                 </p>
               </div>
-              <div className="bg-gray-900/50 p-3 rounded border border-gray-800">
-                <p className="text-xs text-gray-400 uppercase">Transaction Reference</p>
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded border border-slate-200 dark:border-slate-800">
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase">Transaction Reference</p>
                 <p className="text-sm font-mono text-blue-400 break-all">{selectedTransaction.internalReference}</p>
               </div>
-              <div className="bg-gray-900/50 p-3 rounded border border-gray-800">
-                <p className="text-xs text-gray-400 uppercase">Amount</p>
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded border border-slate-200 dark:border-slate-800">
+                <p className="text-xs text-slate-500 dark:text-slate-400 uppercase">Amount</p>
                 <p className="text-lg font-bold text-green-400">{formatCurrency(selectedTransaction.amount || 0)} RWF</p>
               </div>
               <div>
@@ -699,7 +699,7 @@ export default function TransactionDisputesPage() {
                   placeholder="e.g., Dispute resolution, Compliance..."
                   value={reversalReason}
                   onChange={(e) => setReversalReason(e.target.value)}
-                  className="bg-gray-900 border-gray-800 text-white"
+                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
@@ -708,11 +708,11 @@ export default function TransactionDisputesPage() {
                   placeholder="Additional notes..."
                   value={reversalNotes}
                   onChange={(e) => setReversalNotes(e.target.value)}
-                  className="bg-gray-900 border-gray-800 text-white"
+                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                 />
               </div>
             </div>
-            <div className="flex gap-2 justify-end pt-4 border-t border-gray-800">
+            <div className="flex gap-2 justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
               <Button
                 variant="outline"
                 onClick={() => setForceReversalOpen(false)}
@@ -755,7 +755,7 @@ export default function TransactionDisputesPage() {
               {selectedTransaction.status}
             </Badge>
           }
-          maxWidth="3xl"
+          maxWidth="4xl"
           sections={[
             {
               title: 'Transaction',

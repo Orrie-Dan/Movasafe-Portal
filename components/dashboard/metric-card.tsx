@@ -10,6 +10,7 @@ export interface MetricCardProps {
   variant?: 'default' | 'negative' | 'warning'
   format?: 'number' | 'currency'
   currency?: string
+  comparisonLabel?: string
 }
 
 export function MetricCard({
@@ -21,6 +22,7 @@ export function MetricCard({
   variant = 'default',
   format = 'number',
   currency = 'RWF',
+  comparisonLabel = 'from last period',
 }: MetricCardProps) {
   const formattedValue =
     format === 'currency'
@@ -59,7 +61,7 @@ export function MetricCard({
             ) : (
               <TrendingDown className="h-3 w-3 mr-1" />
             )}
-            {Math.abs(change).toFixed(1)}% from last period
+            {Math.abs(change).toFixed(1)}% {comparisonLabel}
           </div>
         )}
       </CardContent>

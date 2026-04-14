@@ -1,18 +1,18 @@
 'use client'
 
+import type { Dispatch, SetStateAction } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Filter, X, RefreshCw, Search } from 'lucide-react'
+import { Filter, X, RefreshCw } from 'lucide-react'
 import { TransactionType, TransactionStatus, TransactionDescription } from '@/lib/api'
 import type { TransactionUIFilters } from '@/hooks/useTransactions'
-import { useState } from 'react'
 
 interface TransactionsFilterBarProps {
   filters: TransactionUIFilters
-  onChange: (filters: TransactionUIFilters) => void
+  onChange: Dispatch<SetStateAction<TransactionUIFilters>>
   onReset: () => void
   onRefresh: () => void
 }
@@ -27,7 +27,7 @@ export function TransactionsFilterBar({
     key: K,
     value: TransactionUIFilters[K]
   ) => {
-    onChange({ ...filters, [key]: value })
+    onChange((prev) => ({ ...prev, [key]: value }))
   }
 
   const handleDescriptionsChange = (value: string) => {
@@ -66,22 +66,33 @@ export function TransactionsFilterBar({
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {/* Transaction Reference */}
           <div>
-            <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">Transaction Reference</Label>
+            <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">Transaction Reference (API)</Label>
             <Input
-              placeholder="transactionReference"
+              placeholder="e.g. TRX-REF-12345"
               value={filters.transactionReference}
               onChange={(e) => updateFilter('transactionReference', e.target.value)}
               className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
 
-          {/* User Name */}
+          {/* First Name */}
           <div>
-            <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">User Name</Label>
+            <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">First Name</Label>
             <Input
-              placeholder="userName"
-              value={filters.userName}
-              onChange={(e) => updateFilter('userName', e.target.value)}
+              placeholder="e.g. John"
+              value={filters.firstName}
+              onChange={(e) => updateFilter('firstName', e.target.value)}
+              className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            />
+          </div>
+
+          {/* Last Name */}
+          <div>
+            <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">Last Name</Label>
+            <Input
+              placeholder="e.g. Doe"
+              value={filters.lastName}
+              onChange={(e) => updateFilter('lastName', e.target.value)}
               className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
@@ -93,17 +104,6 @@ export function TransactionsFilterBar({
               placeholder="userPhoneNumber"
               value={filters.userPhoneNumber}
               onChange={(e) => updateFilter('userPhoneNumber', e.target.value)}
-              className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-            />
-          </div>
-
-          {/* User National ID */}
-          <div>
-            <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">User National ID</Label>
-            <Input
-              placeholder="userNationalId"
-              value={filters.userNationalId}
-              onChange={(e) => updateFilter('userNationalId', e.target.value)}
               className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
@@ -188,7 +188,6 @@ export function TransactionsFilterBar({
             <Select
               value={filters.status}
               onValueChange={(value) => updateFilter('status', value as TransactionUIFilters['status'])}
-              className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
             >
               <SelectValue placeholder="--" />
               <SelectItem value="all">All Statuses</SelectItem>
@@ -232,20 +231,22 @@ export function TransactionsFilterBar({
             <Select
               value={filters.dateRange}
               onValueChange={(value) => {
-                updateFilter('dateRange', value as TransactionUIFilters['dateRange'])
-                // Clear custom dates when switching away from custom
-                if (value !== 'custom') {
-                  updateFilter('customStartDate', '')
-                  updateFilter('customEndDate', '')
-                }
+                onChange((prev) => ({
+                  ...prev,
+                  dateRange: value as TransactionUIFilters['dateRange'],
+                  customStartDate: value === 'custom' ? prev.customStartDate : '',
+                  customEndDate: value === 'custom' ? prev.customEndDate : '',
+                }))
               }}
               className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
             >
               <SelectValue placeholder="Select range..." />
               <SelectItem value="all">All Time</SelectItem>
               <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="7d">Last 7 Days</SelectItem>
-              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="week">Last 7 Days</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="quarter">This Quarter</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
               <SelectItem value="custom">Custom Range</SelectItem>
             </Select>
           </div>
@@ -255,12 +256,11 @@ export function TransactionsFilterBar({
           <div>
             <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">Start Date</Label>
             <Input
-              type="datetime-local"
+              type="date"
               placeholder="startDate"
-              value={filters.customStartDate ? new Date(filters.customStartDate).toISOString().slice(0, 16) : ''}
+              value={filters.customStartDate}
               onChange={(e) => {
-                const dateValue = e.target.value ? new Date(e.target.value).toISOString() : ''
-                updateFilter('customStartDate', dateValue)
+                updateFilter('customStartDate', e.target.value)
               }}
               className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
@@ -272,31 +272,17 @@ export function TransactionsFilterBar({
           <div>
             <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">End Date</Label>
             <Input
-              type="datetime-local"
+              type="date"
               placeholder="endDate"
-              value={filters.customEndDate ? new Date(filters.customEndDate).toISOString().slice(0, 16) : ''}
+              value={filters.customEndDate}
               onChange={(e) => {
-                const dateValue = e.target.value ? new Date(e.target.value).toISOString() : ''
-                updateFilter('customEndDate', dateValue)
+                updateFilter('customEndDate', e.target.value)
               }}
               className="h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
             />
           </div>
           )}
 
-          {/* Transaction ID (for client-side search) */}
-          <div>
-            <Label className="text-xs text-slate-700 dark:text-slate-400 mb-1 block">Transaction ID</Label>
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-slate-500 dark:text-slate-400" />
-              <Input
-                placeholder="Search ID..."
-                value={filters.transactionId}
-                onChange={(e) => updateFilter('transactionId', e.target.value)}
-                className="pl-8 h-9 text-sm bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-              />
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>

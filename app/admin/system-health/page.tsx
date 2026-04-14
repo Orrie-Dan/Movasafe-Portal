@@ -11,6 +11,7 @@ import { Activity, CheckCircle2, AlertTriangle, XCircle, Database, Server, Filte
 import type { SystemHealth } from '@/lib/types/fintech'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useMemo } from 'react'
+import { buildTimeBuckets, getPeriodRange } from '@/lib/utils/period'
 
 // Mock data - replace with actual API calls
 const mockSystemHealth: SystemHealth[] = [
@@ -40,30 +41,11 @@ const mockSystemHealth: SystemHealth[] = [
   },
 ]
 
-const mockUptimeData = [
-  { date: 'Mon', uptime: 99.9 },
-  { date: 'Tue', uptime: 99.8 },
-  { date: 'Wed', uptime: 99.9 },
-  { date: 'Thu', uptime: 99.7 },
-  { date: 'Fri', uptime: 99.9 },
-  { date: 'Sat', uptime: 99.8 },
-  { date: 'Sun', uptime: 99.9 },
-]
-
-const mockErrorRateData = [
-  { date: 'Mon', errors: 0.1 },
-  { date: 'Tue', errors: 0.2 },
-  { date: 'Wed', errors: 0.1 },
-  { date: 'Thu', errors: 0.3 },
-  { date: 'Fri', errors: 0.1 },
-  { date: 'Sat', errors: 0.2 },
-  { date: 'Sun', errors: 0.1 },
-]
-
 export default function SystemHealthPage() {
   const [loading, setLoading] = useState(true)
   const [systemHealth, setSystemHealth] = useState<SystemHealth[]>(mockSystemHealth)
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [dateRange, setDateRange] = useState<'all' | '7d' | '30d'>('all')
 
   // Mock queue/job backlog data
   const queueBacklog = useMemo(() => ({
@@ -77,6 +59,22 @@ export default function SystemHealthPage() {
     if (filterStatus === 'all') return systemHealth
     return systemHealth.filter(s => s.status === filterStatus)
   }, [systemHealth, filterStatus])
+
+  const chartData = useMemo(() => {
+    const period = getPeriodRange({
+      period: dateRange === '7d' ? 'week' : dateRange === '30d' ? 'month' : 'all',
+    })
+    const buckets = buildTimeBuckets(period, dateRange === 'all' ? 'all' : dateRange === '7d' ? 'week' : 'month')
+    const uptimeData = buckets.map((d, idx) => ({
+      date: dateRange === 'all' ? d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      uptime: Math.max(95, 99.9 - (idx % 4) * 0.1),
+    }))
+    const errorData = buckets.map((d, idx) => ({
+      date: dateRange === 'all' ? d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      errors: Number((0.1 + (idx % 5) * 0.05).toFixed(2)),
+    }))
+    return { uptimeData, errorData }
+  }, [dateRange])
 
   useEffect(() => {
     // TODO: Replace with actual API call
@@ -180,14 +178,14 @@ export default function SystemHealthPage() {
           <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
             <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
             <CardTitle className="z-10 relative text-slate-900 dark:text-white">API Uptime</CardTitle>
-            <CardDescription className="z-10 relative">Last 7 days</CardDescription>
+            <CardDescription className="z-10 relative">{dateRange === 'all' ? 'All time' : dateRange === '7d' ? 'Last 7 days' : 'Last 30 days'}</CardDescription>
           </div>
           <CardContent>
             {loading ? (
               <Skeleton className="h-[300px] w-full" />
             ) : (
               <EnhancedLineChart
-                data={mockUptimeData}
+                data={chartData.uptimeData}
                 dataKeys={[{ key: 'uptime', name: 'Uptime %', color: '#10b981' }]}
                 xAxisKey="date"
                 height={300}
@@ -200,14 +198,14 @@ export default function SystemHealthPage() {
           <div className="flex flex-col space-y-1.5 p-6 relative border-b border-slate-200 dark:border-slate-900/50 bg-white dark:bg-black">
             <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
             <CardTitle className="z-10 relative text-slate-900 dark:text-white">Error Rate</CardTitle>
-            <CardDescription className="z-10 relative">Last 7 days</CardDescription>
+            <CardDescription className="z-10 relative">{dateRange === 'all' ? 'All time' : dateRange === '7d' ? 'Last 7 days' : 'Last 30 days'}</CardDescription>
           </div>
           <CardContent>
             {loading ? (
               <Skeleton className="h-[300px] w-full" />
             ) : (
               <EnhancedLineChart
-                data={mockErrorRateData}
+                data={chartData.errorData}
                 dataKeys={[{ key: 'errors', name: 'Error Rate %', color: '#ef4444' }]}
                 xAxisKey="date"
                 height={300}
@@ -226,6 +224,17 @@ export default function SystemHealthPage() {
               <CardTitle className="text-slate-900 dark:text-white">Service Status</CardTitle>
               <CardDescription className="z-10 relative">Real-time service health monitoring</CardDescription>
             </div>
+            <div className="flex gap-2">
+            <Select value={dateRange} onValueChange={(v: any) => setDateRange(v)}>
+              <SelectTrigger className="w-40 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground">
+                <SelectValue placeholder="Date Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-40 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-foreground">
                 <SelectValue placeholder="All Statuses" />
@@ -237,6 +246,7 @@ export default function SystemHealthPage() {
                 <SelectItem value="down">Down</SelectItem>
               </SelectContent>
             </Select>
+            </div>
           </div>
         </div>
         <CardContent>

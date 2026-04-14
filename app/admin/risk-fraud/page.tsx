@@ -26,6 +26,7 @@ import {
   Search,
 } from 'lucide-react'
 import { format, parseISO, subDays, startOfDay } from 'date-fns'
+import { buildTimeBuckets, getPeriodRange } from '@/lib/utils/period'
 import {
   apiGetEscrowsByStatus,
   apiResolveDispute,
@@ -81,6 +82,9 @@ export default function RefundDisputesPage() {
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('')
+  const [dateRange, setDateRange] = useState<'all' | '7d' | '30d' | 'custom'>('all')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
 
   // Load data
   useEffect(() => {
@@ -169,12 +173,14 @@ export default function RefundDisputesPage() {
 
   // Refunds vs Disputes Volume Chart Data
   const refundsVsDisputesChartData = useMemo(() => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(new Date(), 6 - i)
-      return startOfDay(date)
+    const period = getPeriodRange({
+      period: dateRange === '7d' ? 'week' : dateRange === '30d' ? 'month' : dateRange === 'all' ? 'all' : 'custom',
+      customFrom: customStartDate ? new Date(customStartDate) : null,
+      customTo: customEndDate ? new Date(customEndDate) : null,
     })
+    const buckets = buildTimeBuckets(period, dateRange === 'all' ? 'all' : dateRange === '7d' ? 'week' : dateRange === '30d' ? 'month' : 'custom')
 
-    return last7Days.map((date) => {
+    return buckets.map((date) => {
       const dateStr = format(date, 'MMM d')
       const dateFormatted = format(date, 'yyyy-MM-dd')
 
@@ -198,7 +204,7 @@ export default function RefundDisputesPage() {
         'Disputes Resolved': resolvedOnDay,
       }
     })
-  }, [refundedEscrows, disputedEscrows, auditLog])
+  }, [refundedEscrows, disputedEscrows, auditLog, dateRange, customStartDate, customEndDate])
 
   // Handle resolve dispute
   const handleResolveDispute = async () => {
@@ -501,7 +507,28 @@ export default function RefundDisputesPage() {
         <Card className="bg-white dark:bg-black border-slate-200 dark:border-slate-800">
           <CardHeader>
             <CardTitle>Refunds vs Disputes Volume</CardTitle>
-            <CardDescription>Activity over last 7 days</CardDescription>
+            <CardDescription>
+              Activity over {dateRange === 'all' ? 'all time' : dateRange === '7d' ? 'last 7 days' : dateRange === '30d' ? 'last 30 days' : 'custom range'}
+            </CardDescription>
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Select value={dateRange} onValueChange={(v: any) => setDateRange(v)}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Date range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All time</SelectItem>
+                  <SelectItem value="7d">Last 7 days</SelectItem>
+                  <SelectItem value="30d">Last 30 days</SelectItem>
+                  <SelectItem value="custom">Custom range</SelectItem>
+                </SelectContent>
+              </Select>
+              {dateRange === 'custom' && (
+                <>
+                  <Input type="date" value={customStartDate} onChange={(e) => setCustomStartDate(e.target.value)} className="w-44" />
+                  <Input type="date" value={customEndDate} onChange={(e) => setCustomEndDate(e.target.value)} className="w-44" />
+                </>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (

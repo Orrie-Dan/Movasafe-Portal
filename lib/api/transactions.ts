@@ -201,8 +201,8 @@ export async function apiGetAllTransactions(filters?: TransactionFilters): Promi
   if (filters?.maxAmount !== undefined) queryParams.append('maxAmount', filters.maxAmount.toString())
   
   // Date filters
-  // if (filters?.startDate) queryParams.append('startDate', filters.startDate)
-  // if (filters?.endDate) queryParams.append('endDate', filters.endDate)
+  if (filters?.startDate) queryParams.append('startDate', filters.startDate)
+  if (filters?.endDate) queryParams.append('endDate', filters.endDate)
   
   // Legacy support
   if (filters?.userId) queryParams.append('userId', filters.userId)

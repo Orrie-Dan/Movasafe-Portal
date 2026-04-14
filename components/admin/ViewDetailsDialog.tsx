@@ -75,7 +75,7 @@ export function ViewDetailsDialog({
   sections,
   actions,
   footer,
-  maxWidth = '3xl',
+  maxWidth = '4xl',
   className,
 }: ViewDetailsDialogProps) {
   return (

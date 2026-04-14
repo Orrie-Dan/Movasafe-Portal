@@ -8,6 +8,7 @@ const NotificationsPage = lazy(() => import('@/app/notifications/page'))
 const AdminLayout = lazy(() => import('@/app/admin/layout'))
 const AdminDashboard = lazy(() => import('@/app/admin/page'))
 const AdminAnalytics = lazy(() => import('@/app/admin/analytics/page'))
+const AdminAlerts = lazy(() => import('@/app/admin/alerts/page'))
 const AdminApiKeys = lazy(() => import('@/app/admin/api-keys/page'))
 const AdminAudit = lazy(() => import('@/app/admin/audit/page'))
 const AdminAuditLogs = lazy(() => import('@/app/admin/audit-logs/page'))
@@ -35,6 +36,7 @@ const AdminUsersCreate = lazy(() => import('@/app/admin/users/create/page'))
 const AdminUserDetail = lazy(() => import('@/app/admin/users/[id]/UserDetailClient'))
 const AdminWallets = lazy(() => import('@/app/admin/wallets/page'))
 const AdminLoans = lazy(() => import('@/app/admin/loans/page'))
+const AdminReviewQueue = lazy(() => import('@/app/admin/review-queue/page'))
 
 function PageFallback() {
   return (
@@ -58,6 +60,7 @@ export default function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="alerts" element={<AdminAlerts />} />
             <Route path="api-keys" element={<AdminApiKeys />} />
             <Route path="audit" element={<AdminAudit />} />
             <Route path="audit-logs" element={<AdminAuditLogs />} />
@@ -85,6 +88,7 @@ export default function App() {
             <Route path="users/:id" element={<AdminUserDetail />} />
             <Route path="wallets" element={<AdminWallets />} />
             <Route path="loans" element={<AdminLoans />} />
+            <Route path="review-queue" element={<AdminReviewQueue />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -3,9 +3,11 @@
 import { AuthProvider } from '@/lib/auth/hooks'
 import { AdminSidebar } from '@/components/admin-sidebar'
 import { DashboardHeader } from '@/components/dashboard-header'
+import { RiskKpiStrip } from '@/components/admin/RiskKpiStrip'
 import { useAuth } from '@/lib/auth/hooks'
 import { useState, useEffect } from 'react'
 import { useNavigate, Outlet } from 'react-router-dom'
+import { useRiskOverview } from '@/hooks/useRiskOverview'
 
 function AdminLayoutContent() {
   const { user, loading, isAuthenticated, isAdminUser } = useAuth()
@@ -17,6 +19,7 @@ function AdminLayoutContent() {
     }
     return false
   })
+  const { openCriticalAlerts } = useRiskOverview()
 
   // Route protection: Redirect to login if not authenticated or not admin
   useEffect(() => {
@@ -54,12 +57,14 @@ function AdminLayoutContent() {
             localStorage.setItem('sidebarCollapsed', String(collapsed))
           }
         }}
+        criticalAlertsCount={openCriticalAlerts}
       />
       <div className="flex-1 overflow-y-auto">
         <DashboardHeader
           userName={user?.fullName || 'User'}
           userRole={user?.role || 'Admin'}
         />
+        <RiskKpiStrip />
         <Outlet />
       </div>
     </div>

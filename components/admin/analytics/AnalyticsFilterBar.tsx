@@ -4,21 +4,21 @@ import { useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Filter, Calendar } from 'lucide-react'
+import { Filter } from 'lucide-react'
 import { TransactionType, TransactionStatus } from '@/lib/api'
 import type { AnalyticsFilters } from '@/hooks/useAnalytics'
+import { OverviewTimePeriodFilter } from '@/components/admin/OverviewTimePeriodFilter'
 
 interface AnalyticsFilterBarProps {
   filters: AnalyticsFilters
-  onChange: (filters: AnalyticsFilters) => void
+  onChange: React.Dispatch<React.SetStateAction<AnalyticsFilters>>
 }
 
 export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProps) {
   const initialFiltersRef = useRef<AnalyticsFilters>(filters)
 
   const updateFilter = <K extends keyof AnalyticsFilters>(key: K, value: AnalyticsFilters[K]) => {
-    onChange({ ...filters, [key]: value })
+    onChange((prev) => ({ ...prev, [key]: value }))
   }
 
   const handleReset = () => {
@@ -37,65 +37,27 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
             <CardDescription>Refine the metrics and trends shown below.</CardDescription>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleReset}
-          className="mt-1 w-full sm:mt-0 sm:w-auto"
-        >
-          Reset filters
-        </Button>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Date Range */}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              Date range
-            </label>
-            <Select
-              value={filters.dateRange}
-              onValueChange={(value) => updateFilter('dateRange', value as AnalyticsFilters['dateRange'])}
-            >
-              <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-sm">
-                <SelectValue placeholder="Select range" />
-              </SelectTrigger>
-              <SelectContent align="start">
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="custom">Custom range</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-4">
+          <OverviewTimePeriodFilter
+            value={filters.dateRange}
+            onChange={(period) => updateFilter('dateRange', period as AnalyticsFilters['dateRange'])}
+            customDateRange={{
+              from: filters.customStartDate ? new Date(filters.customStartDate) : null,
+              to: filters.customEndDate ? new Date(filters.customEndDate) : null,
+            }}
+            onCustomDateRangeChange={(range) => {
+              onChange((prev) => ({
+                ...prev,
+                customStartDate: range.from ? range.from.toISOString().slice(0, 10) : '',
+                customEndDate: range.to ? range.to.toISOString().slice(0, 10) : '',
+              }))
+            }}
+            onReset={handleReset}
+          />
 
-          {/* Custom Date Range */}
-          {filters.dateRange === 'custom' && (
-            <>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                  Start date
-                </label>
-                <Input
-                  type="date"
-                  value={filters.customStartDate || ''}
-                  onChange={(e) => updateFilter('customStartDate', e.target.value)}
-                  className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                  End date
-                </label>
-                <Input
-                  type="date"
-                  value={filters.customEndDate || ''}
-                  onChange={(e) => updateFilter('customEndDate', e.target.value)}
-                  className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-sm"
-                />
-              </div>
-            </>
-          )}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
           {/* Transaction Type */}
           <div className="space-y-1">
@@ -166,6 +128,7 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
               onChange={(e) => updateFilter('maxAmount', e.target.value)}
               className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-sm"
             />
+          </div>
           </div>
         </div>
       </CardContent>

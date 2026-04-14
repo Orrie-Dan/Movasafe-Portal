@@ -14,7 +14,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RefreshCw, Eye, AlertCircle, CheckCircle2, Loader2, DollarSign, Clock, BarChart3, PieChart, TrendingUp, TrendingDown, Scale, Filter, Calendar, Info, Table as TableIcon } from 'lucide-react'
-import { format, parseISO, subDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns'
+import { format, parseISO, startOfDay, endOfDay, isWithinInterval } from 'date-fns'
+import { buildTimeBuckets, getPeriodRange } from '@/lib/utils/period'
 import { toast } from '@/hooks/use-toast'
 import { apiGetAllEscrows, apiProcessRefund, apiResolveDispute } from '@/lib/api/escrows'
 import { apiGetUsers } from '@/lib/api/users'
@@ -67,29 +68,29 @@ function KPICard({
   purpose?: string
 }) {
   const colorClasses: Record<string, string> = {
-    red: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-black',
-    green: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-black',
-    blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-black',
-    orange: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-black',
-    purple: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-black',
+    red: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-slate-900/40',
+    green: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-slate-900/40',
+    blue: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-900/40',
+    orange: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-slate-900/40',
+    purple: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-slate-900/40',
   }
   
   return (
-    <Card className="border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+    <Card className="border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow bg-white dark:bg-black">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1 flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
               {title}
               {formula && (
                 <span title={`Formula: ${formula}\nData: ${dataFields}\nPurpose: ${purpose}`} aria-label="metric formula">
-                  <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                  <Info className="h-3 w-3 text-slate-400 cursor-help" />
                 </span>
               )}
             </CardTitle>
-            <p className="text-xs text-gray-500 dark:text-gray-500">{label}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
             {formula && (
-              <p className="text-xs text-gray-400 dark:text-gray-600 mt-1 font-mono">
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-mono">
                 {formula}
               </p>
             )}
@@ -101,8 +102,8 @@ function KPICard({
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline gap-2">
-          <div className="text-3xl font-bold text-gray-900 dark:text-white">{value}</div>
-          {unit && <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{unit}</span>}
+          <div className="text-3xl font-bold text-slate-900 dark:text-white">{value}</div>
+          {unit && <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{unit}</span>}
         </div>
       </CardContent>
     </Card>
@@ -318,14 +319,21 @@ export default function EscrowDisputesAnalyticsPage() {
 
   // ============ Chart Data - Using Real API Data ============
   const chartData = useMemo(() => {
-    // Line Chart: Monthly Trends from real data
-    const now = new Date()
+    const period = getPeriodRange({
+      period: filters.dateRange.from && filters.dateRange.to ? 'custom' : 'all',
+      customFrom: filters.dateRange.from,
+      customTo: filters.dateRange.to,
+    })
+    const buckets = buildTimeBuckets(period, filters.dateRange.from && filters.dateRange.to ? 'custom' : 'all')
+    const useMonthly = !(filters.dateRange.from && filters.dateRange.to)
     const monthlyData = []
     
-    for (let i = 11; i >= 0; i--) {
-      const monthStart = subDays(now, i * 30)
-      const monthEnd = subDays(now, (i - 1) * 30)
-      const monthLabel = format(monthStart, 'MMM yyyy')
+    for (const bucketStart of buckets) {
+      const monthStart = bucketStart
+      const monthEnd = useMonthly
+        ? new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1)
+        : new Date(monthStart.getFullYear(), monthStart.getMonth(), monthStart.getDate() + 1)
+      const monthLabel = format(monthStart, useMonthly ? 'MMM yyyy' : 'MMM d, yyyy')
       
       // Count disputes created in this month
       const newDisputes = escrows.filter(e => {
@@ -341,7 +349,7 @@ export default function EscrowDisputesAnalyticsPage() {
       }).length
       
       monthlyData.push({
-        month: format(monthStart, 'MMM'),
+        month: format(monthStart, useMonthly ? 'MMM' : 'MMM d'),
         monthYear: monthLabel,
         'New Disputes': newDisputes,
         'Resolved Disputes': resolved,
@@ -379,7 +387,7 @@ export default function EscrowDisputesAnalyticsPage() {
       trends: monthlyData,
       durations: durationData,
     }
-  }, [escrows, metrics])
+  }, [escrows, metrics, filters.dateRange.from, filters.dateRange.to])
 
   // ============ Filtered Data ============
   const filteredEscrows = useMemo(() => {
@@ -550,14 +558,14 @@ export default function EscrowDisputesAnalyticsPage() {
     <div className="flex-1 flex flex-col bg-white dark:bg-black">
       <main className="flex-1 overflow-auto p-6 space-y-6">
         {/* Page Header */}
-        <div className="bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+        <div className="bg-white dark:bg-black rounded-lg border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-3">
                 <Scale className="h-8 w-8 text-blue-600" />
                 Escrow Disputes & Refunds
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Comprehensive analytics and management for disputed escrow transactions
               </p>
             </div>
@@ -569,11 +577,11 @@ export default function EscrowDisputesAnalyticsPage() {
         </div>
 
         {/* Filters Section */}
-        <Card className="border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-black">
-          <CardHeader className="bg-white dark:bg-black border-b">
+        <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-black">
+          <CardHeader className="bg-white dark:bg-black border-b border-slate-200 dark:border-slate-900/50">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
+                <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white text-lg">
                   <Filter className="h-5 w-5 text-blue-500" />
                   Filters
                 </CardTitle>
@@ -584,7 +592,7 @@ export default function EscrowDisputesAnalyticsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Date Range Filter */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Date Range</Label>
+                <Label className="text-sm font-semibold mb-2 block text-slate-700 dark:text-slate-300">Date Range</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="date"
@@ -593,9 +601,9 @@ export default function EscrowDisputesAnalyticsPage() {
                       ...prev,
                       dateRange: { ...prev.dateRange, from: e.target.value ? new Date(e.target.value) : null }
                     }))}
-                    className="flex-1"
+                    className="flex-1 bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                   />
-                  <span className="text-gray-500 dark:text-gray-400">to</span>
+                  <span className="text-slate-500 dark:text-slate-400">to</span>
                   <Input
                     type="date"
                     value={filters.dateRange.to ? format(filters.dateRange.to, 'yyyy-MM-dd') : ''}
@@ -603,22 +611,22 @@ export default function EscrowDisputesAnalyticsPage() {
                       ...prev,
                       dateRange: { ...prev.dateRange, to: e.target.value ? new Date(e.target.value) : null }
                     }))}
-                    className="flex-1"
+                    className="flex-1 bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
               {/* Escrow Status Filter */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Escrow Status</Label>
+                <Label className="text-sm font-semibold mb-2 block text-slate-700 dark:text-slate-300">Escrow Status</Label>
                 <Select
                   value={filters.escrowStatus}
                   onValueChange={(value: any) => setFilters(prev => ({ ...prev, escrowStatus: value }))}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="ACTIVE">ACTIVE</SelectItem>
                     <SelectItem value="DISPUTED">DISPUTED</SelectItem>
@@ -630,12 +638,12 @@ export default function EscrowDisputesAnalyticsPage() {
 
               {/* Resolution Action Filter */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Resolution Action</Label>
+                <Label className="text-sm font-semibold mb-2 block text-slate-700 dark:text-slate-300">Resolution Action</Label>
                 <Select value={filters.resolutionAction} onValueChange={(value: any) => setFilters(prev => ({ ...prev, resolutionAction: value }))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All Actions</SelectItem>
                     <SelectItem value="RELEASE">RELEASE (Vendor Wins)</SelectItem>
                     <SelectItem value="REFUND">REFUND (Client Wins)</SelectItem>
@@ -645,12 +653,12 @@ export default function EscrowDisputesAnalyticsPage() {
 
               {/* Admin Resolver Filter */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Admin Resolver</Label>
+                <Label className="text-sm font-semibold mb-2 block text-slate-700 dark:text-slate-300">Admin Resolver</Label>
                 <Select value={filters.adminResolver} onValueChange={(value: any) => setFilters(prev => ({ ...prev, adminResolver: value }))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                     <SelectItem value="all">All Admins</SelectItem>
                     {adminResolvers.map(admin => (
                       <SelectItem key={admin} value={admin}>{admin}</SelectItem>
@@ -661,11 +669,12 @@ export default function EscrowDisputesAnalyticsPage() {
 
               {/* Search Term */}
               <div>
-                <Label className="text-sm font-semibold mb-2 block text-gray-900 dark:text-white">Search</Label>
+                <Label className="text-sm font-semibold mb-2 block text-slate-700 dark:text-slate-300">Search</Label>
                 <Input
                   placeholder="ID, client, vendor..."
                   value={filters.searchTerm}
                   onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+                  className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
@@ -691,16 +700,16 @@ export default function EscrowDisputesAnalyticsPage() {
         {/* Tables Section */}
         <div className="space-y-6">
           {/* Section Header */}
-          <div className="bg-white dark:bg-black rounded-lg border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+          <div className="bg-white dark:bg-black rounded-lg border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
                 <TableIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
                   Dispute Management Tables
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                   Actionable tables for managing pending disputes and reviewing resolved dispute history. 
                   Use these tables to prioritize work, take action on pending disputes, and audit past resolutions.
                 </p>
@@ -709,11 +718,11 @@ export default function EscrowDisputesAnalyticsPage() {
           </div>
 
           {/* Table 1: Pending Disputes (Actionable) */}
-          <Card className="border border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-black">
-            <CardHeader className="bg-white dark:bg-black border-b">
+          <Card className="border border-slate-200 dark:border-slate-800 shadow-lg bg-white dark:bg-black">
+            <CardHeader className="bg-white dark:bg-black border-b border-slate-200 dark:border-slate-900/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
+                  <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white text-lg">
                     <AlertCircle className="h-6 w-6 text-red-600" />
                     Pending Disputes
                   </CardTitle>
@@ -727,21 +736,21 @@ export default function EscrowDisputesAnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent className="p-6">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
                 Pending Disputes
               </h3>
               <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50 dark:bg-black border-b">
-                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Internal reference</TableHead>
-                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Client Name</TableHead>
-                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Vendor Name</TableHead>
-                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow Amount</TableHead>
-                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Created At</TableHead>
-                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Disputed At</TableHead>
-                        <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Days Pending</TableHead>
-                        <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Actions</TableHead>
+                      <TableRow className="bg-slate-50 dark:bg-black border-b border-slate-200 dark:border-slate-800">
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Internal reference</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Client Name</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Vendor Name</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Escrow Amount</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Created At</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Disputed At</TableHead>
+                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Days Pending</TableHead>
+                        <TableHead className="text-right font-semibold text-slate-700 dark:text-slate-300">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                   <TableBody>
@@ -752,9 +761,9 @@ export default function EscrowDisputesAnalyticsPage() {
                       <TableRow>
                         <TableCell colSpan={8} className="text-center py-12">
                           <div className="flex flex-col items-center justify-center">
-                            <AlertCircle className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">No Pending Disputes</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All disputes have been resolved. Great job maintaining a clean dispute queue!</p>
+                            <AlertCircle className="h-12 w-12 text-slate-300 dark:text-slate-600 mb-3" />
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">No Pending Disputes</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">All disputes have been resolved. Great job maintaining a clean dispute queue!</p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -766,20 +775,20 @@ export default function EscrowDisputesAnalyticsPage() {
                         const disputedDate = escrow.disputedAt ? new Date(escrow.disputedAt) : (escrow.createdAt ? new Date(escrow.createdAt) : new Date())
                         const daysPending = Math.floor((Date.now() - disputedDate.getTime()) / (1000 * 60 * 60 * 24))
                         return (
-                          <TableRow key={escrow.id} className="hover:bg-gray-50 dark:hover:bg-black/60 border-b border-gray-100 dark:border-gray-800">
-                            <TableCell className="font-mono text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title={escrow.internalReference || escrow.id}>{escrow.internalReference || escrow.id}</TableCell>
-                            <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={getClientName(escrow)}>{getClientName(escrow)}</TableCell>
-                            <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={getVendorName(escrow)}>{getVendorName(escrow)}</TableCell>
-                            <TableCell className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{formatCurrency(escrow.escrowAmount || escrow.amount)}</TableCell>
-                            <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{escrow.createdAt ? format(parseISO(escrow.createdAt), 'MMM dd, yyyy') : 'N/A'}</TableCell>
-                            <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{escrow.disputedAt ? format(parseISO(escrow.disputedAt), 'MMM dd, yyyy') : 'N/A'}</TableCell>
+                          <TableRow key={escrow.id} className="hover:bg-slate-50 dark:hover:bg-black/60 border-b border-slate-100 dark:border-slate-800">
+                            <TableCell className="font-mono text-sm text-slate-700 dark:text-slate-300 max-w-xs truncate" title={escrow.internalReference || escrow.id}>{escrow.internalReference || escrow.id}</TableCell>
+                            <TableCell className="text-slate-900 dark:text-white max-w-xs truncate" title={getClientName(escrow)}>{getClientName(escrow)}</TableCell>
+                            <TableCell className="text-slate-900 dark:text-white max-w-xs truncate" title={getVendorName(escrow)}>{getVendorName(escrow)}</TableCell>
+                            <TableCell className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">{formatCurrency(escrow.escrowAmount || escrow.amount)}</TableCell>
+                            <TableCell className="text-slate-700 dark:text-slate-300 whitespace-nowrap">{escrow.createdAt ? format(parseISO(escrow.createdAt), 'MMM dd, yyyy') : 'N/A'}</TableCell>
+                            <TableCell className="text-slate-700 dark:text-slate-300 whitespace-nowrap">{escrow.disputedAt ? format(parseISO(escrow.disputedAt), 'MMM dd, yyyy') : 'N/A'}</TableCell>
                             <TableCell>
                               <Badge className={daysPending > 7 ? 'bg-red-600' : daysPending > 3 ? 'bg-yellow-600' : 'bg-green-600'}>
                                 {daysPending} days
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(escrow)} className="hover:bg-gray-100 dark:hover:bg-black">
+                              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(escrow)} className="hover:bg-slate-100 dark:hover:bg-black">
                                 <Eye className="h-4 w-4" />
                                 <span className="ml-2 text-xs">View</span>
                               </Button>
@@ -795,11 +804,11 @@ export default function EscrowDisputesAnalyticsPage() {
           </Card>
 
           {/* Table 2: Resolved Disputes (Audit-Focused, Read-Only) */}
-          <Card className="border border-gray-200 dark:border-gray-800 shadow-lg bg-white dark:bg-black">
-            <CardHeader className="bg-white dark:bg-black border-b">
+          <Card className="border border-slate-200 dark:border-slate-800 shadow-lg bg-white dark:bg-black">
+            <CardHeader className="bg-white dark:bg-black border-b border-slate-200 dark:border-slate-900/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white text-lg">
+                  <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white text-lg">
                     <CheckCircle2 className="h-6 w-6 text-green-600" />
                     Resolved Disputes
                   </CardTitle>
@@ -819,25 +828,25 @@ export default function EscrowDisputesAnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent className="p-6">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
                 Resolved Disputes
               </h3>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-black border-b">
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Internal reference</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Client Name</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Vendor Name</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow Amount</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Escrow Status</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">commissionPercentage</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">commissionAmount</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">vendorAmount</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">serviceDescription</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">Resolved At</TableHead>
-                      <TableHead className="font-semibold text-gray-700 dark:text-gray-300">disputeResolvedBy</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300">Actions</TableHead>
+                    <TableRow className="bg-slate-50 dark:bg-black border-b border-slate-200 dark:border-slate-800">
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Internal reference</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Client Name</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Vendor Name</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Escrow Amount</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Escrow Status</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">commissionPercentage</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">commissionAmount</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">vendorAmount</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">serviceDescription</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Resolved At</TableHead>
+                      <TableHead className="font-semibold text-slate-700 dark:text-slate-300">disputeResolvedBy</TableHead>
+                      <TableHead className="text-right font-semibold text-slate-700 dark:text-slate-300">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -854,9 +863,9 @@ export default function EscrowDisputesAnalyticsPage() {
                       <TableRow>
                         <TableCell colSpan={12} className="text-center py-12">
                           <div className="flex flex-col items-center justify-center">
-                            <CheckCircle2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">No Resolved Disputes</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">No disputes have been resolved yet. Resolved disputes will appear here for audit purposes.</p>
+                            <CheckCircle2 className="h-12 w-12 text-slate-300 dark:text-slate-600 mb-3" />
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">No Resolved Disputes</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">No disputes have been resolved yet. Resolved disputes will appear here for audit purposes.</p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -871,22 +880,22 @@ export default function EscrowDisputesAnalyticsPage() {
                           action === 'REFUND'
                         )
                       }).map(escrow => (
-                        <TableRow key={escrow.id} className="hover:bg-gray-50 dark:hover:bg-black/60 border-b border-gray-100 dark:border-gray-800">
-                          <TableCell className="font-mono text-sm text-gray-700 dark:text-gray-300 max-w-xs truncate" title={escrow.internalReference || escrow.id}>{escrow.internalReference || escrow.id}</TableCell>
-                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={getClientName(escrow)}>{getClientName(escrow)}</TableCell>
-                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={getVendorName(escrow)}>{getVendorName(escrow)}</TableCell>
-                          <TableCell className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{formatCurrency(escrow.escrowAmount || escrow.amount)}</TableCell>
+                        <TableRow key={escrow.id} className="hover:bg-slate-50 dark:hover:bg-black/60 border-b border-slate-100 dark:border-slate-800">
+                          <TableCell className="font-mono text-sm text-slate-700 dark:text-slate-300 max-w-xs truncate" title={escrow.internalReference || escrow.id}>{escrow.internalReference || escrow.id}</TableCell>
+                          <TableCell className="text-slate-900 dark:text-white max-w-xs truncate" title={getClientName(escrow)}>{getClientName(escrow)}</TableCell>
+                          <TableCell className="text-slate-900 dark:text-white max-w-xs truncate" title={getVendorName(escrow)}>{getVendorName(escrow)}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">{formatCurrency(escrow.escrowAmount || escrow.amount)}</TableCell>
                           <TableCell>{getStatusBadge(escrow.escrowStatus || escrow.status)}</TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300">{escrow.commissionPercentage != null ? `${escrow.commissionPercentage}%` : 'N/A'}</TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{escrow.commissionAmount != null ? formatCurrency(escrow.commissionAmount) : 'N/A'}</TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">{escrow.vendorAmount != null ? formatCurrency(escrow.vendorAmount) : 'N/A'}</TableCell>
-                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.serviceDescription ?? ''}>{escrow.serviceDescription ?? 'N/A'}</TableCell>
-                          <TableCell className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                          <TableCell className="text-slate-700 dark:text-slate-300">{escrow.commissionPercentage != null ? `${escrow.commissionPercentage}%` : 'N/A'}</TableCell>
+                          <TableCell className="text-slate-700 dark:text-slate-300 whitespace-nowrap">{escrow.commissionAmount != null ? formatCurrency(escrow.commissionAmount) : 'N/A'}</TableCell>
+                          <TableCell className="text-slate-700 dark:text-slate-300 whitespace-nowrap">{escrow.vendorAmount != null ? formatCurrency(escrow.vendorAmount) : 'N/A'}</TableCell>
+                          <TableCell className="text-slate-900 dark:text-white max-w-xs truncate" title={escrow.serviceDescription ?? ''}>{escrow.serviceDescription ?? 'N/A'}</TableCell>
+                          <TableCell className="text-slate-700 dark:text-slate-300 whitespace-nowrap">
                             {escrow.disputeResolvedAt ? format(parseISO(escrow.disputeResolvedAt), 'MMM dd, yyyy HH:mm') : 'N/A'}
                           </TableCell>
-                          <TableCell className="text-gray-900 dark:text-white max-w-xs truncate" title={escrow.disputeResolvedBy ?? 'System'}>{escrow.disputeResolvedBy ?? 'System'}</TableCell>
+                          <TableCell className="text-slate-900 dark:text-white max-w-xs truncate" title={escrow.disputeResolvedBy ?? 'System'}>{escrow.disputeResolvedBy ?? 'System'}</TableCell>
                           <TableCell className="text-right">
-                              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(escrow)} className="hover:bg-gray-100 dark:hover:bg-black">
+                              <Button variant="ghost" size="sm" onClick={() => handleViewDetails(escrow)} className="hover:bg-slate-100 dark:hover:bg-black">
                               <Eye className="h-4 w-4" />
                               <span className="ml-2 text-xs">View</span>
                             </Button>
@@ -921,7 +930,7 @@ export default function EscrowDisputesAnalyticsPage() {
             )
           }
           badge={getStatusBadge(selectedEscrow.escrowStatus || selectedEscrow.status)}
-          maxWidth="3xl"
+          maxWidth="4xl"
           sections={[
             {
               title: 'Transaction',
@@ -988,7 +997,7 @@ export default function EscrowDisputesAnalyticsPage() {
       <Dialog open={isRefundDialogOpen} onOpenChange={setIsRefundDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-gray-900 dark:text-white">Process Direct Refund</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Process Direct Refund</DialogTitle>
             <DialogDescription>
               Refund {selectedEscrow ? getClientName(selectedEscrow) : 'client'} with {formatCurrency(selectedEscrow?.amount || 0)}
             </DialogDescription>
@@ -1027,9 +1036,9 @@ export default function EscrowDisputesAnalyticsPage() {
 
       {/* Dispute Resolution Dialog - POST /api/admin/escrows/resolve-dispute/{id} */}
       <Dialog open={isResolveDisputeDialogOpen} onOpenChange={setIsResolveDisputeDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-gray-900 dark:text-white">Resolve Dispute</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white">Resolve Dispute</DialogTitle>
             <DialogDescription>
               Adjudicate dispute for {selectedEscrow ? getClientName(selectedEscrow) : 'client'} vs {selectedEscrow ? getVendorName(selectedEscrow) : 'vendor'}
             </DialogDescription>
@@ -1037,7 +1046,7 @@ export default function EscrowDisputesAnalyticsPage() {
           <div className="space-y-4 py-4">
 
             <div>
-              <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 block">Resolution Decision *</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Resolution Decision *</label>
               <Select value={disputeAction} onValueChange={(value: any) => setDisputeAction(value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select ACTION" />
@@ -1050,9 +1059,9 @@ export default function EscrowDisputesAnalyticsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 block">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
                 Resolution Notes & Justification *
-                <span className="text-xs font-normal text-gray-500 dark:text-gray-400 block mt-1">
+                <span className="text-xs font-normal text-slate-500 dark:text-slate-400 block mt-1">
                   Explain your decision for audit trail (10-2000 characters required)
                 </span>
               </label>

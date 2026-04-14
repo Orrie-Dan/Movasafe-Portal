@@ -36,9 +36,10 @@ interface AdminSidebarProps {
   userRole?: string
   collapsed?: boolean
   onCollapseChange?: (collapsed: boolean) => void
+  criticalAlertsCount?: number
 }
 
-export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 'admin', collapsed: externalCollapsed, onCollapseChange }: AdminSidebarProps) {
+export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 'admin', collapsed: externalCollapsed, onCollapseChange, criticalAlertsCount = 0 }: AdminSidebarProps) {
   const { pathname } = useLocation()
   const [internalCollapsed, setInternalCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
