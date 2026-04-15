@@ -35,6 +35,7 @@ const AdminUserDetail = lazy(() => import('@/app/admin/users/[id]/UserDetailClie
 const AdminWallets = lazy(() => import('@/app/admin/wallets/page'))
 const AdminLoans = lazy(() => import('@/app/admin/loans/page'))
 const AdminReviewQueue = lazy(() => import('@/app/admin/review-queue/page'))
+const AdminTrustUserManagement = lazy(() => import('@/app/admin/trust/user-management/page'))
 
 function PageFallback() {
   return (
@@ -83,6 +84,7 @@ export default function App() {
             <Route path="wallets" element={<AdminWallets />} />
             <Route path="loans" element={<AdminLoans />} />
             <Route path="review-queue" element={<AdminReviewQueue />} />
+            <Route path="trust/user-management" element={<AdminTrustUserManagement />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

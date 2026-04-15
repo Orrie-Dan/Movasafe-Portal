@@ -5,16 +5,23 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Loader2, Wallet } from 'lucide-react'
-import { adminLogin } from '@/lib/auth'
+import { adminLogin, adminForgotPassword } from '@/lib/auth'
 import type { LoginRequest } from '@/lib/auth'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const [emailOrPhone, setEmailOrPhone] = useState('')
   const [password, setPassword] = useState('')
+  const [mfaCode, setMfaCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [forgotOpen, setForgotOpen] = useState(false)
+  const [forgotEmailOrPhone, setForgotEmailOrPhone] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotError, setForgotError] = useState<string | null>(null)
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -25,6 +32,7 @@ export default function LoginPage() {
       const loginRequest: LoginRequest = {
         emailOrPhoneNumber: emailOrPhone.trim(),
         password,
+        mfaCode,
       }
 
       await adminLogin(loginRequest)
@@ -42,6 +50,25 @@ export default function LoginPage() {
     // Clear error when user starts typing
     if (error) {
       setError(null)
+    }
+  }
+
+  const handleForgotPassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setForgotError(null)
+    setForgotSuccess(null)
+    setForgotLoading(true)
+    try {
+      const result = await adminForgotPassword(forgotEmailOrPhone)
+      setForgotSuccess(result.message || 'Request sent successfully.')
+      setForgotOpen(false)
+      setForgotEmailOrPhone('')
+      navigate('/login')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to submit forgot password request'
+      setForgotError(message)
+    } finally {
+      setForgotLoading(false)
     }
   }
 
@@ -102,10 +129,49 @@ export default function LoginPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="mfaCode" className="text-white">
+                MFA Code
+              </Label>
+              <Input
+                id="mfaCode"
+                type="text"
+                placeholder="Enter your MFA code"
+                value={mfaCode}
+                onChange={(e) => {
+                  setMfaCode(e.target.value)
+                  handleInputChange()
+                }}
+                className="bg-black border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
+                disabled={loading}
+                autoComplete="one-time-code"
+              />
+            </div>
+            <div className="flex justify-end -mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotOpen(true)
+                  setForgotError(null)
+                  setForgotSuccess(null)
+                  setForgotEmailOrPhone(emailOrPhone)
+                }}
+                className="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-4"
+                disabled={loading}
+              >
+                Forgot password?
+              </button>
+            </div>
+
             {/* Error Message */}
             {error && (
               <div className="bg-red-500/10 border border-red-500/50 rounded-md p-3 text-sm text-red-400">
                 {error}
+              </div>
+            )}
+            {forgotSuccess && (
+              <div className="bg-green-500/10 border border-green-500/50 rounded-md p-3 text-sm text-green-400">
+                {forgotSuccess}
               </div>
             )}
 
@@ -127,6 +193,57 @@ export default function LoginPage() {
             </Button>
           </form>
         </div>
+
+        <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+          <DialogContent className="bg-black border border-slate-800 text-white">
+            <DialogHeader>
+              <DialogTitle>Forgot Password</DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Enter your email to request a password reset.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="forgot-email" className="text-white">
+                  Email
+                </Label>
+                <Input
+                  id="forgot-email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={forgotEmailOrPhone}
+                  onChange={(e) => {
+                    setForgotEmailOrPhone(e.target.value)
+                    if (forgotError) setForgotError(null)
+                  }}
+                  className="bg-black border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
+                  required
+                  disabled={forgotLoading}
+                />
+              </div>
+              {forgotError && (
+                <div className="bg-red-500/10 border border-red-500/50 rounded-md p-3 text-sm text-red-400">
+                  {forgotError}
+                </div>
+              )}
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setForgotOpen(false)} disabled={forgotLoading}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="gradient" disabled={forgotLoading}>
+                  {forgotLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Footer */}
         <div className="mt-6 text-center text-sm text-slate-500">

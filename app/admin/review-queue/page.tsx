@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ViewDetailsDialog } from '@/components/admin/ViewDetailsDialog'
 import { getSlaState, getSlaToneClass } from '@/lib/utils/sla'
 import { formatDistanceToNowStrict } from 'date-fns'
-import { apiGetDisputedTransactions, type Transaction } from '@/lib/api/transactions'
+import { apiGetDisputedTransactions, apiResolveDispute, type Transaction } from '@/lib/api/transactions'
 import { apiGetUsers } from '@/lib/api/users'
 import { apiGetAllTransactions } from '@/lib/api'
 import { apiGetExternalAuditLogsAll } from '@/lib/api/audit-logs'
@@ -57,6 +57,37 @@ export default function ReviewQueuePage() {
   const [mitigatingSignals, setMitigatingSignals] = useState<MitigatingSignal[]>([])
   const [detailNarrative, setDetailNarrative] = useState('')
   const [detailRecommendation, setDetailRecommendation] = useState('')
+  const [approvingTransactionId, setApprovingTransactionId] = useState<string | null>(null)
+
+  const handleApproveCase = async (queueCase: QueueCase) => {
+    try {
+      setApprovingTransactionId(queueCase.transactionId)
+      await apiResolveDispute(
+        queueCase.transactionId,
+        'UPHOLD',
+        'Approved from review queue after analyst review.'
+      )
+
+      setQueueCases((prev) =>
+        prev.map((c) =>
+          c.transactionId === queueCase.transactionId ? { ...c, status: 'closed' } : c
+        )
+      )
+
+      toast({
+        title: 'Approved',
+        description: `Case ${queueCase.transactionReference || queueCase.transactionId} approved successfully.`,
+      })
+    } catch (error) {
+      toast({
+        title: 'Approval failed',
+        description: error instanceof Error ? error.message : 'Failed to approve review case',
+        variant: 'destructive',
+      })
+    } finally {
+      setApprovingTransactionId(null)
+    }
+  }
 
   useEffect(() => {
     const loadQueue = async () => {
@@ -168,7 +199,14 @@ export default function ReviewQueuePage() {
       header: 'Quick Action',
       accessor: (c) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="outline">Approve</Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={approvingTransactionId === c.transactionId || c.status === 'closed'}
+            onClick={() => handleApproveCase(c)}
+          >
+            {approvingTransactionId === c.transactionId ? 'Approving...' : 'Approve'}
+          </Button>
           <Button size="sm" variant="destructive">Escalate</Button>
           <Button
             size="icon"

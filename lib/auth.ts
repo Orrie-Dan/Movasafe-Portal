@@ -8,6 +8,7 @@ import { getToken as getStoredToken, setToken as storeToken, removeToken as clea
 export interface LoginRequest {
   emailOrPhoneNumber: string
   password: string
+  mfaCode?: string
 }
 
 export interface Role {
@@ -19,6 +20,28 @@ export interface Role {
   isSystem?: boolean
   createdAt?: string
   updatedAt?: string
+}
+
+const PRIVILEGED_PORTAL_ROLES = ['TRUST_ADMIN', 'SUPPORT_AGENT', 'PLATFORM_ADMIN'] as const
+
+function normalizeRoleName(roleName?: string | null): string {
+  return String(roleName || '').trim().toUpperCase()
+}
+
+function resolvePortalRoleName(rawRoleName?: string | null): 'TRUST_ADMIN' | 'SUPPORT_AGENT' | 'PLATFORM_ADMIN' | '' {
+  const normalized = normalizeRoleName(rawRoleName)
+  if (normalized.includes('TRUST_ADMIN')) return 'TRUST_ADMIN'
+  if (normalized.includes('SUPPORT_AGENT')) return 'SUPPORT_AGENT'
+  if (normalized.includes('PLATFORM_ADMIN')) return 'PLATFORM_ADMIN'
+  return ''
+}
+
+function resolvePortalRole(roles: Role[]): string {
+  const normalized = roles.map((r) => resolvePortalRoleName(r.name)).filter(Boolean)
+  if (normalized.includes('TRUST_ADMIN')) return 'TRUST_ADMIN'
+  if (normalized.includes('SUPPORT_AGENT')) return 'SUPPORT_AGENT'
+  if (normalized.includes('PLATFORM_ADMIN')) return 'PLATFORM_ADMIN'
+  return ''
 }
 
 export interface LoginResponse {
@@ -35,6 +58,7 @@ export interface LoginResponse {
 
 const AUTH_BASE = API_CONFIG.AUTH.baseUrl
 const SIGNIN_ENDPOINT = API_CONFIG.AUTH.endpoints.signin
+const FORGOT_PASSWORD_ENDPOINT = API_CONFIG.AUTH.endpoints.users.forgotPassword
 
 /**
  * Admin-only login function
@@ -48,6 +72,7 @@ export async function adminLogin(credentials: LoginRequest): Promise<LoginRespon
   const loginData = {
     emailOrPhoneNumber: credentials.emailOrPhoneNumber.trim(),
     password: credentials.password,
+    mfaCode: credentials.mfaCode?.trim() || undefined,
   }
 
   // Make login request
@@ -109,15 +134,19 @@ export async function adminLogin(credentials: LoginRequest): Promise<LoginRespon
   // Extract roles from response
   const roles: Role[] = responseData.roles || responseData.data?.roles || []
   
-  // CRITICAL: Check if user has ADMIN role
-  const hasAdminRole = roles.some(
-    (role) => role.name?.toUpperCase() === 'TRUST_ADMIN'
+  // Portal access is restricted to privileged roles.
+  const hasAdminRole = roles.some((role) =>
+    PRIVILEGED_PORTAL_ROLES.includes(
+      resolvePortalRoleName(role.name) as (typeof PRIVILEGED_PORTAL_ROLES)[number]
+    )
   )
 
   if (!hasAdminRole) {
     // Do NOT store token if user is not an admin
     throw new Error('Access denied. Admin privileges required.')
   }
+
+  const primaryRoleName = resolvePortalRole(roles)
 
   // Store token only if user is an admin
   storeToken(token)
@@ -131,7 +160,7 @@ export async function adminLogin(credentials: LoginRequest): Promise<LoginRespon
       phoneNumber: userData.phoneNumber || credentials.emailOrPhoneNumber,
       fullName: userData.fullName || userData.name || '',
       username: userData.username,
-      role: 'admin',
+      role: primaryRoleName || 'TRUST_ADMIN',
       roles: roles,
       status: 'active',
       emailVerified: true,
@@ -191,10 +220,58 @@ export function isAdmin(): boolean {
     if (!userData) return false
     
     const user = JSON.parse(userData)
-    return user.role === 'admin' || 
-           (user.roles && Array.isArray(user.roles) && 
-            user.roles.some((r: Role) => r.name?.toUpperCase() === 'ADMIN'))
+    const primaryRole = resolvePortalRoleName(user.role)
+    if (PRIVILEGED_PORTAL_ROLES.includes(primaryRole as (typeof PRIVILEGED_PORTAL_ROLES)[number])) {
+      return true
+    }
+    return (
+      user.roles &&
+      Array.isArray(user.roles) &&
+      user.roles.some((r: Role) =>
+        PRIVILEGED_PORTAL_ROLES.includes(
+          resolvePortalRoleName(r.name) as (typeof PRIVILEGED_PORTAL_ROLES)[number]
+        )
+      )
+    )
   } catch {
     return false
+  }
+}
+
+/**
+ * Request forgot password OTP/link
+ * Uses: POST /api/auth/users/forgot-password
+ */
+export async function adminForgotPassword(emailOrPhoneNumber: string): Promise<{ success: boolean; message?: string }> {
+  const response = await fetch(`${AUTH_BASE}${FORGOT_PASSWORD_ENDPOINT}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ emailOrPhoneNumber: emailOrPhoneNumber.trim() }),
+  })
+
+  const responseText = await response.text()
+  let parsed: any = null
+  try {
+    parsed = responseText ? JSON.parse(responseText) : null
+  } catch {
+    parsed = null
+  }
+
+  if (!response.ok || parsed?.success === false) {
+    const message =
+      parsed?.message ||
+      parsed?.error ||
+      (typeof parsed?.data === 'string' ? parsed.data : null) ||
+      responseText ||
+      'Failed to process forgot password request'
+    throw new Error(message)
+  }
+
+  return {
+    success: true,
+    message: parsed?.message || 'Password reset request submitted successfully.',
   }
 }

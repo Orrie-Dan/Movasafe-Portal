@@ -21,10 +21,12 @@ import {
   Store,
   CheckCircle2,
   AlertTriangle,
+  ShieldAlert,
   ChevronDown,
   Banknote
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { canSeeMenuLabelByRole } from '@/utils/roleMenuConfig'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -99,11 +101,23 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
     { href: '/admin/refund-disputes/escrow', label: 'Escrow Disputes', icon: AlertTriangle, badge: null },
     { href: '/admin/refund-disputes/transactions', label: 'Transactions Disputes', icon: AlertTriangle, badge: null },
   ]
+  const riskFraudManagementItem = { href: '/admin/risk-fraud', label: 'Risk & Fraud Management', icon: ShieldAlert, badge: null }
 
   const adminPortalSection = [
     { href: '/admin/settings', label: 'System Settings', icon: Settings, badge: null },
+    { href: '/admin/trust/user-management', label: 'User Management', icon: Users, badge: null },
     { href: '/admin/audit-logs', label: 'Audit Logs', icon: Database, badge: null },
   ]
+
+  const filterByRole = (items: Array<{ href: string; label: string; icon: any; badge?: number | null }>) =>
+    items.filter((item) => canSeeMenuLabelByRole(userRole, item.label))
+
+  const visibleOverviewSection = filterByRole(overviewSection)
+  const visibleOperationsSection = filterByRole(operationsSection)
+  const visibleRiskComplianceSection = filterByRole(riskComplianceSection)
+  const visibleAdminPortalSection = filterByRole(adminPortalSection)
+  const canSeeRefundDisputes = canSeeMenuLabelByRole(userRole, 'Refund & Disputes')
+  const canSeeRiskFraud = canSeeMenuLabelByRole(userRole, 'Risk & Fraud Management')
 
 
   const renderNavItem = (item: { href: string; label: string; icon: any; badge?: number | null }) => {
@@ -235,7 +249,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
             </div>
           )}
           <div className="space-y-1">
-            {overviewSection.map(renderNavItem)}
+            {visibleOverviewSection.map(renderNavItem)}
           </div>
         </div>
 
@@ -247,7 +261,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
             </div>
           )}
           <div className="space-y-1">
-            {operationsSection.map(renderNavItem)}
+            {visibleOperationsSection.map(renderNavItem)}
           </div>
         </div>
 
@@ -259,8 +273,9 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
             </div>
           )}
           <div className="space-y-1">
-            {!collapsed ? renderCollapsibleMenu('refund-disputes', 'Refund & Disputes', AlertTriangle, refundDisputesSection) : null}
-            {riskComplianceSection.map(renderNavItem)}
+            {!collapsed && canSeeRefundDisputes ? renderCollapsibleMenu('refund-disputes', 'Refund & Disputes', AlertTriangle, refundDisputesSection) : null}
+            {canSeeRiskFraud ? renderNavItem(riskFraudManagementItem) : null}
+            {visibleRiskComplianceSection.map(renderNavItem)}
           </div>
         </div>
 
@@ -272,7 +287,7 @@ export function AdminSidebar({ variant = 'admin', userName = 'User', userRole = 
             </div>
           )}
           <div className="space-y-1">
-            {adminPortalSection.map(renderNavItem)}
+            {visibleAdminPortalSection.map(renderNavItem)}
           </div>
         </div>
 

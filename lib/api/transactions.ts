@@ -49,6 +49,18 @@ export interface PaginatedTransactionResponse {
   }
 }
 
+export interface FraudReviewListResponse {
+  success?: boolean
+  message?: string | null
+  data: {
+    content: Transaction[]
+    totalElements?: number
+    totalPages?: number
+    size?: number
+    number?: number
+  }
+}
+
 // API request helper with error handling
 // Note: Uses getToken() from @/lib/auth for centralized token management
 async function apiRequest<T>(
@@ -99,8 +111,8 @@ async function apiRequest<T>(
     })
 
     if (!response.ok) {
-      // Handle 401/403 - redirect to login
-      if (response.status === 401 || response.status === 403) {
+      // Handle 401 - redirect to login
+      if (response.status === 401) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token')
           localStorage.removeItem('user_data')
@@ -245,8 +257,8 @@ export async function apiGetAllTransactions(filters?: TransactionFilters): Promi
     })
 
     if (!response.ok) {
-      // Handle 401/403 - redirect to login
-      if (response.status === 401 || response.status === 403) {
+      // Handle 401 - redirect to login
+      if (response.status === 401) {
         if (typeof window !== 'undefined') {
           // Clear token and redirect
           localStorage.removeItem('auth_token')
@@ -439,7 +451,7 @@ export async function apiStandardReversal(
     })
 
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === 401) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token')
           localStorage.removeItem('user_data')
@@ -529,7 +541,7 @@ export async function apiForceReversal(
     })
 
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === 401) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token')
           localStorage.removeItem('user_data')
@@ -609,6 +621,70 @@ export async function apiGetDisputedTransactions(): Promise<Transaction[]> {
 }
 
 /**
+ * Get pending fraud review transactions
+ * Endpoint: GET /api/transactions/fraud-review
+ */
+export async function apiGetFraudReviewTransactions(filters?: {
+  page?: number
+  limit?: number
+  sortBy?: string
+  order?: 'asc' | 'desc'
+}): Promise<FraudReviewListResponse> {
+  const token = getToken()
+  if (!token) {
+    if (typeof window !== 'undefined') window.location.href = '/login'
+    throw new Error('No authentication token found')
+  }
+
+  const queryParams = new URLSearchParams()
+  if (filters?.page !== undefined) queryParams.append('page', String(filters.page))
+  if (filters?.limit !== undefined) queryParams.append('limit', String(filters.limit))
+  if (filters?.sortBy) queryParams.append('sortBy', filters.sortBy)
+  if (filters?.order) queryParams.append('order', filters.order)
+
+  const query = queryParams.toString()
+  const url = `${TRANSACTION_BASE}/api/transactions/fraud-review${query ? `?${query}` : ''}`
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    let errorMessage = `Failed to fetch fraud review transactions: ${response.status} ${response.statusText}`
+    try {
+      const errorData = JSON.parse(errorText)
+      errorMessage = errorData.message || errorData.error || errorData.data?.message || errorMessage
+    } catch {
+      errorMessage = errorText || errorMessage
+    }
+    throw new Error(errorMessage)
+  }
+
+  const result = await response.json()
+  if (result?.data?.content && Array.isArray(result.data.content)) {
+    return result as FraudReviewListResponse
+  }
+  if (Array.isArray(result?.data)) {
+    return {
+      success: result?.success,
+      message: result?.message ?? null,
+      data: { content: result.data as Transaction[] },
+    }
+  }
+  return {
+    success: result?.success,
+    message: result?.message ?? null,
+    data: { content: [] },
+  }
+}
+
+/**
  * Resolve a disputed transaction
  * Endpoint: POST /api/admin/transactions/resolve-dispute/{id}
  * Backend expects action: "RELEASE_FUNDS" | "COMPENSATE" and notes: string
@@ -675,4 +751,135 @@ export async function apiResolveDispute(
     }
     throw error
   }
+}
+
+// ----------------------------------------------------------------------------
+// Fraud review (PENDING_REVIEW) actions
+// ----------------------------------------------------------------------------
+
+export interface FraudReviewActionResponse {
+  action: 'APPROVED' | 'REJECTED' | string
+  executedTransaction: Transaction | null
+  originalTransaction?: Transaction | null
+  message?: string | null
+}
+
+interface FraudReviewApiEnvelope {
+  success?: boolean
+  message?: string | null
+  data?: FraudReviewActionResponse
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+function getUserIdFromToken(token: string | null): string | null {
+  if (!token) return null
+  try {
+    const payloadPart = token.split('.')[1]
+    if (!payloadPart) return null
+    const padded = payloadPart.padEnd(payloadPart.length + (4 - (payloadPart.length % 4 || 4)) % 4, '=')
+    const json = atob(padded.replace(/-/g, '+').replace(/_/g, '/'))
+    const payload = JSON.parse(json)
+    const candidates = [payload?.userId, payload?.id, payload?.sub].filter((v) => typeof v === 'string') as string[]
+    return candidates.find((v) => isUuid(v.trim()))?.trim() ?? null
+  } catch {
+    return null
+  }
+}
+
+function getCurrentUserIdForFraudReview(token: string | null): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    // Required source: signin response field data.userId (persisted in localStorage.user_data.id).
+    const userDataRaw = localStorage.getItem('user_data')
+    if (userDataRaw) {
+      const user = JSON.parse(userDataRaw)
+      const localCandidates = [
+        user?.id,
+        user?.userId,
+        user?.sub,
+        user?.user?.id,
+        user?.user?.userId,
+      ].filter((v) => typeof v === 'string') as string[]
+      const localUuid = localCandidates.find((v) => isUuid(v.trim()))
+      if (localUuid) return localUuid.trim()
+    }
+    return getUserIdFromToken(token)
+  } catch {
+    return getUserIdFromToken(token)
+  }
+}
+
+async function fraudReviewRequest(
+  transactionId: string,
+  decision: 'approve' | 'reject',
+  payload?: { notes?: string }
+): Promise<FraudReviewActionResponse> {
+  const token = getToken()
+  if (!token) {
+    if (typeof window !== 'undefined') window.location.href = '/login'
+    throw new Error('No authentication token found')
+  }
+
+  const userId = getCurrentUserIdForFraudReview(token)
+  if (!userId) {
+    throw new Error(
+      'Unable to determine reviewer id for required X-User-Id header. Please sign out and sign in again.'
+    )
+  }
+  const url = `${TRANSACTION_BASE}/api/transactions/fraud-review/${encodeURIComponent(transactionId)}/${decision}`
+
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  }
+  headers['X-User-Id'] = userId
+
+  const body = {
+    notes: String(payload?.notes ?? '').trim() || 'Reviewed by trust admin',
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+
+  const responseText = await response.text()
+  let parsed: FraudReviewApiEnvelope | null = null
+  try {
+    parsed = responseText ? (JSON.parse(responseText) as FraudReviewApiEnvelope) : null
+  } catch {
+    parsed = null
+  }
+
+  // Some backends return 200 with success=false for business validation errors.
+  if (parsed?.success === false) {
+    throw new Error(parsed.message || `Failed to ${decision} fraud review`)
+  }
+
+  if (!response.ok) {
+    let errorMessage = `Failed to ${decision} fraud review: ${response.status} ${response.statusText}`
+    try {
+      const errorData = parsed ?? JSON.parse(responseText)
+      errorMessage = errorData.message || errorData.error || errorData.data?.message || errorMessage
+    } catch {
+      errorMessage = responseText || errorMessage
+    }
+    throw new Error(errorMessage)
+  }
+
+  const result = parsed
+  return (result?.data ?? result) as FraudReviewActionResponse
+}
+
+export async function apiApproveFraudReview(transactionId: string, notes?: string): Promise<FraudReviewActionResponse> {
+  return fraudReviewRequest(transactionId, 'approve', { notes })
+}
+
+export async function apiRejectFraudReview(transactionId: string, notes?: string): Promise<FraudReviewActionResponse> {
+  return fraudReviewRequest(transactionId, 'reject', { notes })
 }
